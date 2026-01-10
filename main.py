@@ -136,6 +136,18 @@ Examples:
         help="Run with test data (small sample)"
     )
     
+    parser.add_argument(
+        "--strategy-discovery",
+        action="store_true",
+        help="Run complete strategy discovery pipeline (labeling, regime detection, backtesting, ranking)"
+    )
+    
+    parser.add_argument(
+        "--skip-telegram",
+        action="store_true",
+        help="Disable Telegram notifications"
+    )
+    
     return parser.parse_args()
 
 
@@ -236,6 +248,231 @@ def check_system():
     
     print("   ✅ All systems ready!")
     return True
+
+
+# ═══════════════════════════════════════════════════════════════
+# 🌟 STRATEGY DISCOVERY PIPELINE
+# ═══════════════════════════════════════════════════════════════
+
+def run_strategy_discovery(analyzer, results, num_workers, output_dirs, enable_telegram=True):
+    """
+    Run complete strategy discovery pipeline
+    
+    Args:
+        analyzer: UltraNecrozmaAnalyzer instance
+        results: Analysis results dictionary
+        num_workers: Number of parallel workers
+        output_dirs: Output directory structure
+        enable_telegram: Whether to enable Telegram notifications
+    
+    Returns:
+        Dictionary with strategy discovery results
+    """
+    print("""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║           🌟💎⚡ STRATEGY DISCOVERY PIPELINE ⚡💎🌟                          ║
+║                                                                              ║
+║     "From raw data to trading strategies - the complete transformation"     ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+    """)
+    
+    # Initialize Telegram notifier
+    from telegram_notifier import TelegramNotifier
+    from lore import EventType
+    from config import LORE_ENABLED
+    
+    notifier = TelegramNotifier(lore_enabled=LORE_ENABLED) if enable_telegram else None
+    
+    if notifier and notifier.enabled:
+        notifier.send_awakening()
+    
+    strategy_results = {}
+    
+    try:
+        # 1. Labeling
+        print("\n" + "="*80)
+        print("📊 STEP 1: Multi-Dimensional Labeling")
+        print("="*80)
+        
+        from labeler import label_dataframe
+        
+        if notifier:
+            notifier.send_message("DIALGA", EventType.PROGRESS, 
+                                 custom_message="Beginning temporal labeling...")
+        
+        labels_dict = {}
+        if results:
+            first_config = list(results.keys())[0]
+            features_df = results[first_config]["features"]
+            
+            labels_dict = label_dataframe(
+                features_df.head(5000),  # Use subset for speed
+                target_pips=[10, 20],
+                stop_pips=[10, 15],
+                horizons=[60, 240],
+                num_workers=min(num_workers, 8)
+            )
+        
+        # 2. Regime Detection
+        print("\n" + "="*80)
+        print("🔮 STEP 2: Market Regime Detection")
+        print("="*80)
+        
+        from regime_detector import RegimeDetector
+        
+        if notifier:
+            notifier.send_message("GIRATINA", EventType.PROGRESS,
+                                 custom_message="Detecting regime chaos...")
+        
+        regime_analysis_results = {}
+        if results:
+            regime_detector = RegimeDetector()
+            first_config = list(results.keys())[0]
+            features_df = results[first_config]["features"].head(5000)
+            
+            regimes_df = regime_detector.detect_regimes(features_df)
+            regime_analysis_results = regime_detector.analyze_regimes(regimes_df)
+            
+            if notifier:
+                n_regimes = regime_analysis_results.get("n_regimes", 0)
+                notifier.send_discovery(f"{n_regimes} market regimes")
+        
+        # 3. Pattern Mining
+        print("\n" + "="*80)
+        print("⛏️  STEP 3: Pattern Mining")
+        print("="*80)
+        
+        from pattern_miner import PatternMiner
+        
+        if notifier:
+            notifier.send_message("PALKIA", EventType.PROGRESS,
+                                 custom_message="Mining patterns...")
+        
+        feature_importance_results = {}
+        if results and labels_dict:
+            pattern_miner = PatternMiner()
+            
+            first_label_key = list(labels_dict.keys())[0]
+            labels_df = labels_dict[first_label_key]
+            
+            first_config = list(results.keys())[0]
+            X = results[first_config]["features"].iloc[:len(labels_df)]
+            y = labels_df["up_outcome"].map({"target": 1, "stop": 0, "none": 0})
+            
+            feature_importance_results = pattern_miner.analyze_features(X, y)
+        
+        # 4. Strategy Generation
+        print("\n" + "="*80)
+        print("🏭 STEP 4: Strategy Generation")
+        print("="*80)
+        
+        from strategy_factory import StrategyFactory
+        
+        factory = StrategyFactory()
+        strategies = factory.generate_strategies(max_strategies=30)
+        
+        # 5. Backtesting
+        print("\n" + "="*80)
+        print("📊 STEP 5: Backtesting")
+        print("="*80)
+        
+        from backtester import Backtester
+        
+        if notifier:
+            notifier.send_message("DIALGA", EventType.PROGRESS,
+                                 custom_message=f"Testing {len(strategies)} strategies...")
+        
+        backtester = Backtester()
+        backtest_results = {}
+        
+        if results:
+            first_config = list(results.keys())[0]
+            test_df = results[first_config]["features"].head(5000)
+            
+            for i, strategy in enumerate(strategies):
+                if (i + 1) % 5 == 0:
+                    print(f"   Testing {i+1}/{len(strategies)}...")
+                
+                try:
+                    result = backtester.backtest(strategy, test_df)
+                    if result.n_trades >= 10:  # Only keep strategies with enough trades
+                        backtest_results[strategy.name] = result
+                        
+                        if notifier and result.sharpe_ratio > 2.0:
+                            notifier.send_light_found(strategy.name, result.sharpe_ratio * 30)
+                except:
+                    continue
+        
+        # 6. Ranking
+        print("\n" + "="*80)
+        print("🌟 STEP 6: Strategy Ranking")
+        print("="*80)
+        
+        from light_finder import LightFinder
+        
+        top_strategies_df = None
+        if backtest_results:
+            light_finder = LightFinder()
+            results_list = list(backtest_results.values())
+            top_strategies_df = light_finder.rank_strategies(results_list, top_n=10)
+            
+            if notifier and len(top_strategies_df) > 0:
+                for _, row in top_strategies_df.head(3).iterrows():
+                    notifier.send_top_strategy(
+                        row["strategy_name"],
+                        row["sharpe_ratio"],
+                        int(row["rank"])
+                    )
+        
+        # 7. Final Report
+        print("\n" + "="*80)
+        print("📝 STEP 7: Final Report")
+        print("="*80)
+        
+        from light_report import LightReportGenerator
+        
+        light_report = None
+        if top_strategies_df is not None and len(top_strategies_df) > 0:
+            report_gen = LightReportGenerator(output_dir=output_dirs["reports"])
+            
+            light_report = report_gen.generate_report(
+                top_strategies=top_strategies_df,
+                all_backtest_results=backtest_results,
+                feature_importance=feature_importance_results,
+                regime_analysis=regime_analysis_results,
+                total_strategies=len(strategies)
+            )
+            
+            report_path = report_gen.save_report(light_report)
+            report_gen.print_summary(light_report)
+            
+            if notifier:
+                notifier.send_completion("NECROZMA")
+                notifier.send_document(str(report_path), 
+                                      caption="🌟 Final Strategy Report")
+        
+        strategy_results = {
+            "strategies_generated": len(strategies),
+            "strategies_tested": len(backtest_results),
+            "top_strategies": top_strategies_df,
+            "light_report": light_report,
+        }
+        
+    except Exception as e:
+        print(f"\n❌ Strategy discovery failed: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        if notifier:
+            notifier.send_warning(f"Error: {str(e)}")
+    
+    finally:
+        if notifier:
+            notifier.wait_for_queue(timeout=30)
+    
+    return strategy_results
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -439,6 +676,15 @@ def main():
         # Save intermediate results
         analyzer.save_results()
         
+    
+    # Strategy Discovery Pipeline (if enabled)
+    strategy_results = {}
+    if args.strategy_discovery:
+        enable_telegram = not args.skip_telegram
+        strategy_results = run_strategy_discovery(
+            analyzer, results, num_workers, output_dirs, enable_telegram
+        )
+    
     except KeyboardInterrupt:
         print("\n\n   ⚠️ Analysis interrupted by user")
         print("   💾 Progress saved in checkpoints")
