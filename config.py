@@ -161,6 +161,149 @@ CHECKPOINT_INTERVAL = 5
 
 
 # ═══════════════════════════════════════════════════════════════
+# 📱 TELEGRAM CONFIGURATION (Divine Messages)
+# ═══════════════════════════════════════════════════════════════
+
+# Telegram bot configuration
+# Set via environment variables or telegram_config.json:
+#   TELEGRAM_BOT_TOKEN - Your bot token from @BotFather
+#   TELEGRAM_CHAT_ID - Your chat/channel ID
+TELEGRAM_ENABLED = True  # Master switch for notifications
+LORE_ENABLED = True      # Use deity personalities in messages
+
+
+# ═══════════════════════════════════════════════════════════════
+# 🏷️ LABELING CONFIGURATION (Outcome Targets)
+# ═══════════════════════════════════════════════════════════════
+
+# Target levels in pips (Profit Targets)
+TARGET_PIPS = [5, 10, 15, 20, 30, 50]
+
+# Stop loss levels in pips (Risk Limits)
+STOP_PIPS = [5, 10, 15, 20, 30]
+
+# Time horizons in minutes (Temporal Windows)
+TIME_HORIZONS = [1, 5, 15, 30, 60, 240, 1440]  # 1m to 1d
+
+# Metrics to calculate
+LABELING_METRICS = {
+    "direction": True,        # Direction of movement
+    "magnitude": True,        # Size of movement
+    "time_to_target": True,   # Time to reach target
+    "time_to_stop": True,     # Time to hit stop
+    "mfe": True,              # Maximum Favorable Excursion
+    "mae": True,              # Maximum Adverse Excursion
+    "r_multiple": True,       # Risk/Reward multiple
+}
+
+
+# ═══════════════════════════════════════════════════════════════
+# 🤖 MACHINE LEARNING CONFIGURATION (Pattern Discovery)
+# ═══════════════════════════════════════════════════════════════
+
+# Regime detection
+REGIME_CONFIG = {
+    "methods": ["kmeans", "hdbscan"],  # Clustering methods to try
+    "n_clusters_range": [2, 3, 4, 5, 6],  # Range for k-means
+    "min_cluster_size": 100,  # Minimum cluster size for HDBSCAN
+}
+
+# Feature importance
+FEATURE_IMPORTANCE_CONFIG = {
+    "methods": ["xgboost", "lightgbm", "permutation"],
+    "n_estimators": 100,
+    "max_depth": 6,
+    "learning_rate": 0.1,
+}
+
+# Association rules
+ASSOCIATION_CONFIG = {
+    "min_support": 0.01,     # Minimum support (1%)
+    "min_confidence": 0.5,   # Minimum confidence (50%)
+    "max_len": 3,            # Maximum rule length
+}
+
+# SHAP values
+SHAP_CONFIG = {
+    "enabled": True,
+    "max_samples": 1000,     # Max samples for SHAP calculation
+}
+
+
+# ═══════════════════════════════════════════════════════════════
+# 🎯 BACKTESTING CONFIGURATION (Strategy Validation)
+# ═══════════════════════════════════════════════════════════════
+
+# Walk-forward validation
+BACKTEST_CONFIG = {
+    "train_size": 0.6,           # 60% training
+    "validation_size": 0.2,      # 20% validation
+    "test_size": 0.2,            # 20% testing
+    "n_splits": 5,               # Number of walk-forward splits
+    "min_trades": 30,            # Minimum trades for valid strategy
+}
+
+# Monte Carlo simulation
+MONTE_CARLO_CONFIG = {
+    "enabled": True,
+    "n_simulations": 1000,
+    "confidence_level": 0.95,
+}
+
+# Performance metrics thresholds
+METRIC_THRESHOLDS = {
+    "min_sharpe": 1.0,
+    "min_profit_factor": 1.2,
+    "max_drawdown": 0.25,        # 25%
+    "min_win_rate": 0.45,        # 45%
+    "min_trades": 30,
+}
+
+
+# ═══════════════════════════════════════════════════════════════
+# 🏭 STRATEGY FACTORY CONFIGURATION (Strategy Generation)
+# ═══════════════════════════════════════════════════════════════
+
+# Strategy templates to generate
+STRATEGY_TEMPLATES = [
+    "TrendFollower",
+    "MeanReverter",
+    "BreakoutTrader",
+    "RegimeAdapter",
+]
+
+# Parameter ranges for strategy generation
+STRATEGY_PARAMS = {
+    "lookback_periods": [5, 10, 15, 20, 30],
+    "thresholds": [0.5, 1.0, 1.5, 2.0, 2.5, 3.0],
+    "stop_loss_pips": [10, 15, 20, 30],
+    "take_profit_pips": [20, 30, 40, 50],
+}
+
+
+# ═══════════════════════════════════════════════════════════════
+# 🌟 RANKING CONFIGURATION (Light Finder)
+# ═══════════════════════════════════════════════════════════════
+
+# Multi-objective weights
+RANKING_WEIGHTS = {
+    "return": 0.30,          # 30% weight on returns
+    "risk": 0.25,            # 25% weight on risk metrics
+    "consistency": 0.25,     # 25% weight on consistency
+    "robustness": 0.20,      # 20% weight on robustness
+}
+
+# Top strategies to report
+TOP_N_STRATEGIES = 20
+
+# Overfitting detection
+OVERFITTING_CONFIG = {
+    "max_is_oos_ratio": 2.0,     # Max in-sample / out-of-sample ratio
+    "min_stability_score": 0.7,   # Min parameter stability score
+}
+
+
+# ═══════════════════════════════════════════════════════════════
 # 🔧 HELPER FUNCTIONS
 # ═══════════════════════════════════════════════════════════════
 
