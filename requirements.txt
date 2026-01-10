@@ -1,0 +1,24 @@
+# ═══════════════════════════════════════════════════════════════
+# ⚡🌟💎 ULTRA NECROZMA - DEPENDENCIES 💎🌟⚡
+# ═══════════════════════════════════════════════════════════════
+# Install:  pip install -r requirements.txt
+# ═══════════════════════════════════════════════════════════════
+
+# Core Data Processing
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Parquet Engine (Photon Storage)
+pyarrow>=14.0.0
+
+# Scientific Computing (Crystal Mathematics)
+scipy>=1.11.0
+
+# JIT Compilation (Light Speed Processing)
+numba>=0.58.0
+
+# System Monitoring (Arceus Judgment)
+psutil>=5.9.0
+
+# Progress Display (Evolution Tracker)
+tqdm>=4.66.0
