@@ -26,6 +26,17 @@ from config import BACKTEST_CONFIG, MONTE_CARLO_CONFIG, METRIC_THRESHOLDS
 
 
 # ═══════════════════════════════════════════════════════════════
+# 🔧 CONSTANTS
+# ═══════════════════════════════════════════════════════════════
+
+# Trading days per year for annualization
+TRADING_DAYS_PER_YEAR = 252
+
+# Risk-free rate (default)
+DEFAULT_RISK_FREE_RATE = 0.0
+
+
+# ═══════════════════════════════════════════════════════════════
 # 📊 PERFORMANCE METRICS
 # ═══════════════════════════════════════════════════════════════
 
@@ -125,7 +136,7 @@ class Backtester:
         if excess_returns.std() == 0:
             return 0.0
         
-        return np.sqrt(252) * (excess_returns.mean() / excess_returns.std())
+        return np.sqrt(TRADING_DAYS_PER_YEAR) * (excess_returns.mean() / excess_returns.std())
     
     def _calculate_sortino_ratio(self, returns: pd.Series,
                                  risk_free_rate: float = 0.0) -> float:
@@ -139,7 +150,7 @@ class Backtester:
         if len(downside_returns) == 0 or downside_returns.std() == 0:
             return 0.0
         
-        return np.sqrt(252) * (excess_returns.mean() / downside_returns.std())
+        return np.sqrt(TRADING_DAYS_PER_YEAR) * (excess_returns.mean() / downside_returns.std())
     
     def _calculate_max_drawdown(self, equity_curve: pd.Series) -> float:
         """Calculate maximum drawdown"""

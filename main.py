@@ -402,7 +402,9 @@ def run_strategy_discovery(analyzer, results, num_workers, output_dirs, enable_t
                         
                         if notifier and result.sharpe_ratio > 2.0:
                             notifier.send_light_found(strategy.name, result.sharpe_ratio * 30)
-                except:
+                except Exception as e:
+                    # Log the error but continue with other strategies
+                    print(f"   ⚠️  Strategy {strategy.name} failed: {str(e)}")
                     continue
         
         # 6. Ranking

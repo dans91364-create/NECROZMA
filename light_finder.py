@@ -23,6 +23,17 @@ from backtester import BacktestResults
 
 
 # ═══════════════════════════════════════════════════════════════
+# 🔧 CONSTANTS
+# ═══════════════════════════════════════════════════════════════
+
+# Score normalization constants
+MAX_SHARPE_FOR_NORMALIZATION = 3.0
+MAX_ULCER_FOR_NORMALIZATION = 10.0
+MAX_PROFIT_FACTOR_FOR_NORMALIZATION = 3.0
+DEFAULT_SCORE = 0.5  # Score when no variation exists
+
+
+# ═══════════════════════════════════════════════════════════════
 # 🌟 LIGHT FINDER
 # ═══════════════════════════════════════════════════════════════
 
@@ -59,15 +70,16 @@ class LightFinder:
             # Consistency score
             consistency_score = (
                 result.win_rate * 0.4 +
-                (result.sharpe_ratio / 3.0) * 0.3 +  # Normalize Sharpe
-                (result.sortino_ratio / 3.0) * 0.3
+                (result.sharpe_ratio / MAX_SHARPE_FOR_NORMALIZATION) * 0.3 +
+                (result.sortino_ratio / MAX_SHARPE_FOR_NORMALIZATION) * 0.3
             )
             consistency_score = min(consistency_score, 1.0)
             
             # Robustness score (stability)
             robustness_score = (
-                (result.profit_factor / 3.0) * 0.5 +
-                (1.0 - result.ulcer_index / 10.0) * 0.5 if result.ulcer_index < 10 else 0.0
+                (result.profit_factor / MAX_PROFIT_FACTOR_FOR_NORMALIZATION) * 0.5 +
+                (1.0 - result.ulcer_index / MAX_ULCER_FOR_NORMALIZATION) * 0.5 
+                if result.ulcer_index < MAX_ULCER_FOR_NORMALIZATION else 0.0
             )
             robustness_score = max(0.0, min(robustness_score, 1.0))
             
@@ -94,7 +106,7 @@ class LightFinder:
         # Handle edge cases
         for col in score_cols:
             if scores_df[col].max() == scores_df[col].min():
-                scores_df[f"{col}_norm"] = 0.5
+                scores_df[f"{col}_norm"] = DEFAULT_SCORE
             else:
                 scores_df[f"{col}_norm"] = (
                     (scores_df[col] - scores_df[col].min()) /

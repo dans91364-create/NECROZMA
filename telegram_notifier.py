@@ -154,8 +154,10 @@ class TelegramNotifier:
                 # Mark as done
                 self.message_queue.task_done()
                 
-            except Exception:
+            except Exception as e:
                 # Queue timeout or error, continue
+                if not isinstance(e, Exception):
+                    raise  # Re-raise system exits
                 continue
     
     def _send_message_sync(self, message_data: Dict[str, Any]):
