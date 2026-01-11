@@ -453,24 +453,21 @@ class UltraNecrozmaAnalyzer:
         """)
     
     def evolve(self):
-        """Update evolution stage based on progress"""
-        progress = self.universes_processed / len(self. configs) if self.configs else 0
+        """Update evolution stage based on patterns found (uses new lore system)"""
+        from lore import evolution_status, show_prismatic_progress
         
-        if progress >= 1.0:
-            self.evolution_stage = "Ultra Necrozma"
-            self.light_power = 100.0
-        elif progress >= 0.75:
-            self.evolution_stage = "Ultra Burst"
-            self.light_power = 75.0
-        elif progress >= 0.5:
-            self.evolution_stage = "Dawn Wings"
-            self.light_power = 50.0
-        elif progress >= 0.25:
-            self.evolution_stage = "Dusk Mane"
-            self.light_power = 25.0
-        else:
-            self.evolution_stage = "Necrozma"
-            self.light_power = progress * 100
+        # Get evolution based on total patterns
+        evo = evolution_status(self.total_patterns)
+        
+        self.evolution_stage = evo["name"]
+        self.light_power = evo["power_percent"]
+        
+        # Show prismatic progress if significant milestone
+        if self.total_patterns > 0 and self.total_patterns % 50000 == 0:
+            print(f"\n   💎 Necrozma absorbs light from {self.total_patterns:,} patterns...")
+            show_prismatic_progress(evo["cores"], 7, evo["power_percent"])
+            print(f"   🌟 Evolution: {evo['name']}")
+            print()
     
     def collect_prismatic_core(self, color):
         """Collect a prismatic core (progress tracking)"""
@@ -519,6 +516,15 @@ class UltraNecrozmaAnalyzer:
         if len(self.results) >= len(self.configs):
             self.collect_prismatic_core("Yellow")
         
+        # Show final evolution status
+        from lore import evolution_status, show_prismatic_progress, print_legendary_banner
+        
+        evo = evolution_status(self.total_patterns)
+        
+        # If we've reached Ultra Necrozma, show the banner
+        if evo["cores"] >= 5:
+            print_legendary_banner('ultra_necrozma', count=self.total_patterns, universes=len(self.configs))
+        
         print(f"""
 ╔══════════════════════════════════════════════════════════════╗
 ║                                                              ║
@@ -533,6 +539,12 @@ class UltraNecrozmaAnalyzer:
 ║   🌈 Prismatic Cores:     {len(self.prismatic_cores):>10}/7                    ║
 ╚══════════════════════════════════════════════════════════════╝
         """)
+        
+        # Show prismatic progress
+        print()
+        show_prismatic_progress(evo["cores"], 7, self.light_power)
+        print(f"🌟 Final Evolution: {evo['emoji']} {evo['name']}")
+        print()
         
         return self.results
     

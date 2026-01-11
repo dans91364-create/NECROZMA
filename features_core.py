@@ -608,6 +608,9 @@ def chaos_features(prices):
     
     prices = np.asarray(prices, dtype=np.float64)
     
+    # Giratina reveals chaos in the distortion world
+    # 👻 The antimatter lord analyzes entropy and disorder
+    
     # Lyapunov
     features["lyapunov"] = lyapunov_exponent(prices)
     
@@ -624,7 +627,7 @@ def chaos_features(prices):
     dfa = features["dfa_alpha"]
     hurst = features["hurst"]
     
-    # Market regime classification
+    # Market regime classification (Giratina detects hidden states)
     if dfa > 0.6: 
         features["regime_dfa"] = 1  # Trending
     elif dfa < 0.4:

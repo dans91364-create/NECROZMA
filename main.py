@@ -635,6 +635,26 @@ def main():
     if not check_system():
         sys.exit(1)
     
+    # Display system resources with thermal status
+    from utils.parallel import get_system_resources
+    print("\n" + "═" * 80)
+    print("🌡️ System Status")
+    print("═" * 80)
+    resources = get_system_resources()
+    print(f"   CPU: {resources['cpu_count']} cores | {resources['cpu_percent']:.1f}% usage", end="")
+    if resources.get('cpu_temperature'):
+        thermal = resources['thermal_status']
+        print(f" | {thermal['emoji']} {resources['cpu_temperature']:.0f}°C {thermal['status'].upper()}")
+    else:
+        print(" | 🌡️ Temperature monitoring unavailable")
+    print(f"   RAM: {resources['memory_available_gb']:.1f} GB available | {resources['memory_percent']:.1f}% used")
+    
+    if resources.get('thermal_status') and resources['thermal_status']['action'] != 'continue':
+        print(f"   ⚠️ Thermal Protection: ACTIVE")
+    else:
+        print(f"   ✅ Thermal Protection: Ready")
+    print("═" * 80 + "\n")
+    
     # Import config (after system check)
     from config import CSV_FILE, PARQUET_FILE, NUM_WORKERS
     from data_loader import crystallize_csv_to_parquet, load_crystal, crystal_info
