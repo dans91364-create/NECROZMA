@@ -1,0 +1,238 @@
+# ═══════════════════════════════════════════════════════════════
+# ⚡🌟💎 ULTRA NECROZMA - CONFIGURATION FILE 💎🌟⚡
+# ═══════════════════════════════════════════════════════════════
+
+# 🌟 PATH CONFIGURATION
+paths:
+  csv_file: "/home/usuario/EURUSD_2025_COMPLETO.csv"
+  parquet_file: "data/EURUSD_2025.parquet"
+  output_dir: "ultra_necrozma_results"
+  cache_dir: "joblib_cache"
+  log_dir: "logs"
+
+# 💎 DATA CONFIGURATION
+data:
+  parquet_compression: "snappy"
+  csv_chunk_size: 500000
+  min_samples: 30
+
+# ⚡ ANALYSIS CONFIGURATION
+analysis:
+  intervals: [1, 5, 15, 30, 60]  # minutes
+  lookbacks: [5, 10, 15, 20, 30]  # candles
+  
+  movement_levels:
+    Pequeno:
+      min: 1
+      max: 5
+      technical: "Small (1-5 pips)"
+    Médio:
+      min: 5
+      max: 15
+      technical: "Medium (5-15 pips)"
+    Grande:
+      min: 15
+      max: 30
+      technical: "Large (15-30 pips)"
+    Muito Grande:
+      min: 30
+      max: .inf
+      technical: "Very Large (30+ pips)"
+  
+  directions: ["up", "down"]
+
+# 🔥 PROCESSING CONFIGURATION
+processing:
+  num_workers: 16  # Ryzen 9: 16 cores available
+  enable_caching: true
+  enable_checkpointing: true
+  checkpoint_interval: 5
+  
+# 🌌 FEATURE GROUPS
+features:
+  derivatives: true
+  spectral: true
+  chaos: true
+  entropy: true
+  quantum: true
+  multifractal: true
+  recurrence: true
+  statistical: true
+  patterns: true
+  ultra: true
+  # New PR #2 features
+  dispersion_entropy: true
+  bubble_entropy: true
+  rcmse: true
+  complexity_entropy: true
+  wavelet_leaders: true
+  information_imbalance: false  # Requires bid/ask tick data
+  temporal_features: true
+  market_sessions: true
+
+# 📊 OUTPUT CONFIGURATION
+output:
+  confidence_thresholds:
+    ultra_high: 80
+    high: 70
+    medium: 60
+    low: 50
+  top_patterns_per_level: 50
+
+# 🛡️ SYSTEM LIMITS
+limits:
+  memory_warning_gb: 80
+  max_universe_time: 600  # seconds (10 minutes)
+
+# 🧠 MACHINE LEARNING CONFIGURATION
+ml:
+  # Feature Selection
+  feature_selection:
+    enable_boruta: true
+    enable_shap: true
+    shap_sample_size: 0.1  # 10% of data
+    correlation_threshold: 0.95
+  
+  # Cross Validation
+  cv:
+    n_folds: 5
+    purge_gap: 10  # periods between train and test
+  
+  # Hyperparameter Tuning
+  tuning:
+    enable: true
+    max_trials: 100
+    early_stopping_rounds: 20
+    pruning: true
+    sample_size: 0.3  # 30% of data for tuning
+  
+  # Ensemble
+  ensemble:
+    models: ["xgboost", "lightgbm", "random_forest"]
+    parallel_training: true
+    voting_type: "soft"  # or "hard"
+  
+  # Meta-Labeling
+  meta_labeling:
+    enable: false  # Enable when ready
+    confidence_threshold: 0.7
+
+# 📈 BACKTEST CONFIGURATION
+backtest:
+  # Transaction Costs
+  costs:
+    base_spread_pips: 0.8
+    commission_per_lot: 0.0  # in currency
+    spread_multiplier_volatile: 1.5
+    spread_multiplier_quiet: 0.8
+  
+  # Slippage
+  slippage:
+    base_pips: 0.2
+    volatility_factor: 1.0
+  
+  # Validation
+  validation:
+    train_size: 0.6
+    val_size: 0.2
+    test_size: 0.2
+  
+  # Monte Carlo
+  monte_carlo:
+    enable: false
+    n_simulations: 1000
+  
+  # Robustness Testing
+  robustness:
+    enable: false
+    method: "latin_hypercube"  # or "grid"
+    n_samples: 100
+
+# 🛡️ RISK MANAGEMENT
+risk:
+  # Drawdown Control
+  drawdown:
+    max_dd_stop: 0.10  # 10% - circuit breaker
+    reduce_size_dd: 0.05  # 5% - reduce to 50%
+    reduction_factor: 0.5
+  
+  # Volatility Targeting
+  vol_targeting:
+    enable: true
+    target_vol_annual: 0.10  # 10%
+    lookback_periods: 20
+  
+  # Kelly Criterion
+  kelly:
+    enable: true
+    fraction: 0.25  # Use 25% of Kelly
+  
+  # Risk Parity
+  risk_parity:
+    enable: true
+    volatile_regime_reduction: 0.5
+    quiet_regime_increase: 1.5
+    max_increase: 2.0
+
+# ⚡ PERFORMANCE OPTIMIZATIONS
+optimization:
+  # Numba JIT
+  numba:
+    enable: true
+    parallel: true
+    cache: true
+  
+  # Caching
+  caching:
+    enable: true
+    memory_limit_mb: 10000  # 10GB cache limit
+  
+  # Chunk Processing
+  chunking:
+    enable: true
+    chunk_size: 100000  # rows per chunk
+  
+  # Feature Group Sharing
+  shared_calculations:
+    enable: true
+    cache_intermediate: true
+
+# 🔍 LOGGING CONFIGURATION
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  console: true
+  file: true
+  rotation:
+    max_bytes: 10485760  # 10MB
+    backup_count: 5
+
+# 🎲 REPRODUCIBILITY
+reproducibility:
+  random_seed: 42
+  numpy_seed: 42
+  hash_config: true
+  save_versions: true
+
+# 📊 VISUALIZATION
+visualization:
+  enable: true
+  formats: ["png"]
+  dpi: 300
+  style: "seaborn-v0_8-darkgrid"
+  
+  equity_curve:
+    figsize: [14, 8]
+    show_drawdown: true
+  
+  regime_plots:
+    figsize: [16, 6]
+    regime_colors:
+      trending: "green"
+      volatile: "red"
+      quiet: "blue"
+      ranging: "yellow"
+  
+  feature_heatmap:
+    figsize: [12, 10]
+    colormap: "RdYlGn"

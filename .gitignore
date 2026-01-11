@@ -7,31 +7,61 @@ __pycache__/
 
 # Distribution / packaging
 build/
+develop-eggs/
 dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
 *.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# Unit test / coverage
-.coverage
-htmlcov/
-.pytest_cache/
-
-# Environments
+# Virtual environments
 venv/
-env/
 ENV/
+env/
 
-# IDE
+# IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# Project specific
-data/
+# Jupyter
+.ipynb_checkpoints
+
+# Unit test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Data files
 *.parquet
 *.csv
+data/
+
+# Output
 ultra_necrozma_results/
+*.png
+*.jpg
+*.jpeg
+
+# Logs
+*.log
+logs/
+
+# Cache
+.cache/
+*.cache
+joblib_cache/
 
 # OS
 .DS_Store
