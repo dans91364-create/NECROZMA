@@ -64,6 +64,14 @@ Sistema narrativo com 5 deidades:
 - **Multiprocessing** para análise paralela (usa todos os cores)
 - Otimizado para datasets de **16+ milhões de linhas**
 
+### 💎 Chunked Processing (NOVO)
+- **Temporal Chunking**: Split large datasets into manageable monthly/weekly/daily chunks
+- **Dual Strategies**: Choose between fast (chunked) or memory-efficient (universe) processing
+- **Checkpoint/Resume**: Save progress and resume after interruptions
+- **Thermal Protection**: Cooling breaks and CPU monitoring for VM-safe operation
+- **Auto Strategy**: Automatically select best approach based on system resources
+- See [CHUNKED_PROCESSING.md](CHUNKED_PROCESSING.md) for detailed documentation
+
 ---
 
 ## 📁 Estrutura do Projeto
@@ -89,6 +97,13 @@ NECROZMA/
 ├── light_finder.py          # 🌟 Ranking de estratégias
 ├── light_report.py          # 📝 Relatório final
 ├── dashboard_generator.py   # 🎨 Interactive HTML dashboard
+│
+├── ========== NOVO: Chunked Processing Modules ==========
+├── data_chunker.py          # 💎 Temporal data chunking
+├── checkpoint_manager.py    # ♻️  Checkpoint/resume system
+├── thermal_manager.py       # ❄️  Cooling & CPU monitoring
+├── result_consolidator.py   # 🔧 Result merging & reports
+├── universe_processor.py    # 🌌 Dual strategy processor
 │
 ├── requirements.txt         # 📦 Dependências
 └── README.md                # 📖 Este arquivo
@@ -201,6 +216,32 @@ The dashboard provides:
 - 📱 Responsive design for all devices
 
 Dashboard is saved to: `ultra_necrozma_results/dashboard_YYYYMMDD_HHMMSS.html`
+
+### 💎 CHUNKED PROCESSING (NOVO)
+
+Process large datasets efficiently with memory management and checkpoint/resume:
+
+```bash
+# Auto-select best strategy (recommended)
+python main.py --chunk-size monthly --strategy auto
+
+# Memory-efficient mode for VMs
+python main.py --strategy universe --chunk-size weekly
+
+# Fast mode for bare-metal systems
+python main.py --strategy chunked --chunk-size monthly
+
+# Resume from checkpoint after interruption
+python main.py --resume
+
+# VM-safe mode with thermal protection
+python main.py --strategy universe --max-cpu 80 --cooling-chunk-interval 3
+
+# Process specific universes
+python main.py --universes "1,5,10-15" --chunks "1-6"
+```
+
+**See [CHUNKED_PROCESSING.md](CHUNKED_PROCESSING.md) for complete documentation**
 
 ### Opções de Linha de Comando
 
