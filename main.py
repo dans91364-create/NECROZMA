@@ -203,6 +203,26 @@ Examples:
 # 🔍 SYSTEM CHECK
 # ═══════════════════════════════════════════════════════════════
 
+def get_version(module):
+    """
+    Safely get module version
+    
+    Args:
+        module: Python module object
+        
+    Returns:
+        str: Version string or "installed"
+    """
+    if hasattr(module, '__version__'):
+        return module.__version__
+    elif hasattr(module, 'version'):
+        return module.version
+    elif hasattr(module, 'VERSION'):
+        return module.VERSION
+    else:
+        return "installed"
+
+
 def check_system():
     """
     Verify system dependencies are available
@@ -261,14 +281,14 @@ def check_system():
     # Check psutil
     try:
         import psutil
-        print(f"✓ psutil: {psutil.__version__}")
+        print(f"✓ psutil: {get_version(psutil)}")
     except ImportError:
         print("⚠ psutil: NOT FOUND (optional, for resource monitoring)")
     
     # Check tqdm
     try:
         import tqdm
-        print(f"✓ tqdm: {tqdm.__version__}")
+        print(f"✓ tqdm: {get_version(tqdm)}")
     except ImportError:
         print("⚠ tqdm: NOT FOUND (optional, for progress bars)")
     
@@ -562,7 +582,25 @@ def main():
     print(f"\n⚡ ULTRA NECROZMA v1.0 - Supreme Analysis Engine")
     print(f"   Python {sys.version.split()[0]} | {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
     
+    # Initialize Lore System with Telegram support
+    from lore import LoreSystem, EventType
+    from datetime import datetime
+    lore = LoreSystem(enable_telegram=not args.skip_telegram)
+    
+    # System initialization notification
+    lore.broadcast(
+        EventType.SYSTEM_INIT,
+        python_version=f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+        timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    )
+    
     # System check
+    lore.broadcast(
+        EventType.SYSTEM_CHECK,
+        status="checking",
+        dependencies=["NumPy", "Pandas", "PyArrow", "SciPy", "TA-Lib"]
+    )
+    
     if not check_system():
         sys.exit(1)
     
@@ -624,7 +662,35 @@ def main():
         
         # Load data
         print(f"📊 Loading data from Parquet...\n")
+        
+        # Data loading notification
+        import os
+        file_path = parquet_path
+        file_size_gb = os.path.getsize(file_path) / (1024**3) if os.path.exists(file_path) else 0
+        
+        lore.broadcast(
+            EventType.DATA_LOADING,
+            filename=os.path.basename(file_path),
+            size_gb=f"{file_size_gb:.2f}"
+        )
+        
+        # Load data with timing
+        load_start = time.time()
         df = load_crystal(parquet_path)
+        load_time = time.time() - load_start
+        
+        # Data loaded notification
+        lore.broadcast(
+            EventType.DATA_LOADED,
+            rows=f"{len(df):,}",
+            memory_gb=f"{df.memory_usage(deep=True).sum() / 1e9:.2f}",
+            load_time=f"{load_time:.1f}",
+            rows_per_sec=f"{len(df)/load_time:,.0f}" if load_time > 0 else "N/A",
+            start_date=str(df.index[0]) if len(df) > 0 and hasattr(df, 'index') else "N/A",
+            end_date=str(df.index[-1]) if len(df) > 0 and hasattr(df, 'index') else "N/A",
+            min_price=f"{df['close'].min():.5f}" if 'close' in df.columns else (f"{df['mid'].min():.5f}" if 'mid' in df.columns else "N/A"),
+            max_price=f"{df['close'].max():.5f}" if 'close' in df.columns else (f"{df['mid'].max():.5f}" if 'mid' in df.columns else "N/A")
+        )
         crystal_info(df)
     
     # Test Mode Sampling (NEW - from PR #3)
@@ -661,8 +727,21 @@ def main():
     print("⚡ ANALYSIS PHASE - Processing All Universes")
     print("═" * 80 + "\n")
     
-    analyzer = UltraNecrozmaAnalyzer(df, num_workers=num_workers)
-    analyzer.run_full_analysis()
+    # Get number of universes from config
+    from config import get_all_configs
+    all_configs = get_all_configs()
+    num_universes = len(all_configs)
+    
+    # Analysis start notification
+    lore.broadcast(
+        EventType.ANALYSIS_START,
+        num_universes=num_universes,
+        num_workers=num_workers,
+        stages="Necrozma → Dusk Mane → Dawn Wings → Ultra Burst → Ultra Necrozma"
+    )
+    
+    analyzer = UltraNecrozmaAnalyzer(df)
+    analyzer.run_analysis()
     
     # Strategy discovery (if enabled)
     discovery_results = None

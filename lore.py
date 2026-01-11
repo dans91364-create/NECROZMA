@@ -25,18 +25,30 @@ import random
 
 class EventType(Enum):
     """Types of events that can occur during analysis"""
-    AWAKENING = "awakening"           # System startup
-    PROGRESS = "progress"             # General progress update
-    DISCOVERY = "discovery"           # Pattern/insight discovered
-    LIGHT_FOUND = "light_found"       # Major breakthrough
-    TOP_STRATEGY = "top_strategy"     # Top strategy found
-    WARNING = "warning"               # Issue or concern
-    REGIME_CHANGE = "regime_change"   # Market regime transition
-    MILESTONE = "milestone"           # Major checkpoint reached
-    INSIGHT = "insight"               # Analytical insight
-    COMPLETION = "completion"         # Task completed
-    ERROR = "error"                   # Error occurred
-    HEARTBEAT = "heartbeat"           # Periodic status update
+    AWAKENING = "awakening"                   # System startup
+    SYSTEM_INIT = "system_init"               # System initialization
+    SYSTEM_CHECK = "system_check"             # System dependency check
+    DATA_LOADING = "data_loading"             # Data loading started
+    DATA_LOADED = "data_loaded"               # Data loaded successfully
+    ANALYSIS_START = "analysis_start"         # Analysis phase started
+    UNIVERSE_PROGRESS = "universe_progress"   # Universe processing progress
+    PROGRESS = "progress"                     # General progress update
+    DISCOVERY = "discovery"                   # Pattern/insight discovered
+    DISCOVERY_START = "discovery_start"       # Discovery process started
+    LABELING_COMPLETE = "labeling_complete"   # Labeling completed
+    REGIME_DETECTION = "regime_detection"     # Regime detection completed
+    FEATURE_ENGINEERING = "feature_engineering"  # Feature engineering completed
+    OPTIMIZATION_COMPLETE = "optimization_complete"  # Optimization completed
+    FINAL_REPORT = "final_report"             # Final report generated
+    LIGHT_FOUND = "light_found"               # Major breakthrough
+    TOP_STRATEGY = "top_strategy"             # Top strategy found
+    WARNING = "warning"                       # Issue or concern
+    REGIME_CHANGE = "regime_change"           # Market regime transition
+    MILESTONE = "milestone"                   # Major checkpoint reached
+    INSIGHT = "insight"                       # Analytical insight
+    COMPLETION = "completion"                 # Task completed
+    ERROR = "error"                           # Error occurred
+    HEARTBEAT = "heartbeat"                   # Periodic status update
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -264,8 +276,19 @@ NECROZMA.quotes = {
 class LoreSystem:
     """Centralized lore management system"""
     
-    def __init__(self, enabled: bool = True):
+    def __init__(self, enabled: bool = True, enable_telegram: bool = True):
+        """
+        Initialize LoreSystem with optional Telegram support
+        
+        Args:
+            enabled: Whether lore system is enabled
+            enable_telegram: Whether to enable Telegram notifications
+        """
         self.enabled = enabled
+        self.telegram_enabled = enable_telegram
+        self.bot_token = None
+        self.chat_id = None
+        
         self.deities = {
             "ARCEUS": ARCEUS,
             "DIALGA": DIALGA,
@@ -273,6 +296,156 @@ class LoreSystem:
             "GIRATINA": GIRATINA,
             "NECROZMA": NECROZMA,
         }
+        
+        if enable_telegram:
+            self._init_telegram()
+    
+    def _init_telegram(self):
+        """Initialize Telegram bot if credentials available"""
+        try:
+            import os
+            self.bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
+            self.chat_id = os.getenv('TELEGRAM_CHAT_ID')
+            
+            if not self.bot_token or not self.chat_id:
+                print("⚠️ Telegram credentials not found in environment")
+                self.telegram_enabled = False
+        except Exception as e:
+            print(f"⚠️ Telegram initialization failed: {e}")
+            self.telegram_enabled = False
+    
+    def broadcast(self, event_type, message=None, **kwargs):
+        """
+        Send notification via Telegram if enabled
+        
+        Args:
+            event_type: Type of event from EventType enum
+            message: Optional custom message
+            **kwargs: Additional data to include in message
+        """
+        if not self.telegram_enabled:
+            return
+        
+        try:
+            formatted_message = self._format_message(event_type, message, **kwargs)
+            if formatted_message:
+                self._send_telegram(formatted_message)
+        except Exception as e:
+            # Don't crash if telegram fails
+            print(f"⚠️ Telegram notification failed: {e}")
+    
+    def _format_message(self, event_type, message, **kwargs):
+        """Format message based on event type"""
+        # If custom message provided, use it
+        if message:
+            return message
+        
+        # Format message based on event type
+        if event_type == EventType.SYSTEM_INIT:
+            python_ver = kwargs.get('python_version', 'Unknown')
+            timestamp = kwargs.get('timestamp', '')
+            return f"""🌟 <b>ULTRA NECROZMA AWAKENING</b> 🌟
+
+⚡ System initializing...
+🐍 Python {python_ver}
+📅 {timestamp}
+
+<i>The Blinding One prepares to analyze the markets...</i>"""
+        
+        elif event_type == EventType.SYSTEM_CHECK:
+            deps = kwargs.get('dependencies', [])
+            deps_str = ', '.join(deps) if isinstance(deps, list) else deps
+            return f"""🔍 <b>SYSTEM CHECK IN PROGRESS</b>
+
+✅ Verifying dependencies...
+⚙️ {deps_str}
+💎 Preparing prismatic cores...
+
+<i>All systems operational ✓</i>"""
+        
+        elif event_type == EventType.DATA_LOADING:
+            filename = kwargs.get('filename', 'data')
+            size_gb = kwargs.get('size_gb', '?')
+            return f"""💎 <b>CRYSTAL LOADING INITIATED</b>
+
+📊 Dataset: {filename}
+💾 Size: {size_gb} GB
+⏱️ Loading in progress...
+
+<i>Temporal shift commencing...</i>"""
+        
+        elif event_type == EventType.DATA_LOADED:
+            rows = kwargs.get('rows', '?')
+            memory_gb = kwargs.get('memory_gb', '?')
+            load_time = kwargs.get('load_time', '?')
+            rows_per_sec = kwargs.get('rows_per_sec', '?')
+            start_date = kwargs.get('start_date', '')
+            end_date = kwargs.get('end_date', '')
+            min_price = kwargs.get('min_price', '')
+            max_price = kwargs.get('max_price', '')
+            
+            return f"""✅ <b>CRYSTAL LOADED SUCCESSFULLY</b>
+
+📊 Rows: {rows}
+💾 Memory: {memory_gb} GB
+⏱️ Time: {load_time}s
+⚡ Speed: {rows_per_sec} rows/sec
+
+<b>Period:</b> {start_date} → {end_date}
+<b>Price Range:</b> {min_price} - {max_price}"""
+        
+        elif event_type == EventType.ANALYSIS_START:
+            num_universes = kwargs.get('num_universes', '?')
+            num_workers = kwargs.get('num_workers', '?')
+            stages = kwargs.get('stages', '')
+            return f"""⚡ <b>ANALYSIS PHASE INITIATED</b>
+
+🌌 Universes to process: {num_universes}
+⚡ Workers: {num_workers}
+💎 Evolution stages: {stages}
+
+<i>The light begins to pierce through all dimensions...</i>"""
+        
+        elif event_type == EventType.UNIVERSE_PROGRESS:
+            percentage = kwargs.get('percentage', '?')
+            completed = kwargs.get('completed', '?')
+            total = kwargs.get('total', '?')
+            total_patterns = kwargs.get('total_patterns', '?')
+            current_evolution = kwargs.get('current_evolution', 'Necrozma')
+            power = kwargs.get('power', '?')
+            
+            return f"""📊 <b>ANALYSIS PROGRESS: {percentage}%</b>
+
+🌌 Universes processed: {completed}/{total}
+🎯 Patterns found: {total_patterns}
+⚡ Evolution: {current_evolution}
+💎 Light Power: {power}%
+
+<i>Analysis continues...</i>"""
+        
+        elif event_type == EventType.AWAKENING:
+            return "🌟 <b>ULTRA NECROZMA AWAKENING</b> 🌟\n\n<i>The Blinding One emerges from the void...</i>"
+        
+        # Default formatting for other event types
+        return f"{event_type.value}: {kwargs}"
+    
+    def _send_telegram(self, message):
+        """Send message via Telegram API"""
+        if not self.bot_token or not self.chat_id:
+            return
+        
+        try:
+            import requests
+            url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
+            data = {
+                "chat_id": self.chat_id,
+                "text": message,
+                "parse_mode": "HTML"
+            }
+            response = requests.post(url, data=data, timeout=5)
+            response.raise_for_status()
+        except Exception as e:
+            print(f"⚠️ Failed to send Telegram message: {e}")
     
     def speak(self, deity_name: str, event_type: EventType, **kwargs) -> str:
         """
