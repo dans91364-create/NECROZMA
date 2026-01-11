@@ -287,7 +287,8 @@ class LoreSystem:
         """
         self.enabled = enabled
         self.telegram_enabled = enable_telegram
-        self.telegram_notifier = None
+        self.bot_token = None
+        self.chat_id = None
         
         self.deities = {
             "ARCEUS": ARCEUS,
@@ -304,20 +305,12 @@ class LoreSystem:
     def _init_telegram(self):
         """Initialize Telegram notifier"""
         try:
-            from telegram_notifier import TelegramNotifier
+            self.bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
+            self.chat_id = os.getenv('TELEGRAM_CHAT_ID')
             
-            bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
-            chat_id = os.getenv('TELEGRAM_CHAT_ID')
-            
-            if bot_token and chat_id:
-                self.telegram_notifier = TelegramNotifier(bot_token, chat_id)
-                print("✅ Telegram notifications enabled")
-            else:
+            if not self.bot_token or not self.chat_id:
                 print("⚠️ Telegram credentials not found in environment")
                 self.telegram_enabled = False
-        except ImportError:
-            print("⚠️ telegram_notifier module not found")
-            self.telegram_enabled = False
         except Exception as e:
             print(f"⚠️ Telegram initialization failed: {e}")
             self.telegram_enabled = False
@@ -331,7 +324,7 @@ class LoreSystem:
             message: Optional custom message
             **kwargs: Additional data for message formatting
         """
-        if not self.telegram_enabled or not self.telegram_notifier:
+        if not self.telegram_enabled:
             return
         
         try:
@@ -354,7 +347,7 @@ class LoreSystem:
                     final_message = self._format_default_message(event_str, **kwargs)
             
             # Send via telegram
-            self.telegram_notifier.send_message(final_message)
+            self._send_telegram(final_message)
             
         except Exception as e:
             # Don't crash if telegram fails
@@ -466,6 +459,24 @@ class LoreSystem:
             return f"❌ Error: {kwargs.get('message', 'An error occurred')}"
         else:
             return f"ℹ️ {event_type}: {kwargs.get('message', 'Event occurred')}"
+    
+    def _send_telegram(self, message):
+        """Send message via Telegram API"""
+        if not self.bot_token or not self.chat_id:
+            return
+        
+        try:
+            import requests
+            url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
+            data = {
+                "chat_id": self.chat_id,
+                "text": message,
+                "parse_mode": "HTML"
+            }
+            response = requests.post(url, data=data, timeout=5)
+            response.raise_for_status()
+        except Exception as e:
+            print(f"⚠️ Failed to send Telegram message: {e}")
     
     def speak(self, deity_name: str, event_type: EventType, **kwargs) -> str:
         """
