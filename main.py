@@ -85,6 +85,12 @@ Examples:
   python main. py --sequential        # Disable parallel processing
   python main.py --workers 8         # Use 8 parallel workers
   python main.py --csv /path/to. csv  # Specify custom CSV path
+  
+Test Mode Examples:
+  python main.py --test-mode --test-strategy minimal    # ~10min, 1 week
+  python main.py --test-mode --test-strategy quick      # ~20min, 2 weeks
+  python main.py --test-mode --test-strategy balanced   # ~45min, 4 weeks (recommended)
+  python main.py --test-mode --test-strategy thorough   # ~90min, 8 weeks
         """
     )
     
@@ -134,6 +140,35 @@ Examples:
         "--test",
         action="store_true",
         help="Run with test data (small sample)"
+    )
+    
+    # Test Mode arguments
+    parser.add_argument(
+        "--test-mode",
+        action="store_true",
+        help="Run in test mode with sampled data"
+    )
+    
+    parser.add_argument(
+        "--test-strategy",
+        type=str,
+        default="balanced",
+        choices=["minimal", "quick", "balanced", "thorough"],
+        help="Test sampling strategy (default: balanced)"
+    )
+    
+    parser.add_argument(
+        "--test-weeks",
+        type=int,
+        default=4,
+        help="Number of weeks to sample for testing (default: 4)"
+    )
+    
+    parser.add_argument(
+        "--test-seed",
+        type=int,
+        default=42,
+        help="Random seed for reproducible test samples (default: 42)"
     )
     
     return parser.parse_args()
@@ -405,6 +440,77 @@ def main():
         sys.exit(1)
     
     # ═══════════════════════════════════════════════════════════
+    # TEST MODE SAMPLING
+    # ═══════════════════════════════════════════════════════════
+    
+    if args.test_mode:
+        print("""
+╔══════════════════════════════════════════════════════════════╗
+║              🧪 TEST MODE - DATA SAMPLING                     ║
+╚══════════════════════════════════════════════════════════════╝
+        """)
+        
+        from test_mode import TestModeSampler
+        from config import TEST_MODE_CONFIG
+        
+        # Get strategy config
+        strategy_config = TEST_MODE_CONFIG['strategies'].get(args.test_strategy, 
+                                                              TEST_MODE_CONFIG['strategies']['balanced'])
+        
+        print(f"""
+🧪 TEST MODE ACTIVATED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Strategy:           {args.test_strategy}
+Description:        {strategy_config['description']}
+Estimated time:     ~{strategy_config['estimated_time_minutes']} minutes
+Random seed:        {args.test_seed}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        """)
+        
+        # Initialize sampler
+        sampler = TestModeSampler(seed=args.test_seed)
+        
+        # Sample data
+        df_original = df.copy()  # Keep original for reference
+        df = sampler.get_test_sample(df, strategy=args.test_strategy, total_weeks=args.test_weeks)
+        
+        if len(df) == 0:
+            print("\n❌ Test mode sampling failed - no data selected")
+            sys.exit(1)
+        
+        # Display sampling summary
+        weeks = df['timestamp'].dt.isocalendar().week.unique()
+        print(f"""
+📊 SAMPLED WEEKS SELECTED:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        """)
+        
+        # Group by week and show
+        df_temp = df.copy()
+        df_temp['week'] = df_temp['timestamp'].dt.isocalendar().week
+        df_temp['year'] = df_temp['timestamp'].dt.year
+        
+        for (year, week), group in df_temp.groupby(['year', 'week']):
+            week_start = group['timestamp'].min().strftime('%b %d')
+            week_end = group['timestamp'].max().strftime('%b %d')
+            week_ticks = len(group)
+            print(f"   • {year}-W{week:02d} ({week_start} - {week_end}): {week_ticks:,} ticks")
+        
+        print(f"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total:              {len(df):,} ticks
+Reduction:          {len(df_original) / len(df):.1f}x faster
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  TEST MODE CAVEATS:
+   • Results based on limited sample only
+   • Full analysis may differ significantly
+   • Use for validation, not final trading decisions
+
+⚡ Starting test analysis...
+        """)
+    
+    # ═══════════════════════════════════════════════════════════
     # STEP 3: ANALYSIS
     # ═══════════════════════════════════════════════════════════
     
@@ -414,8 +520,8 @@ def main():
 ╚══════════════════════════════════════════════════════════════╝
     """)
     
-    # Confirmation for large datasets
-    if len(df) > 1_000_000:
+    # Confirmation for large datasets (skip in test mode)
+    if len(df) > 1_000_000 and not args.test_mode:
         print(f"""
    ⚠️  Large dataset detected: {len(df):,} rows
    
@@ -491,6 +597,32 @@ def main():
     
     if final_judgment and report_paths:
         print_final_summary(analyzer, final_judgment, report_paths)
+    
+    # Test mode specific summary
+    if args.test_mode:
+        print(f"""
+╔══════════════════════════════════════════════════════════════╗
+║                 🧪 TEST MODE RESULTS                          ║
+╚══════════════════════════════════════════════════════════════╝
+
+✅ System ran successfully!
+
+📊 Quick Stats:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Time elapsed:       {total_time/60:.1f} minutes
+   Ticks processed:    {len(df):,}
+   Strategy:           {args.test_strategy}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  TEST MODE CAVEATS:
+   • Results based on limited sample only
+   • Full analysis may produce different results
+   • Use for validation, not final trading decisions
+
+🚀 Ready for full analysis?
+   Run: python main.py --analyze-only
+   (Or remove --test-mode flag to analyze all data)
+        """)
     
     print(f"""
 ╔══════════════════════════════════════════════════════════════════════════════╗

@@ -161,6 +161,44 @@ CHECKPOINT_INTERVAL = 5
 
 
 # ═══════════════════════════════════════════════════════════════
+# 🧪 TEST MODE CONFIGURATION
+# ═══════════════════════════════════════════════════════════════
+
+# Test Mode Configuration
+TEST_MODE_CONFIG = {
+    'strategies': {
+        'minimal': {
+            'weeks': 1,
+            'method': 'random',
+            'estimated_time_minutes': 10,
+            'description': 'Smoke test - just check if it runs'
+        },
+        'quick': {
+            'weeks': 2,
+            'method': 'random',
+            'estimated_time_minutes': 20,
+            'description': 'Quick validation'
+        },
+        'balanced': {
+            'weeks': 4,
+            'method': 'stratified',  # 1 week per quarter
+            'estimated_time_minutes': 45,
+            'description': 'Balanced test with all quarters represented'
+        },
+        'thorough': {
+            'weeks': 8,
+            'method': 'diverse',  # Mix of volatility regimes
+            'estimated_time_minutes': 90,
+            'description': 'Thorough test before full analysis'
+        }
+    },
+    'avoid_holidays': True,
+    'default_seed': 42,
+    'min_ticks_per_week': 100_000,  # Minimum ticks to consider valid week
+}
+
+
+# ═══════════════════════════════════════════════════════════════
 # 🔧 HELPER FUNCTIONS
 # ═══════════════════════════════════════════════════════════════
 
