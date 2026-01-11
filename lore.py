@@ -19,6 +19,13 @@ from typing import Dict, List
 import random
 import os
 
+# Try to import requests for Telegram (optional)
+try:
+    import requests
+    REQUESTS_AVAILABLE = True
+except ImportError:
+    REQUESTS_AVAILABLE = False
+
 
 # ═══════════════════════════════════════════════════════════════
 # 🌟 EVENT TYPES
@@ -341,9 +348,8 @@ class LoreSystem:
                 # Get formatted message - use specific formatting or fall back to default
                 final_message = self._format_message(event_type, message, **kwargs)
                 
-                # If we got the generic fallback (event_type.value: kwargs), use nicer default formatting
-                if final_message and ": {" in final_message and "}" in final_message:
-                    # This looks like the generic fallback, use custom default formatting
+                # If _format_message returned None, use default formatting
+                if not final_message:
                     final_message = self._format_default_message(event_str, **kwargs)
             
             # Send via telegram
@@ -445,8 +451,8 @@ class LoreSystem:
         elif event_type == EventType.AWAKENING:
             return "🌟 <b>ULTRA NECROZMA AWAKENING</b> 🌟\n\n<i>The Blinding One emerges from the void...</i>"
         
-        # Default formatting for other event types
-        return f"{event_type.value}: {kwargs}"
+        # Return None for unknown event types so broadcast can use _format_default_message
+        return None
     
     def _format_default_message(self, event_type, **kwargs):
         """Generate default message for event type"""
@@ -465,8 +471,11 @@ class LoreSystem:
         if not self.bot_token or not self.chat_id:
             return
         
+        if not REQUESTS_AVAILABLE:
+            print("⚠️ requests library not available for Telegram")
+            return
+        
         try:
-            import requests
             url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
             data = {
                 "chat_id": self.chat_id,
