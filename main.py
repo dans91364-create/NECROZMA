@@ -740,7 +740,7 @@ def main():
         stages="Necrozma → Dusk Mane → Dawn Wings → Ultra Burst → Ultra Necrozma"
     )
     
-    analyzer = UltraNecrozmaAnalyzer(df)
+    analyzer = UltraNecrozmaAnalyzer(df, lore_system=lore)
     analyzer.run_analysis()
     
     # Strategy discovery (if enabled)

@@ -406,17 +406,19 @@ class UltraNecrozmaAnalyzer:
     Technical: Orchestrates parallel universe processing
     """
     
-    def __init__(self, df, output_dir=None):
+    def __init__(self, df, output_dir=None, lore_system=None):
         """
         Initialize analyzer with data
         
         Args:
             df:  Tick DataFrame (from data_loader)
             output_dir: Output directory path
+            lore_system: Optional LoreSystem for notifications
         """
         self.df = df
         self.output_dirs = get_output_dirs()
         self.output_dir = output_dir or self.output_dirs["root"]
+        self.lore_system = lore_system
         
         self.configs = get_all_configs()
         self.results = {}
@@ -557,7 +559,26 @@ class UltraNecrozmaAnalyzer:
             self.evolve()
             
             # Checkpoint every 5 universes
-            if i % 5 == 0:
+            if i % 5 == 0 or i == len(self.configs):
+                progress = i / len(self.configs) * 100
+                
+                # Send Telegram notification
+                if self.lore_system:
+                    try:
+                        from lore import EventType
+                        self.lore_system.broadcast(
+                            EventType.UNIVERSE_PROGRESS,
+                            percentage=f"{progress:.0f}",
+                            completed=i,
+                            total=len(self.configs),
+                            total_patterns=f"{self.total_patterns:,}",
+                            current_evolution=self.evolution_stage,
+                            power=f"{self.light_power:.1f}"
+                        )
+                    except Exception as e:
+                        # Don't crash if notification fails
+                        pass
+                
                 self._save_checkpoint(i)
                 gc.collect()
     
@@ -606,11 +627,29 @@ class UltraNecrozmaAnalyzer:
                 self.evolve()
                 
                 # Progress update and checkpoint
-                if completed % 5 == 0:
+                if completed % 5 == 0 or completed == len(self.configs):
                     progress = completed / len(self.configs) * 100
                     print(f"\n   📊 Progress: {progress:.1f}% | "
                           f"Evolution: {self.evolution_stage} | "
                           f"Power: {self.light_power:.1f}%\n")
+                    
+                    # Send Telegram notification
+                    if self.lore_system:
+                        try:
+                            from lore import EventType
+                            self.lore_system.broadcast(
+                                EventType.UNIVERSE_PROGRESS,
+                                percentage=f"{progress:.0f}",
+                                completed=completed,
+                                total=len(self.configs),
+                                total_patterns=f"{self.total_patterns:,}",
+                                current_evolution=self.evolution_stage,
+                                power=f"{self.light_power:.1f}"
+                            )
+                        except Exception as e:
+                            # Don't crash if notification fails
+                            pass
+                    
                     self._save_checkpoint(completed)
                     gc.collect()
     
