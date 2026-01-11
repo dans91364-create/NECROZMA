@@ -48,6 +48,16 @@ Sistema narrativo com 5 deidades:
 - Alertas de descobertas importantes
 - Envio de relatórios finais
 
+### 🎨 Interactive Dashboard (NOVO)
+- **Beautiful HTML Dashboard**: Visualize results in an interactive web interface
+- **Dark/Light Theme**: Prismatic purple/blue gradient design with theme toggle
+- **Interactive Charts**: Chart.js powered visualizations (regime radar, universe rankings, pattern distributions)
+- **Sortable Tables**: DataTables integration for top 20 universe configurations
+- **Responsive Design**: Works on desktop, tablet, and mobile
+- **Single File Output**: Portable HTML with all data embedded
+- **Auto-generation**: Integrates with main.py analysis pipeline
+- See [DASHBOARD_README.md](DASHBOARD_README.md) for details
+
 ### ⚡ Performance
 - **Parquet** para armazenamento otimizado (10-20x mais rápido que CSV)
 - **Numba JIT** para funções críticas (50-100x speedup)
@@ -78,6 +88,7 @@ NECROZMA/
 ├── backtester.py            # 📊 Motor de backtesting
 ├── light_finder.py          # 🌟 Ranking de estratégias
 ├── light_report.py          # 📝 Relatório final
+├── dashboard_generator.py   # 🎨 Interactive HTML dashboard
 │
 ├── requirements.txt         # 📦 Dependências
 └── README.md                # 📖 Este arquivo
@@ -167,6 +178,29 @@ Este comando executa o **pipeline completo**:
 7. 🌟 Strategy ranking
 8. 📝 Relatório "Where The Light Is"
 9. 📱 Notificações Telegram (opcional)
+
+### 🎨 DASHBOARD VISUALIZATION (NOVO)
+
+```bash
+# Generate analysis with interactive dashboard
+python main.py --test --generate-dashboard
+
+# Generate and auto-open dashboard in browser
+python main.py --test --open-dashboard
+
+# Full pipeline with dashboard
+python main.py --strategy-discovery --generate-dashboard
+```
+
+The dashboard provides:
+- 📊 Executive summary with key metrics
+- 📈 Market regime analysis and recommendations
+- 🏆 Top 20 universe configurations (interactive table)
+- 📊 Pattern distribution charts
+- 🎨 Beautiful dark theme with theme toggle
+- 📱 Responsive design for all devices
+
+Dashboard is saved to: `ultra_necrozma_results/dashboard_YYYYMMDD_HHMMSS.html`
 
 ### Opções de Linha de Comando
 

@@ -106,6 +106,12 @@ Examples:
   # Strategy discovery without Telegram
   python main.py --strategy-discovery --skip-telegram
   
+  # Generate interactive dashboard
+  python main.py --generate-dashboard
+  
+  # Generate and open dashboard automatically
+  python main.py --open-dashboard
+  
   # Sequential processing (disable multiprocessing)
   python main.py --sequential
         """
@@ -205,6 +211,18 @@ Examples:
         "--skip-telegram",
         action="store_true",
         help="Disable Telegram notifications"
+    )
+    
+    parser.add_argument(
+        "--generate-dashboard",
+        action="store_true",
+        help="Generate HTML dashboard after analysis"
+    )
+    
+    parser.add_argument(
+        "--open-dashboard",
+        action="store_true",
+        help="Auto-open dashboard in browser (implies --generate-dashboard)"
     )
     
     return parser.parse_args()
@@ -770,6 +788,24 @@ def main():
     # Generate reports
     print("\n📝 Generating comprehensive reports...\n")
     report_paths = generate_full_report(analyzer, final_judgment)
+    
+    # Generate dashboard (if enabled)
+    dashboard_path = None
+    if args.generate_dashboard or args.open_dashboard:
+        print("\n🎨 Generating interactive HTML dashboard...\n")
+        from dashboard_generator import DashboardGenerator
+        
+        generator = DashboardGenerator()
+        dashboard_path = generator.generate_dashboard()
+        
+        if dashboard_path:
+            report_paths["dashboard"] = dashboard_path
+            
+            # Open in browser if requested
+            if args.open_dashboard:
+                import webbrowser
+                print("\n🌐 Opening dashboard in browser...")
+                webbrowser.open(f'file://{os.path.abspath(dashboard_path)}')
     
     # Final summary
     print_final_summary(analyzer, final_judgment, report_paths)
