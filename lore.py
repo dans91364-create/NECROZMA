@@ -17,6 +17,7 @@ The Five Deities:
 from enum import Enum
 from typing import Dict, List
 import random
+import os
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -303,7 +304,6 @@ class LoreSystem:
     def _init_telegram(self):
         """Initialize Telegram bot if credentials available"""
         try:
-            import os
             self.bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
             self.chat_id = os.getenv('TELEGRAM_CHAT_ID')
             

@@ -558,7 +558,7 @@ class UltraNecrozmaAnalyzer:
             
             self.evolve()
             
-            # Checkpoint every 5 universes
+            # Checkpoint every 5 universes or on the last one
             if i % 5 == 0 or i == len(self.configs):
                 progress = i / len(self.configs) * 100
                 
