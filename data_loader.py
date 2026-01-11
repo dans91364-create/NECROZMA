@@ -29,6 +29,38 @@ from config import (
 
 
 # ═══════════════════════════════════════════════════════════════
+# 🛠️ UTILITY FUNCTIONS
+# ═══════════════════════════════════════════════════════════════
+
+def ensure_datetime_column(df, column='timestamp', utc=True):
+    """
+    Ensure a column is datetime type
+    
+    Args:
+        df: DataFrame
+        column: Column name to convert
+        utc: Whether to localize to UTC
+        
+    Returns:
+        DataFrame with converted column
+    """
+    if column not in df.columns:
+        return df
+    
+    if df[column].dtype == 'object' or pd.api.types.is_string_dtype(df[column]):
+        df = df.copy()
+        df[column] = pd.to_datetime(df[column], utc=utc, errors='coerce')
+    elif df[column].dtype.name.startswith('datetime') and utc:
+        # Ensure UTC if not already
+        if df[column].dt.tz is None:
+            df[column] = df[column].dt.tz_localize('UTC')
+        elif str(df[column].dt.tz) != 'UTC':
+            df[column] = df[column].dt.tz_convert('UTC')
+    
+    return df
+
+
+# ═══════════════════════════════════════════════════════════════
 # 🌟 PRISM FORM:  CSV → PARQUET CRYSTALLIZATION
 # ═══════════════════════════════════════════════════════════════
 
@@ -251,6 +283,11 @@ def load_crystal(parquet_path=None):
     print("⚡ Initiating Ultra Burst...")
     df = pd.read_parquet(parquet_path, engine="pyarrow")
     
+    # BUGFIX: Ensure timestamp is datetime after loading
+    if "timestamp" in df.columns:
+        if df['timestamp'].dtype == 'object' or pd.api.types.is_string_dtype(df['timestamp']):
+            df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True, errors='coerce')
+    
     load_time = time.time() - start_time
     mem_usage = df.memory_usage(deep=True).sum() / (1024**3)
     speed = len(df) / load_time
@@ -283,6 +320,12 @@ def resample_to_ohlc(df, interval_minutes):
         pd.DataFrame: OHLC data
     """
     print(f"   🕐 Resampling to {interval_minutes}min candles (Dialga Temporal Shift)...")
+    
+    # BUGFIX: Ensure timestamp column is datetime type
+    if "timestamp" in df.columns:
+        if df['timestamp'].dtype == 'object' or pd.api.types.is_string_dtype(df['timestamp']):
+            df = df.copy()
+            df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True, errors='coerce')
     
     # Set timestamp as index
     df_temp = df.set_index("timestamp")
@@ -340,11 +383,21 @@ def crystal_info(df):
     print()
     
     if "timestamp" in df.columns:
+        # BUGFIX: Ensure timestamp is datetime type before arithmetic operations
+        ts_col = df['timestamp']
+        if ts_col.dtype == 'object' or pd.api.types.is_string_dtype(ts_col):
+            ts_col = pd.to_datetime(ts_col, utc=True, errors='coerce')
+        
         print(f"📅 Period:")
-        print(f"   Start: {df['timestamp'].min()}")
-        print(f"   End:    {df['timestamp'].max()}")
-        duration = df['timestamp'].max() - df['timestamp'].min()
-        print(f"   Duration: {duration}")
+        print(f"   Start: {ts_col.min()}")
+        print(f"   End:    {ts_col.max()}")
+        
+        # Safe duration calculation
+        try:
+            duration = ts_col.max() - ts_col.min()
+            print(f"   Duration: {duration}")
+        except Exception as e:
+            print(f"   Duration: Unable to calculate ({type(e).__name__})")
     print()
     
     if "mid_price" in df.columns:
