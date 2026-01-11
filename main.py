@@ -17,6 +17,14 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 
 # ═══════════════════════════════════════════════════════════════
+# 🔧 CONSTANTS
+# ═══════════════════════════════════════════════════════════════
+
+# Common version attribute names to check when getting module versions
+VERSION_ATTRIBUTES = ['__version__', 'version', 'VERSION', '_version']
+
+
+# ═══════════════════════════════════════════════════════════════
 # 🌟 ULTRA NECROZMA ASCII BANNER
 # ═══════════════════════════════════════════════════════════════
 
@@ -211,16 +219,18 @@ def get_version(module):
         module: Python module object
         
     Returns:
-        str: Version string or "installed"
+        str: Version string or "installed" if version not found
     """
-    if hasattr(module, '__version__'):
-        return module.__version__
-    elif hasattr(module, 'version'):
-        return module.version
-    elif hasattr(module, 'VERSION'):
-        return module.VERSION
-    else:
-        return "installed"
+    # Try common version attributes
+    for attr in VERSION_ATTRIBUTES:
+        if hasattr(module, attr):
+            version = getattr(module, attr)
+            # Handle version_info tuples
+            if isinstance(version, tuple):
+                return '.'.join(map(str, version))
+            return str(version)
+    
+    return "installed"
 
 
 def check_system():
@@ -242,7 +252,7 @@ def check_system():
     # Check NumPy
     try:
         import numpy as np
-        print(f"✓ NumPy: {np.__version__}")
+        print(f"✓ NumPy: {get_version(np)}")
     except ImportError:
         print("✗ NumPy: NOT FOUND")
         issues.append("NumPy")
@@ -250,7 +260,7 @@ def check_system():
     # Check Pandas
     try:
         import pandas as pd
-        print(f"✓ Pandas: {pd.__version__}")
+        print(f"✓ Pandas: {get_version(pd)}")
     except ImportError:
         print("✗ Pandas: NOT FOUND")
         issues.append("Pandas")
@@ -258,7 +268,7 @@ def check_system():
     # Check PyArrow
     try:
         import pyarrow as pa
-        print(f"✓ PyArrow: {pa.__version__}")
+        print(f"✓ PyArrow: {get_version(pa)}")
     except ImportError:
         print("✗ PyArrow: NOT FOUND (required for Parquet)")
         issues.append("PyArrow")
@@ -266,7 +276,7 @@ def check_system():
     # Check SciPy
     try:
         import scipy
-        print(f"✓ SciPy: {scipy.__version__}")
+        print(f"✓ SciPy: {get_version(scipy)}")
     except ImportError:
         print("✗ SciPy: NOT FOUND")
         issues.append("SciPy")
@@ -274,7 +284,7 @@ def check_system():
     # Check Numba
     try:
         import numba
-        print(f"✓ Numba: {numba.__version__}")
+        print(f"✓ Numba: {get_version(numba)}")
     except ImportError:
         print("⚠ Numba: NOT FOUND (optional, for JIT acceleration)")
     

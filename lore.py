@@ -19,6 +19,13 @@ from typing import Dict, List
 import random
 import os
 
+# Try to import requests for Telegram (optional)
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
+
 
 # ═══════════════════════════════════════════════════════════════
 # 🌟 EVENT TYPES
@@ -279,7 +286,7 @@ class LoreSystem:
     
     def __init__(self, enabled: bool = True, enable_telegram: bool = True):
         """
-        Initialize LoreSystem with optional Telegram support
+        Initialize LoreSystem with optional Telegram notifications
         
         Args:
             enabled: Whether lore system is enabled
@@ -298,11 +305,12 @@ class LoreSystem:
             "NECROZMA": NECROZMA,
         }
         
-        if enable_telegram:
+        # Initialize Telegram if enabled
+        if self.telegram_enabled:
             self._init_telegram()
     
     def _init_telegram(self):
-        """Initialize Telegram bot if credentials available"""
+        """Initialize Telegram notifier"""
         try:
             self.bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
             self.chat_id = os.getenv('TELEGRAM_CHAT_ID')
@@ -319,17 +327,34 @@ class LoreSystem:
         Send notification via Telegram if enabled
         
         Args:
-            event_type: Type of event from EventType enum
+            event_type: Type of event (from EventType enum or string)
             message: Optional custom message
-            **kwargs: Additional data to include in message
+            **kwargs: Additional data for message formatting
         """
         if not self.telegram_enabled:
             return
         
         try:
-            formatted_message = self._format_message(event_type, message, **kwargs)
-            if formatted_message:
-                self._send_telegram(formatted_message)
+            # Convert EventType enum to string if needed
+            if isinstance(event_type, EventType):
+                event_str = event_type.value
+            else:
+                event_str = str(event_type)
+            
+            # Format message
+            if message:
+                final_message = message
+            else:
+                # Get formatted message - use specific formatting or fall back to default
+                final_message = self._format_message(event_type, message, **kwargs)
+                
+                # If _format_message returned None, use default formatting
+                if not final_message:
+                    final_message = self._format_default_message(event_str, **kwargs)
+            
+            # Send via telegram
+            self._send_telegram(final_message)
+            
         except Exception as e:
             # Don't crash if telegram fails
             print(f"⚠️ Telegram notification failed: {e}")
@@ -426,16 +451,31 @@ class LoreSystem:
         elif event_type == EventType.AWAKENING:
             return "🌟 <b>ULTRA NECROZMA AWAKENING</b> 🌟\n\n<i>The Blinding One emerges from the void...</i>"
         
-        # Default formatting for other event types
-        return f"{event_type.value}: {kwargs}"
+        # Return None for unknown event types so broadcast can use _format_default_message
+        return None
+    
+    def _format_default_message(self, event_type, **kwargs):
+        """Generate default message for event type"""
+        # Basic formatting based on event type
+        if 'progress' in event_type.lower():
+            return f"📊 Progress: {kwargs.get('message', 'Processing...')}"
+        elif 'complete' in event_type.lower():
+            return f"✅ Complete: {kwargs.get('message', 'Task finished')}"
+        elif 'error' in event_type.lower():
+            return f"❌ Error: {kwargs.get('message', 'An error occurred')}"
+        else:
+            return f"ℹ️ {event_type}: {kwargs.get('message', 'Event occurred')}"
     
     def _send_telegram(self, message):
         """Send message via Telegram API"""
         if not self.bot_token or not self.chat_id:
             return
         
+        if not HAS_REQUESTS:
+            print("⚠️ requests library not available for Telegram. Install with: pip install requests")
+            return
+        
         try:
-            import requests
             url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
             data = {
                 "chat_id": self.chat_id,
