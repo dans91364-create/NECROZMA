@@ -85,14 +85,26 @@ class TestModeSampler:
         for week_key, (start, end) in weeks.items():
             is_holiday = False
             for holiday_str in holiday_dates:
-                # Ensure timezone awareness matches start/end
+                # BUGFIX: Proper timezone-aware comparison
                 holiday = pd.to_datetime(holiday_str)
-                if start.tz is not None or end.tz is not None:
-                    # If either start or end is timezone-aware, make holiday tz-aware
+                
+                # Normalize timezone - convert both to UTC for comparison
+                if start.tz is not None:
+                    # start is timezone-aware, make holiday aware too
                     if holiday.tz is None:
                         holiday = holiday.tz_localize('UTC')
-                    
-                if start <= holiday <= end:
+                    else:
+                        holiday = holiday.tz_convert('UTC')
+                    start_cmp = start.tz_convert('UTC') if start.tz != 'UTC' else start
+                    end_cmp = end.tz_convert('UTC') if end.tz != 'UTC' else end
+                else:
+                    # start is timezone-naive, make holiday naive too
+                    if holiday.tz is not None:
+                        holiday = holiday.tz_convert('UTC').tz_localize(None)
+                    start_cmp = start
+                    end_cmp = end
+                
+                if start_cmp <= holiday <= end_cmp:
                     is_holiday = True
                     break
             
