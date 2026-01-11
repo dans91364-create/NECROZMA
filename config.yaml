@@ -14,7 +14,7 @@ paths:
 data:
   parquet_compression: "snappy"
   csv_chunk_size: 500000
-  min_samples: 30
+  min_samples: 5  # Minimum for basic statistical features (was 30, which blocked lookback < 30)
 
 # ⚡ ANALYSIS CONFIGURATION
 analysis:
