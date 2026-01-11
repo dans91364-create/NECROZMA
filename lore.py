@@ -558,6 +558,321 @@ def format_message(deity_name: str, event_type: EventType, message: str = None, 
 
 
 # ═══════════════════════════════════════════════════════════════
+# 💎 ENHANCED LEGENDARY LORE SYSTEM
+# ═══════════════════════════════════════════════════════════════
+
+LEGENDARY_LORE = {
+    "dialga": {
+        "name": "⏰ Dialga",
+        "domain": "Temporal Dimension",
+        "power": "Time Control",
+        "features": ["DFA Alpha", "Temporal Patterns", "Time Series Analysis"],
+        "messages": [
+            "⏰ Dialga shifts through temporal patterns...",
+            "⌛ Time itself bends to reveal market cycles...",
+            "🕐 Temporal signatures detected across {count} candles..."
+        ]
+    },
+    "palkia": {
+        "name": "🌌 Palkia",
+        "domain": "Spatial Dimension",
+        "power": "Space Warping",
+        "features": ["Hurst Exponent", "Phase Space", "Dimensional Memory"],
+        "messages": [
+            "🌌 Palkia warps dimensional space to reveal hidden patterns...",
+            "🔮 Spatial rifts expose {count} parallel universes...",
+            "💫 Dimensional memory persists across {lookback} periods..."
+        ]
+    },
+    "giratina": {
+        "name": "👻 Giratina",
+        "domain": "Distortion World",
+        "power": "Chaos & Antimatter",
+        "features": ["Lyapunov Exponent", "Chaos Metrics", "Regime Detection"],
+        "messages": [
+            "👻 Giratina reveals chaos signatures in the distortion realm...",
+            "🌀 Antimatter patterns emerge from {count} chaos points...",
+            "⚫ The distortion world shows {regimes} hidden market states..."
+        ]
+    },
+    "rayquaza": {
+        "name": "🐉 Rayquaza",
+        "domain": "Sky Pillar",
+        "power": "Atmospheric Control",
+        "features": ["Volatility Normalization", "Outlier Detection", "Corrections"],
+        "messages": [
+            "🐉 Rayquaza descends from the Sky Pillar to restore balance...",
+            "🌪️ Atmospheric corrections applied to {count} volatility spikes...",
+            "⚡ Dragon's breath normalizes {percent}% of extreme values..."
+        ]
+    },
+    "necrozma": {
+        "name": "💎 Necrozma",
+        "domain": "Ultra Space",
+        "power": "Light Absorption",
+        "features": ["Feature Engineering", "Pattern Absorption", "Power Accumulation"],
+        "messages": [
+            "💎 Necrozma absorbs light from {count} patterns...",
+            "⚫ Ultra Beast drains energy from {features} dimensions...",
+            "🌟 Light power: {percent}% - Evolution imminent..."
+        ]
+    },
+    "ultra_necrozma": {
+        "name": "⚡🌟💎 ULTRA NECROZMA",
+        "domain": "Blinding Light",
+        "power": "Supreme Radiance",
+        "features": ["Complete Analysis", "Maximum Power", "Transcendence"],
+        "messages": [
+            "⚡💎🌟 ULTRA NECROZMA - MAXIMUM POWER ACHIEVED! 🌟💎⚡",
+            "🌈 PRISMATIC LASER - Illuminating {count} supreme patterns!",
+            "✨ PHOTON GEYSER - Analyzing {universes} parallel dimensions!"
+        ]
+    }
+}
+
+
+# ASCII Art for legendaries
+ASCII_ART = {
+    "dialga": """
+    ⏰═══════════════════════════════════⏰
+         ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+        ▓▓░░░DIALGA░░░▓▓
+        ▓▓ Master of Time ▓▓
+         ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+    ⏰═══════════════════════════════════⏰
+    """,
+    
+    "palkia": """
+    🌌═══════════════════════════════════🌌
+         ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+        ▓▓░░░PALKIA░░░▓▓
+        ▓▓ Master of Space ▓▓
+         ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+    🌌═══════════════════════════════════🌌
+    """,
+    
+    "giratina": """
+    👻═══════════════════════════════════👻
+         ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+        ▓▓░░GIRATINA░░▓▓
+        ▓▓ Master of Chaos ▓▓
+         ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+    👻═══════════════════════════════════👻
+    """,
+    
+    "rayquaza": """
+    🐉═══════════════════════════════════🐉
+         ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+        ▓▓░░RAYQUAZA░░▓▓
+        ▓▓ Sky High Dragon ▓▓
+         ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+    🐉═══════════════════════════════════🐉
+    """,
+    
+    "necrozma": """
+    💎═══════════════════════════════════💎
+         ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+        ▓▓░░NECROZMA░░▓▓
+        ▓▓ Light Devourer ▓▓
+         ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+    💎═══════════════════════════════════💎
+    """,
+    
+    "ultra_necrozma": """
+    ⚡💎🌟═════════════════════════════════════🌟💎⚡
+         ███████████████████████████████
+        ███ ⚡ ULTRA NECROZMA ⚡ ███
+        ███  Supreme Light Dragon  ███
+        ███   MAXIMUM RADIANCE    ███
+         ███████████████████████████████
+    ⚡💎🌟═════════════════════════════════════🌟💎⚡
+    """
+}
+
+
+def print_legendary_banner(legendary: str, **kwargs):
+    """
+    Print epic lore message with formatted variables
+    
+    Args:
+        legendary: Name of legendary Pokemon (dialga, palkia, etc.)
+        **kwargs: Variables for string formatting
+    """
+    legendary = legendary.lower()
+    
+    if legendary not in LEGENDARY_LORE:
+        return
+    
+    lore = LEGENDARY_LORE[legendary]
+    
+    # Print ASCII art if available
+    if legendary in ASCII_ART:
+        print(ASCII_ART[legendary])
+    
+    # Print a random message
+    import random
+    message = random.choice(lore["messages"])
+    
+    try:
+        formatted_message = message.format(**kwargs)
+    except KeyError:
+        formatted_message = message
+    
+    print(formatted_message)
+
+
+def show_prismatic_cores(cores_activated: int, total_cores: int = 7):
+    """
+    Show Prismatic Cores progress bar
+    
+    Args:
+        cores_activated: Number of activated cores
+        total_cores: Total cores (default: 7)
+    
+    Example:
+        💎💎💎⚫⚫⚫⚫ 3/7 Cores - 42% Power
+    """
+    filled = "💎" * cores_activated
+    empty = "⚫" * (total_cores - cores_activated)
+    power_percent = (cores_activated / total_cores) * 100
+    
+    print(f"{filled}{empty} {cores_activated}/{total_cores} Prismatic Cores - {power_percent:.0f}% Power")
+
+
+def evolution_status(patterns_found: int) -> dict:
+    """
+    Return evolution stage based on patterns discovered
+    
+    Args:
+        patterns_found: Number of patterns discovered
+    
+    Returns:
+        dict: {
+            "stage": str,
+            "cores": int,
+            "name": str,
+            "emoji": str
+        }
+    
+    Evolution stages:
+    - 0-10k: Necrozma (1 core)
+    - 10k-50k: Dusk Mane (2 cores)
+    - 50k-100k: Dawn Wings (3 cores)
+    - 100k-500k: Ultra Necrozma (5 cores)
+    - 500k+: SUPREME ULTRA NECROZMA (7 cores)
+    """
+    if patterns_found < 10000:
+        return {
+            "stage": "necrozma",
+            "cores": 1,
+            "name": "Necrozma",
+            "emoji": "💎",
+            "power_percent": min(100, (patterns_found / 10000) * 100)
+        }
+    elif patterns_found < 50000:
+        return {
+            "stage": "dusk_mane",
+            "cores": 2,
+            "name": "Dusk Mane Necrozma",
+            "emoji": "🌙💎",
+            "power_percent": min(100, ((patterns_found - 10000) / 40000) * 100)
+        }
+    elif patterns_found < 100000:
+        return {
+            "stage": "dawn_wings",
+            "cores": 3,
+            "name": "Dawn Wings Necrozma",
+            "emoji": "🌅💎",
+            "power_percent": min(100, ((patterns_found - 50000) / 50000) * 100)
+        }
+    elif patterns_found < 500000:
+        return {
+            "stage": "ultra_necrozma",
+            "cores": 5,
+            "name": "Ultra Necrozma",
+            "emoji": "⚡💎🌟",
+            "power_percent": min(100, ((patterns_found - 100000) / 400000) * 100)
+        }
+    else:
+        return {
+            "stage": "supreme_ultra",
+            "cores": 7,
+            "name": "SUPREME ULTRA NECROZMA",
+            "emoji": "⚡💎🌟✨",
+            "power_percent": 100
+        }
+
+
+def show_thermal_warning(temp: float, status: dict):
+    """
+    Show color-coded temperature warning
+    
+    Args:
+        temp: Temperature in Celsius
+        status: Status dict from check_thermal_status()
+    
+    Examples:
+        🟢 65°C ████████░░ SAFE - Full Power
+        🟡 78°C ██████████ WARM - Monitoring  
+        🟠 83°C ████████░░ HOT - Throttling to 12 workers
+        🔴 88°C ██████░░░░ VERY HOT - Reduced to 8 workers
+        🚨 92°C ████░░░░░░ DANGER - Minimal workers (2)
+        ⛔ 97°C ██░░░░░░░░ CRITICAL - PAUSED until cool
+    """
+    emoji = status.get("emoji", "🌡️")
+    status_name = status.get("status", "UNKNOWN").upper()
+    
+    # Create temperature bar (10 segments)
+    max_temp = 100
+    filled_segments = int((temp / max_temp) * 10)
+    bar = "█" * filled_segments + "░" * (10 - filled_segments)
+    
+    action = status.get("action", "continue")
+    
+    # Create action message
+    if action == "pause":
+        action_msg = "PAUSED until cool"
+    elif action == "throttle":
+        reduction = status.get("worker_reduction", 0)
+        if reduction > 0.5:
+            action_msg = "Critical throttling"
+        else:
+            action_msg = "Throttling active"
+    else:
+        action_msg = "Full Power"
+    
+    print(f"{emoji} {temp:.0f}°C {bar} {status_name} - {action_msg}")
+
+
+def show_prismatic_progress(cores: int, total: int = 7, power_percent: float = None):
+    """
+    Show comprehensive Prismatic Cores progress display
+    
+    Args:
+        cores: Number of activated cores
+        total: Total cores (default: 7)
+        power_percent: Power percentage (auto-calculated if None)
+    
+    Example:
+        💎💎💎💎💎⚫⚫ 5/7 Prismatic Cores Active
+        ████████████░░░░ 71% Light Power
+        🌟 Evolution: Ultra Necrozma
+    """
+    if power_percent is None:
+        power_percent = (cores / total) * 100
+    
+    # Cores display
+    filled = "💎" * cores
+    empty = "⚫" * (total - cores)
+    print(f"{filled}{empty} {cores}/{total} Prismatic Cores Active")
+    
+    # Power bar (16 segments)
+    filled_segments = int((power_percent / 100) * 16)
+    power_bar = "█" * filled_segments + "░" * (16 - filled_segments)
+    print(f"{power_bar} {power_percent:.0f}% Light Power")
+
+
+# ═══════════════════════════════════════════════════════════════
 # 🧪 TESTING
 # ═══════════════════════════════════════════════════════════════
 

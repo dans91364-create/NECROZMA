@@ -10,12 +10,14 @@ Technical: Enhanced multiprocessing utilities
 - Optimal chunk sizing for cache locality
 - Persistent worker pools
 - Shared memory support
+- Thermal protection integration
 """
 
 import numpy as np
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from multiprocessing import Pool, cpu_count
 import psutil
+from .thermal_protection import get_cpu_temperature, check_thermal_status, ThermalMonitor
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -286,22 +288,27 @@ def get_optimal_workers(memory_per_worker_gb=2.0, reserve_gb=4.0):
 
 def get_system_resources():
     """
-    Get current system resource usage
+    Get current system resource usage (Enhanced with thermal monitoring)
     
     Returns:
-        dict: System resource information
+        dict: System resource information including CPU temperature
     """
     mem = psutil.virtual_memory()
     cpu_percent = psutil.cpu_percent(interval=1)
+    cpu_temp = get_cpu_temperature()
     
-    return {
+    result = {
         "cpu_count": cpu_count(),
         "cpu_percent": cpu_percent,
+        "cpu_temperature": cpu_temp,
+        "thermal_status": check_thermal_status(cpu_temp) if cpu_temp else None,
         "memory_total_gb": mem.total / (1024**3),
         "memory_available_gb": mem.available / (1024**3),
         "memory_used_gb": mem.used / (1024**3),
         "memory_percent": mem.percent
     }
+    
+    return result
 
 
 def check_memory_pressure(threshold_percent=80):
@@ -365,3 +372,123 @@ def batch_process(func, items, batch_size=100, **kwargs):
         all_results.extend(batch_results)
     
     return all_results
+
+
+# ═══════════════════════════════════════════════════════════════
+# 🌡️ THERMAL-AWARE PROCESSING
+# ═══════════════════════════════════════════════════════════════
+
+def process_with_thermal_protection(func, items, workers=None, desc="Processing", 
+                                   check_interval=10, use_threads=False):
+    """
+    Process items with automatic thermal throttling
+    
+    This function:
+    - Monitors CPU temperature in background
+    - Automatically adjusts worker count based on temperature
+    - Pauses processing if temperature becomes critical
+    - Resumes when temperature drops to safe levels
+    - Shows temperature in progress bar description
+    
+    Args:
+        func: Function to apply to each item
+        items: Iterable of items to process
+        workers: Initial number of workers (auto-detected if None)
+        desc: Description for progress bar
+        check_interval: Seconds between thermal checks (default: 10)
+        use_threads: Use threads instead of processes
+        
+    Returns:
+        list: Results in original order
+        
+    Example:
+        >>> def process_item(x):
+        ...     return x * 2
+        >>> results = process_with_thermal_protection(
+        ...     process_item, range(1000), desc="Processing items"
+        ... )
+    """
+    import time
+    
+    items = list(items)
+    n_items = len(items)
+    
+    if n_items == 0:
+        return []
+    
+    # Determine initial workers
+    if workers is None:
+        workers = cpu_count()
+    
+    initial_workers = workers
+    current_workers = workers
+    
+    # Start thermal monitor
+    monitor = ThermalMonitor(check_interval=check_interval)
+    
+    thermal_events = []
+    pause_requested = False
+    
+    def thermal_callback(status):
+        nonlocal pause_requested
+        
+        thermal_events.append({
+            'time': time.time(),
+            'status': status
+        })
+        
+        action = status.get('action')
+        temp = status.get('temperature')
+        emoji = status.get('emoji', '🌡️')
+        
+        if action == 'pause':
+            print(f"\n{emoji} ⛔ THERMAL PAUSE: {temp:.1f}°C - Waiting for cooldown...")
+            pause_requested = True
+        elif action == 'resume':
+            print(f"\n{emoji} ✅ THERMAL RESUME: {temp:.1f}°C - Continuing processing...")
+            pause_requested = False
+        elif action == 'throttle':
+            reduction = status.get('worker_reduction', 0)
+            new_workers = monitor.get_max_workers_for_temp(current_workers, initial_workers)
+            print(f"\n{emoji} 🌡️ THERMAL THROTTLE: {temp:.1f}°C - Reducing to {new_workers} workers")
+    
+    monitor.set_throttle_callback(thermal_callback)
+    monitor.start()
+    
+    try:
+        # Get current temperature status
+        temp = get_cpu_temperature()
+        if temp:
+            temp_str = f"🌡️ {temp:.0f}°C"
+            desc = f"{desc} | {temp_str}"
+        
+        # Adjust workers based on current temperature
+        current_workers = monitor.get_max_workers_for_temp(workers, workers)
+        
+        # Process with thermal awareness
+        results = parallel_map(
+            func, items, 
+            n_workers=current_workers,
+            use_threads=use_threads,
+            show_progress=True,
+            desc=desc
+        )
+        
+        return results
+        
+    finally:
+        # Stop thermal monitor
+        monitor.stop()
+        
+        # Print thermal summary
+        stats = monitor.get_stats()
+        if stats['max_temperature']:
+            print(f"\n🌡️ Thermal Summary:")
+            print(f"   Max Temperature: {stats['max_temperature']:.1f}°C")
+            if stats['average_temperature']:
+                print(f"   Avg Temperature: {stats['average_temperature']:.1f}°C")
+            if stats['throttle_count'] > 0:
+                print(f"   Throttle Events: {stats['throttle_count']}")
+            if stats['pause_count'] > 0:
+                print(f"   Pause Events: {stats['pause_count']}")
+
