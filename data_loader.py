@@ -161,7 +161,7 @@ def crystallize_csv_to_parquet(csv_path=None, parquet_path=None, force=False):
     df["pips_change"] = df["pips_change"].astype("float32")
     
     process_time = time.time() - process_start
-    print(f"   ✅ Refraction complete in {process_time:. 1f}s")
+    print(f"   ✅ Refraction complete in {process_time:.1f}s")
     
     # ═══ PHASE 3: CRYSTALLIZE (Save Parquet) ═══
     print(f"\n💎 Phase 3: CRYSTALLIZING (Saving Parquet)")
@@ -242,7 +242,7 @@ def load_crystal(parquet_path=None):
     
     parquet_size = parquet_path.stat().st_size / (1024**3)
     print(f"💎 Loading crystal:  {parquet_path}")
-    print(f"💾 Crystal size: {parquet_size:. 2f} GB")
+    print(f"💾 Crystal size: {parquet_size:.2f} GB")
     print()
     
     start_time = time.time()

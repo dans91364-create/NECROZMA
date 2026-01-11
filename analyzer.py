@@ -610,7 +610,7 @@ class UltraNecrozmaAnalyzer:
                     progress = completed / len(self.configs) * 100
                     print(f"\n   📊 Progress: {progress:.1f}% | "
                           f"Evolution: {self.evolution_stage} | "
-                          f"Power: {self.light_power:. 1f}%\n")
+                          f"Power: {self.light_power:.1f}%\n")
                     self._save_checkpoint(completed)
                     gc.collect()
     
@@ -824,7 +824,7 @@ if __name__ == "__main__":
     
     n_ticks = 100000  # 100k ticks for testing
     timestamps = pd.date_range("2025-01-01", periods=n_ticks, freq="1s")
-    prices = 1. 10 + np.cumsum(np.random.randn(n_ticks) * 0.00005)
+    prices = 1.10 + np.cumsum(np.random.randn(n_ticks) * 0.00005)
     
     df = pd.DataFrame({
         "timestamp": timestamps,

@@ -4,6 +4,8 @@ __pycache__/
 *$py.class
 *.so
 .Python
+
+# Distribution / packaging
 build/
 develop-eggs/
 dist/
@@ -36,7 +38,7 @@ env/
 # Jupyter
 .ipynb_checkpoints
 
-# Testing
+# Unit test / coverage
 .pytest_cache/
 .coverage
 htmlcov/
