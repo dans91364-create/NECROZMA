@@ -328,11 +328,10 @@ def run_strategy_discovery(df, args):
         lore.broadcast(EventType.PROGRESS, 
                       message="Step 1/7: Labeling outcomes across dimensions...")
         
-        from labeler import label_dataframe, get_label_summary
+        from labeler import label_dataframe
         
         start_time = time.time()
         labels_dict = label_dataframe(df)
-        label_summary = get_label_summary(labels_dict)
         elapsed = time.time() - start_time
         
         print(f"\n✅ Labeling complete in {elapsed:.1f}s")
@@ -568,10 +567,7 @@ def main():
         sys.exit(1)
     
     # Import config (after system check)
-    from config import (
-        CSV_FILE, PARQUET_FILE, OUTPUT_DIR, NUM_WORKERS,
-        INTERVALS, LOOKBACKS, MOVEMENT_LEVELS
-    )
+    from config import CSV_FILE, PARQUET_FILE, NUM_WORKERS
     from data_loader import crystallize_csv_to_parquet, load_crystal, crystal_info
     from analyzer import UltraNecrozmaAnalyzer
     from reports import light_that_burns_the_sky, generate_full_report, print_final_summary
@@ -588,12 +584,17 @@ def main():
     # Test mode check
     if args.test:
         print("🧪 TEST MODE - Generating synthetic data...\n")
+        
+        # Import numpy and pandas (already checked in check_system)
         import numpy as np
         import pandas as pd
+        from datetime import datetime
         
         # Generate synthetic tick data
         n_samples = 100000
-        timestamps = pd.date_range('2025-01-01', periods=n_samples, freq='1s')
+        # Use current date for synthetic data
+        start_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        timestamps = pd.date_range(start_date, periods=n_samples, freq='1s')
         base_price = 1.1000
         noise = np.random.randn(n_samples) * 0.0001
         cumsum = np.cumsum(noise)
