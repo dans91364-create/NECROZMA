@@ -253,7 +253,7 @@ def light_that_burns_the_sky(analyzer):
     
     print(f"\n🌟 ULTRA NECROZMA STATUS:")
     print(f"   Evolution: {analyzer.evolution_stage}")
-    print(f"   Light Power: {analyzer.light_power:. 1f}%")
+    print(f"   Light Power: {analyzer.light_power:.1f}%")
     print(f"   Prismatic Cores: {len(analyzer.prismatic_cores)}/7")
     
     if analyzer.light_power >= 100:
@@ -724,7 +724,7 @@ def print_final_summary(analyzer, final_judgment, report_paths):
 │   🌌 Universes Analyzed:      {summary.get('universes_analyzed', 0): <10}                                │
 │   🎯 Total Patterns Found:   {summary.get('total_patterns', 0):<10,}                                │
 │   ⚡ Evolution Stage:        {summary.get('evolution_stage', 'N/A'):<15}                           │
-│   💎 Light Power:            {summary.get('light_power', 0):. 1f}%                                       │
+│   💎 Light Power:            {summary.get('light_power', 0):.1f}%                                       │
 │   🌈 Prismatic Cores:        {len(summary.get('prismatic_cores', []))}/7                                          │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘

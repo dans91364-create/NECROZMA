@@ -651,7 +651,9 @@ def main():
             'timestamp': timestamps,
             'bid': base_price + cumsum - 0.00005,
             'ask': base_price + cumsum + 0.00005,
-            'mid': base_price + cumsum
+            'mid_price': base_price + cumsum,
+            'spread_pips': 1.0,
+            'pips_change': np.concatenate([[0], np.diff(cumsum) * 10000])
         })
         
         print(f"✅ Generated {len(df):,} synthetic ticks\n")
