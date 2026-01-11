@@ -149,10 +149,22 @@ def label_single_candle(
         time_to_stop = None
         
         if hit_target and target_time:
-            time_to_target = (target_time - entry_time).total_seconds() / 60.0
+            # Handle both numpy.timedelta64 and pandas Timedelta
+            time_diff = target_time - entry_time
+            if hasattr(time_diff, 'total_seconds'):
+                time_to_target = time_diff.total_seconds() / 60.0
+            else:
+                # numpy.timedelta64 - convert to float (nanoseconds)
+                time_to_target = float(time_diff) / 1e9 / 60.0
         
         if hit_stop and stop_time:
-            time_to_stop = (stop_time - entry_time).total_seconds() / 60.0
+            # Handle both numpy.timedelta64 and pandas Timedelta
+            time_diff = stop_time - entry_time
+            if hasattr(time_diff, 'total_seconds'):
+                time_to_stop = time_diff.total_seconds() / 60.0
+            else:
+                # numpy.timedelta64 - convert to float (nanoseconds)
+                time_to_stop = float(time_diff) / 1e9 / 60.0
         
         # Determine outcome
         if hit_target and hit_stop:
