@@ -1,19 +1,21 @@
-# ⚡🌟💎 Ultra Necrozma - Forex Analysis System 💎🌟⚡
+# ⚡🌟💎 Ultra Necrozma - Complete Strategy Discovery System 💎🌟⚡
 
-> *"The Light That Burns The Sky - Illuminating Hidden Patterns"*
+> *"The Light That Burns The Sky - From Raw Data to Trading Strategies"*
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
 ![NumPy](https://img.shields.io/badge/NumPy-1.24+-orange.svg)
 ![Pandas](https://img.shields.io/badge/Pandas-2.0+-green.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-Sistema avançado de análise de dados Forex com **500+ features** extraídas de séries temporais, utilizando técnicas de teoria do caos, análise fractal, entropia e processamento paralelo. 
+Sistema completo de descoberta automática de estratégias de trading Forex com **500+ features** extraídas de séries temporais, machine learning, backtesting robusto e ranking multi-objetivo.
+
+**NOVO:** Sistema completo de descoberta de estratégias com 9 módulos adicionais que transformam dados brutos em estratégias de trading validadas!
 
 ---
 
 ## 🌟 Características
 
-### 📊 Análise Avançada
+### 📊 Feature Extraction (Original)
 - **500+ features** extraídas de cada janela de análise
 - Derivadas até 5ª ordem (velocity, acceleration, jerk, snap, crackle)
 - Análise espectral (FFT, Wavelets multi-escala)
@@ -23,33 +25,62 @@ Sistema avançado de análise de dados Forex com **500+ features** extraídas de
 - Análise Multifractal (MF-DFA)
 - Quantificação de Recorrência (RQA)
 
+### 🚀 Strategy Discovery Pipeline (NOVO)
+- **Multi-Dimensional Labeling**: Rotula outcomes com múltiplos targets, stops e horizontes temporais
+- **Regime Detection**: Detecta automaticamente regimes de mercado usando clustering (K-Means, HDBSCAN)
+- **Pattern Mining**: Descobre padrões com ML (XGBoost, LightGBM, SHAP values)
+- **Strategy Factory**: Gera automaticamente centenas de estratégias candidatas
+- **Backtesting**: Motor robusto com walk-forward validation, métricas completas (Sharpe, Sortino, Calmar, etc.)
+- **Light Finder**: Ranking multi-objetivo das melhores estratégias
+- **Light Report**: Relatório final "Where The Light Is" com estratégias prontas para usar
+
+### 🎭 Lore System (NOVO)
+Sistema narrativo com 5 deidades:
+- **ARCEUS** ⚪ - O Original (Genesis & Synthesis)
+- **DIALGA** 🔵 - Senhor do Tempo (Features Temporais)
+- **PALKIA** 🟣 - Senhor do Espaço (Features Espaciais)
+- **GIRATINA** ⚫ - Senhor do Caos (Entropia & Regimes)
+- **NECROZMA** 🌟 - Devorador de Luz (Síntese Final)
+
+### 📱 Telegram Integration (NOVO)
+- Notificações assíncronas em tempo real
+- Personalidade via Lore System
+- Alertas de descobertas importantes
+- Envio de relatórios finais
+
 ### ⚡ Performance
 - **Parquet** para armazenamento otimizado (10-20x mais rápido que CSV)
 - **Numba JIT** para funções críticas (50-100x speedup)
 - **Multiprocessing** para análise paralela (usa todos os cores)
 - Otimizado para datasets de **16+ milhões de linhas**
 
-### 🎮 Temática Pokémon
-- Sistema de evolução (Necrozma → Ultra Necrozma)
-- Coleta de Prismatic Cores
-- Z-Move:  "Light That Burns The Sky" (análise final)
-- Nomenclatura técnica + temática lado a lado
-
 ---
 
 ## 📁 Estrutura do Projeto
 
 ```
-necroza/
-├── config.py              # ⚙️  Configurações centralizadas
-├── data_loader.py         # 💾 CSV → Parquet + Loading
-├── features_core.py       # 🔬 Features básicas (derivadas, spectral, chaos, entropy)
-├── features_advanced. py   # 🌌 Features avançadas (phase space, RQA, multifractal)
-├── analyzer.py            # 🎯 Motor de análise + Paralelização
-├── reports.py             # 📊 Geração de relatórios JSON
-├── main.py                # 🚀 Ponto de entrada
-├── requirements.txt       # 📦 Dependências
-└── README.md              # 📖 Este arquivo
+NECROZMA/
+├── config.py                # ⚙️  Configurações centralizadas
+├── data_loader.py           # 💾 CSV → Parquet + Loading
+├── features_core.py         # 🔬 Features básicas
+├── features_advanced.py     # 🌌 Features avançadas
+├── analyzer.py              # 🎯 Motor de análise + Paralelização
+├── reports.py               # 📊 Geração de relatórios JSON
+├── main.py                  # 🚀 Ponto de entrada
+│
+├── ========== NOVO: Strategy Discovery Modules ==========
+├── lore.py                  # 🎭 Sistema de lore (5 deidades)
+├── telegram_notifier.py     # 📱 Notificações Telegram
+├── labeler.py               # 🏷️  Multi-dimensional labeling
+├── regime_detector.py       # 🔮 Detecção de regimes
+├── pattern_miner.py         # ⛏️  Pattern mining com ML
+├── strategy_factory.py      # 🏭 Geração de estratégias
+├── backtester.py            # 📊 Motor de backtesting
+├── light_finder.py          # 🌟 Ranking de estratégias
+├── light_report.py          # 📝 Relatório final
+│
+├── requirements.txt         # 📦 Dependências
+└── README.md                # 📖 Este arquivo
 ```
 
 ---
@@ -107,7 +138,7 @@ O sistema espera um CSV com tick data no seguinte formato:
 
 ## 🎮 Uso
 
-### Análise Completa (Recomendado)
+### Feature Extraction Only (Original)
 
 ```bash
 python main.py
@@ -120,9 +151,32 @@ Este comando irá:
 4. 🌌 Processar todas as configurações em paralelo
 5. 📊 Gerar relatórios JSON
 
+### ⭐ COMPLETE STRATEGY DISCOVERY (NOVO)
+
+```bash
+python main.py --strategy-discovery
+```
+
+Este comando executa o **pipeline completo**:
+1. ✅ Feature extraction (500+ features)
+2. 🏷️  Multi-dimensional labeling
+3. 🔮 Regime detection
+4. ⛏️  Pattern mining & feature importance
+5. 🏭 Strategy generation (50+ strategies)
+6. 📊 Backtesting com walk-forward validation
+7. 🌟 Strategy ranking
+8. 📝 Relatório "Where The Light Is"
+9. 📱 Notificações Telegram (opcional)
+
 ### Opções de Linha de Comando
 
 ```bash
+# NOVO: Pipeline completo de descoberta de estratégias
+python main.py --strategy-discovery
+
+# NOVO: Desabilitar notificações Telegram
+python main.py --strategy-discovery --skip-telegram
+
 # Apenas converter CSV para Parquet
 python main.py --convert-only
 
@@ -156,7 +210,42 @@ Para testar o sistema sem dados reais:
 python main.py --test
 ```
 
-Isso gera 100. 000 ticks sintéticos e executa a análise completa.
+Isso gera 100.000 ticks sintéticos e executa a análise completa.
+
+---
+
+## 📱 Configuração do Telegram (NOVO)
+
+Para receber notificações em tempo real durante a análise:
+
+### 1. Criar Bot no Telegram
+
+1. Abra o Telegram e procure por `@BotFather`
+2. Envie `/newbot` e siga as instruções
+3. Copie o token do bot (ex: `123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11`)
+
+### 2. Obter Chat ID
+
+1. Procure por `@userinfobot` no Telegram
+2. Envie qualquer mensagem
+3. Copie seu Chat ID (ex: `987654321`)
+
+### 3. Configurar
+
+**Opção A: Variáveis de Ambiente**
+```bash
+export TELEGRAM_BOT_TOKEN="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+export TELEGRAM_CHAT_ID="987654321"
+```
+
+**Opção B: Arquivo de Configuração**
+Crie `telegram_config.json`:
+```json
+{
+    "bot_token": "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11",
+    "chat_id": "987654321"
+}
+```
 
 ---
 
@@ -174,6 +263,28 @@ INTERVALS = [1, 5, 15, 30, 60]  # minutos
 
 ```python
 LOOKBACKS = [5, 10, 15, 20, 30]  # candles
+```
+
+### NOVO: Configurações de Labeling
+
+```python
+TARGET_PIPS = [5, 10, 15, 20, 30, 50]  # Targets
+STOP_PIPS = [5, 10, 15, 20, 30]        # Stops
+TIME_HORIZONS = [1, 5, 15, 30, 60, 240, 1440]  # 1m a 1d
+```
+
+### NOVO: Configurações de ML
+
+```python
+REGIME_CONFIG = {
+    "methods": ["kmeans", "hdbscan"],
+    "n_clusters_range": [2, 3, 4, 5, 6],
+}
+
+FEATURE_IMPORTANCE_CONFIG = {
+    "methods": ["xgboost", "lightgbm", "permutation"],
+    "n_estimators": 100,
+}
 ```
 
 ### Níveis de Movimento
@@ -281,7 +392,7 @@ FEATURE_GROUPS = {
 
 ## 📊 Output
 
-### Estrutura de Saída
+### Estrutura de Saída (Original)
 
 ```
 ultra_necrozma_results/
@@ -291,13 +402,88 @@ ultra_necrozma_results/
 │   └── ... 
 ├── crystals/            # Formações de cristais
 ├── reports/             # Relatórios consolidados
-│   ├── final_judgment_*. json
+│   ├── final_judgment_*.json
 │   ├── rankings_*.json
 │   ├── market_analysis_*.json
 │   ├── pattern_catalog_*.json
 │   ├── executive_summary_*.json
 │   └── ULTRA_NECROZMA_MASTER_REPORT_*.json
 └── checkpoints/         # Progresso salvo
+```
+
+### ⭐ Estrutura de Saída - Strategy Discovery (NOVO)
+
+```
+ultra_necrozma_results/
+├── universes/           # Feature extraction results
+├── reports/             # Relatórios finais
+│   ├── LIGHT_REPORT_*.json        # 🌟 RELATÓRIO PRINCIPAL
+│   ├── final_judgment_*.json
+│   └── ...
+└── checkpoints/
+```
+
+### Exemplo: Light Report (NOVO)
+
+O relatório "Where The Light Is" contém:
+
+```json
+{
+  "title": "WHERE THE LIGHT IS - NECROZMA FINAL REPORT",
+  "executive_summary": {
+    "total_strategies_tested": 50,
+    "viable_strategies_found": 15,
+    "best_strategy": {
+      "name": "TrendFollower_L20_T1.5",
+      "total_return": 0.35,
+      "sharpe_ratio": 2.1,
+      "win_rate": 0.62,
+      "max_drawdown": 0.12
+    }
+  },
+  "top_strategies": [
+    {
+      "rank": 1,
+      "name": "TrendFollower_L20_T1.5",
+      "composite_score": 0.85,
+      "performance": {
+        "sharpe_ratio": 2.1,
+        "sortino_ratio": 2.8,
+        "profit_factor": 2.3,
+        "win_rate": 0.62
+      }
+    }
+  ],
+  "feature_insights": {
+    "most_important_features": [
+      {"feature": "momentum_5m", "importance": 0.234},
+      {"feature": "volatility_ratio", "importance": 0.187}
+    ],
+    "key_insights": [
+      "Volatility indicators are crucial - volatility_ratio is highly predictive",
+      "Momentum matters - momentum_5m shows strong signal"
+    ]
+  },
+  "regime_analysis": {
+    "n_regimes": 4,
+    "regimes": [
+      {"name": "TRENDING_HIGH_VOL", "percentage": 35.2},
+      {"name": "RANGING_LOW_VOL", "percentage": 28.5}
+    ]
+  },
+  "implementation_guide": {
+    "recommended_strategy": "TrendFollower_L20_T1.5",
+    "risk_management": {
+      "recommended_stop_loss": "15-20 pips",
+      "recommended_take_profit": "30-40 pips",
+      "position_sizing": "Risk 1-2% per trade"
+    },
+    "warnings": [
+      "Past performance does not guarantee future results",
+      "Monitor performance regularly"
+    ]
+  }
+}
 ```
 
 ### Exemplo de Output (Market Regime)
@@ -313,7 +499,7 @@ ultra_necrozma_results/
 }
 ```
 
-### Exemplo de Recomendação
+### Exemplo de Estratégia Descoberta (NOVO)
 
 ```json
 {

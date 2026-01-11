@@ -23,6 +23,18 @@ psutil>=5.9.0
 # Progress Display (Evolution Tracker)
 tqdm>=4.66.0
 
+# Machine Learning (Pattern Mining & Strategy Discovery)
+scikit-learn>=1.3.0
+xgboost>=2.0.0
+lightgbm>=4.0.0
+hdbscan>=0.8.33
+shap>=0.44.0
+
+# Association Rules (Pattern Discovery)
+mlxtend>=0.22.0
+
+# HTTP Requests (Telegram Notifications)
+requests>=2.31.0
 # ═══════════════════════════════════════════════════════════════
 # 🆕 NEW DEPENDENCIES - PR #2 (Ultra Evolution)
 # ═══════════════════════════════════════════════════════════════
