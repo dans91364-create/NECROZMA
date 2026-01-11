@@ -279,7 +279,7 @@ class LoreSystem:
     
     def __init__(self, enabled: bool = True, enable_telegram: bool = True):
         """
-        Initialize LoreSystem with optional Telegram support
+        Initialize LoreSystem with optional Telegram notifications
         
         Args:
             enabled: Whether lore system is enabled
@@ -287,8 +287,7 @@ class LoreSystem:
         """
         self.enabled = enabled
         self.telegram_enabled = enable_telegram
-        self.bot_token = None
-        self.chat_id = None
+        self.telegram_notifier = None
         
         self.deities = {
             "ARCEUS": ARCEUS,
@@ -298,18 +297,27 @@ class LoreSystem:
             "NECROZMA": NECROZMA,
         }
         
-        if enable_telegram:
+        # Initialize Telegram if enabled
+        if self.telegram_enabled:
             self._init_telegram()
     
     def _init_telegram(self):
-        """Initialize Telegram bot if credentials available"""
+        """Initialize Telegram notifier"""
         try:
-            self.bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
-            self.chat_id = os.getenv('TELEGRAM_CHAT_ID')
+            from telegram_notifier import TelegramNotifier
             
-            if not self.bot_token or not self.chat_id:
+            bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
+            chat_id = os.getenv('TELEGRAM_CHAT_ID')
+            
+            if bot_token and chat_id:
+                self.telegram_notifier = TelegramNotifier(bot_token, chat_id)
+                print("✅ Telegram notifications enabled")
+            else:
                 print("⚠️ Telegram credentials not found in environment")
                 self.telegram_enabled = False
+        except ImportError:
+            print("⚠️ telegram_notifier module not found")
+            self.telegram_enabled = False
         except Exception as e:
             print(f"⚠️ Telegram initialization failed: {e}")
             self.telegram_enabled = False
@@ -319,17 +327,33 @@ class LoreSystem:
         Send notification via Telegram if enabled
         
         Args:
-            event_type: Type of event from EventType enum
+            event_type: Type of event (from EventType enum or string)
             message: Optional custom message
-            **kwargs: Additional data to include in message
+            **kwargs: Additional data for message formatting
         """
-        if not self.telegram_enabled:
+        if not self.telegram_enabled or not self.telegram_notifier:
             return
         
         try:
-            formatted_message = self._format_message(event_type, message, **kwargs)
-            if formatted_message:
-                self._send_telegram(formatted_message)
+            # Convert EventType enum to string if needed
+            if hasattr(event_type, 'value'):
+                event_str = event_type.value
+            else:
+                event_str = str(event_type)
+            
+            # Format message
+            if message:
+                final_message = message
+            else:
+                # Try specific formatting first, fall back to default
+                final_message = self._format_message(event_type, message, **kwargs)
+                if not final_message or final_message.startswith(event_str):
+                    # Use default formatting if specific formatting wasn't found
+                    final_message = self._format_default_message(event_str, **kwargs)
+            
+            # Send via telegram
+            self.telegram_notifier.send_message(final_message)
+            
         except Exception as e:
             # Don't crash if telegram fails
             print(f"⚠️ Telegram notification failed: {e}")
@@ -428,6 +452,18 @@ class LoreSystem:
         
         # Default formatting for other event types
         return f"{event_type.value}: {kwargs}"
+    
+    def _format_default_message(self, event_type, **kwargs):
+        """Generate default message for event type"""
+        # Basic formatting based on event type
+        if 'progress' in event_type.lower():
+            return f"📊 Progress: {kwargs.get('message', 'Processing...')}"
+        elif 'complete' in event_type.lower():
+            return f"✅ Complete: {kwargs.get('message', 'Task finished')}"
+        elif 'error' in event_type.lower():
+            return f"❌ Error: {kwargs.get('message', 'An error occurred')}"
+        else:
+            return f"ℹ️ {event_type}: {kwargs.get('message', 'Event occurred')}"
     
     def _send_telegram(self, message):
         """Send message via Telegram API"""
