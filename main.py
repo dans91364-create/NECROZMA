@@ -211,16 +211,18 @@ def get_version(module):
         module: Python module object
         
     Returns:
-        str: Version string or "installed"
+        Version string or "installed" if version not available
     """
-    if hasattr(module, '__version__'):
-        return module.__version__
-    elif hasattr(module, 'version'):
-        return module.version
-    elif hasattr(module, 'VERSION'):
-        return module.VERSION
-    else:
-        return "installed"
+    # Try common version attributes
+    for attr in ['__version__', 'version', 'VERSION', '__VERSION__']:
+        if hasattr(module, attr):
+            version = getattr(module, attr)
+            # Handle version_info tuples
+            if isinstance(version, tuple):
+                return '.'.join(map(str, version))
+            return str(version)
+    
+    return "installed"
 
 
 def check_system():
