@@ -114,6 +114,18 @@ Examples:
   
   # Sequential processing (disable multiprocessing)
   python main.py --sequential
+  
+  # Chunked processing examples
+  python main.py --chunk-size monthly --strategy auto
+  python main.py --chunk-size weekly --strategy universe
+  python main.py --resume  # Resume from last checkpoint
+  python main.py --fresh   # Start fresh, ignore checkpoints
+  
+  # VM-safe mode with cooling breaks
+  python main.py --strategy universe --cooling-chunk-interval 3 --max-cpu 80
+  
+  # Process specific universes or chunks
+  python main.py --universes "1,5,10-15" --chunks "1-6"
         """
     )
     
@@ -225,7 +237,155 @@ Examples:
         help="Auto-open dashboard in browser (implies --generate-dashboard)"
     )
     
+    # Chunking arguments
+    parser.add_argument(
+        "--chunk-size",
+        type=str,
+        choices=["daily", "weekly", "monthly"],
+        default="monthly",
+        help="Temporal chunk size for processing (default: monthly)"
+    )
+    
+    parser.add_argument(
+        "--keep-chunks",
+        action="store_true",
+        help="Keep chunk files after processing"
+    )
+    
+    # Strategy arguments
+    parser.add_argument(
+        "--strategy",
+        type=str,
+        choices=["chunked", "universe", "auto"],
+        default="auto",
+        help="Processing strategy: chunked (fast, more memory), universe (slow, less memory), auto (decide based on RAM)"
+    )
+    
+    # Cooling arguments
+    parser.add_argument(
+        "--cooling-chunk-interval",
+        type=int,
+        default=3,
+        help="Cooling break every N chunks (default: 3, 0 to disable)"
+    )
+    
+    parser.add_argument(
+        "--cooling-universe-interval",
+        type=int,
+        default=5,
+        help="Cooling break every N universes (default: 5, 0 to disable)"
+    )
+    
+    parser.add_argument(
+        "--cooling-duration",
+        type=int,
+        default=120,
+        help="Cooling break duration in seconds (default: 120)"
+    )
+    
+    # CPU monitoring arguments
+    parser.add_argument(
+        "--max-cpu",
+        type=int,
+        default=85,
+        help="Pause if CPU > this %% for 5+ minutes (default: 85)"
+    )
+    
+    # Resume arguments
+    parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Resume from last checkpoint if available"
+    )
+    
+    parser.add_argument(
+        "--fresh",
+        action="store_true",
+        help="Ignore checkpoints and start fresh (cleanup old checkpoints)"
+    )
+    
+    # Specific processing arguments
+    parser.add_argument(
+        "--universes",
+        type=str,
+        default=None,
+        help='Process specific universes (e.g., "1,5,10-15,20")'
+    )
+    
+    parser.add_argument(
+        "--chunks",
+        type=str,
+        default=None,
+        help='Process specific chunks (e.g., "1-6,12")'
+    )
+    
     return parser.parse_args()
+
+
+# ═══════════════════════════════════════════════════════════════
+# 🧠 STRATEGY SELECTION
+# ═══════════════════════════════════════════════════════════════
+
+def select_strategy():
+    """
+    Auto-select best strategy based on environment
+    
+    Returns:
+        str: Selected strategy ('chunked' or 'universe')
+    """
+    import psutil
+    
+    total_ram_gb = psutil.virtual_memory().total / 1e9
+    
+    # Check if VM (basic heuristic)
+    is_vm = False
+    try:
+        # Check for common VM indicators
+        product_name_file = Path('/sys/class/dmi/id/product_name')
+        if product_name_file.exists():
+            product_name = product_name_file.read_text().strip()
+            is_vm = any(indicator in product_name.lower() for indicator in 
+                       ['vmware', 'virtualbox', 'kvm', 'qemu', 'xen', 'hyperv'])
+    except:
+        pass
+    
+    # Decision logic
+    if is_vm:
+        print(f"   🖥️  VM detected - selecting 'universe' strategy (better checkpointing)")
+        return 'universe'
+    elif total_ram_gb < 32:
+        print(f"   💾 RAM < 32GB ({total_ram_gb:.1f}GB) - selecting 'universe' strategy (memory constrained)")
+        return 'universe'
+    else:
+        print(f"   ⚡ Bare metal + {total_ram_gb:.1f}GB RAM - selecting 'chunked' strategy (fast processing)")
+        return 'chunked'
+
+
+def parse_range_string(range_str: str) -> list:
+    """
+    Parse range string like "1,5,10-15,20" into list of integers
+    
+    Args:
+        range_str: Range string
+    
+    Returns:
+        list: List of integers
+    """
+    if not range_str:
+        return []
+    
+    result = []
+    parts = range_str.split(',')
+    
+    for part in parts:
+        part = part.strip()
+        if '-' in part:
+            start, end = part.split('-')
+            result.extend(range(int(start), int(end) + 1))
+        else:
+            result.append(int(part))
+    
+    return sorted(set(result))
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -332,6 +492,109 @@ def check_system():
     
     print("\n✅ All required dependencies available!\n")
     return True
+
+
+# ═══════════════════════════════════════════════════════════════
+# 💾 MEMORY MANAGEMENT
+# ═══════════════════════════════════════════════════════════════
+
+def cleanup_memory():
+    """
+    Aggressive memory cleanup between processing steps
+    """
+    import gc
+    import psutil
+    
+    # Force garbage collection
+    gc.collect()
+    
+    # Log memory usage
+    mem = psutil.virtual_memory()
+    print(f"💾 Memory: {mem.used/1e9:.1f}GB / {mem.total/1e9:.1f}GB ({mem.percent}%)")
+    
+    # Warn if high
+    if mem.percent > 80:
+        print("⚠️  Memory usage high - pausing for cooldown")
+        time.sleep(30)
+        gc.collect()
+        
+        mem = psutil.virtual_memory()
+        print(f"💾 After cooldown: {mem.used/1e9:.1f}GB / {mem.total/1e9:.1f}GB ({mem.percent}%)")
+
+
+def show_progress(
+    universe_idx: int,
+    total_universes: int,
+    chunk_idx: int,
+    total_chunks: int,
+    elapsed_time: float,
+    strategy: str,
+    memory_gb: float,
+    memory_total_gb: float,
+    cpu_percent: float
+):
+    """
+    Show detailed progress information
+    
+    Args:
+        universe_idx: Current universe index
+        total_universes: Total number of universes
+        chunk_idx: Current chunk index
+        total_chunks: Total number of chunks
+        elapsed_time: Elapsed time in seconds
+        strategy: Processing strategy
+        memory_gb: Current memory usage in GB
+        memory_total_gb: Total memory in GB
+        cpu_percent: Current CPU percentage
+    """
+    # Calculate progress
+    if strategy == "chunked":
+        # Chunked: process all universes per chunk
+        total_tasks = total_chunks
+        completed_tasks = chunk_idx
+        current_desc = f"Chunk {chunk_idx}/{total_chunks}"
+    else:
+        # Universe: process all chunks per universe
+        total_tasks = total_universes
+        completed_tasks = universe_idx
+        current_desc = f"Universe {universe_idx}/{total_universes}"
+    
+    overall_progress = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+    
+    # Calculate ETA
+    if completed_tasks > 0 and elapsed_time > 0:
+        avg_time_per_task = elapsed_time / completed_tasks
+        remaining_tasks = total_tasks - completed_tasks
+        eta_seconds = remaining_tasks * avg_time_per_task
+        eta_hours = int(eta_seconds // 3600)
+        eta_mins = int((eta_seconds % 3600) // 60)
+        eta_str = f"{eta_hours}h {eta_mins}min"
+    else:
+        eta_str = "calculating..."
+    
+    # Display progress
+    print(f"""
+╔══════════════════════════════════════════════════════════════╗
+║  🌟 ULTRA NECROZMA - Processing Progress                    ║
+╚══════════════════════════════════════════════════════════════╝
+
+📊 Configuration:
+   Strategy:       {strategy}
+   Total tasks:    {total_tasks}
+   
+🔄 Progress:
+   Current:        {current_desc}
+   Overall:        {completed_tasks}/{total_tasks} ({overall_progress:.1f}%)
+   
+⏱️  Timing:
+   Elapsed:        {int(elapsed_time//3600)}h {int((elapsed_time%3600)//60)}min
+   ETA:            {eta_str}
+   
+💾 Resources:
+   Memory:         {memory_gb:.1f}GB / {memory_total_gb:.1f}GB ({memory_gb/memory_total_gb*100:.0f}%)
+   CPU:            {cpu_percent:.1f}%
+   
+""")
 
 
 # ═══════════════════════════════════════════════════════════════
