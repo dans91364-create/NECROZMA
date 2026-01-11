@@ -347,7 +347,7 @@ class LoreSystem:
             else:
                 # Try specific formatting first, fall back to default
                 final_message = self._format_message(event_type, message, **kwargs)
-                if not final_message or final_message.startswith(event_str):
+                if not final_message or (isinstance(final_message, str) and final_message.startswith(event_str)):
                     # Use default formatting if specific formatting wasn't found
                     final_message = self._format_default_message(event_str, **kwargs)
             
@@ -464,24 +464,6 @@ class LoreSystem:
             return f"❌ Error: {kwargs.get('message', 'An error occurred')}"
         else:
             return f"ℹ️ {event_type}: {kwargs.get('message', 'Event occurred')}"
-    
-    def _send_telegram(self, message):
-        """Send message via Telegram API"""
-        if not self.bot_token or not self.chat_id:
-            return
-        
-        try:
-            import requests
-            url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
-            data = {
-                "chat_id": self.chat_id,
-                "text": message,
-                "parse_mode": "HTML"
-            }
-            response = requests.post(url, data=data, timeout=5)
-            response.raise_for_status()
-        except Exception as e:
-            print(f"⚠️ Failed to send Telegram message: {e}")
     
     def speak(self, deity_name: str, event_type: EventType, **kwargs) -> str:
         """
