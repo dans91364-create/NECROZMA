@@ -390,6 +390,12 @@ class TestModeSampler:
         print(f"📂 Total data: {len(df):,} ticks")
         print()
         
+        # Check if data is too small for week-based sampling (e.g., synthetic test data)
+        if len(df) < 500_000:  # Less than ~5 days of tick data
+            print(f"⚠️  Data size too small for week-based sampling")
+            print(f"   Using entire dataset for testing")
+            return df
+        
         if strategy == 'minimal':
             print("🔬 Minimal test - 1 week")
             result = self.sample_random_weeks(df, n_weeks=1, avoid_holidays=True)
@@ -428,6 +434,11 @@ class TestModeSampler:
         else:
             print(f"⚠️  Unknown strategy '{strategy}', using balanced")
             result = self.sample_stratified(df, weeks_per_quarter=1)
+        
+        # If sampling failed (empty result), return original data
+        if len(result) == 0:
+            print(f"⚠️  Sampling returned empty result - using full dataset")
+            return df
         
         # Estimate test time
         if len(result) > 0:

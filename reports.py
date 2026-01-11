@@ -424,6 +424,28 @@ def generate_full_report(analyzer, final_judgment):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     report_paths = {}
     
+    # Check if we have results
+    if final_judgment is None:
+        print("⚠️  No results to generate reports - creating minimal report...")
+        
+        # Create minimal report for no-results case
+        minimal_file = reports_dir / f"no_results_{timestamp}.json"
+        minimal_report = {
+            "generated_at": datetime.now().isoformat(),
+            "status": "No results",
+            "message": "Analysis completed but no patterns were found. This may be due to insufficient data.",
+            "universes_processed": len(analyzer.results),
+            "total_patterns": analyzer.total_patterns
+        }
+        
+        with open(minimal_file, "w", encoding="utf-8") as f:
+            json.dump(minimal_report, f, indent=2, ensure_ascii=False, default=str)
+        
+        report_paths["minimal"] = str(minimal_file)
+        print(f"   ✅ Saved: {minimal_file.name}")
+        
+        return report_paths
+    
     # ═══ 1. FINAL JUDGMENT REPORT ═══
     print("📄 Generating Final Judgment Report...")
     
@@ -470,9 +492,9 @@ def generate_full_report(analyzer, final_judgment):
     
     market_report = {
         "generated_at": datetime.now().isoformat(),
-        "regime": final_judgment["market_regime"],
-        "interpretation": get_regime_interpretation(final_judgment["market_regime"]),
-        "recommendations": final_judgment["recommendations"]
+        "regime": final_judgment.get("market_regime", {}),
+        "interpretation": get_regime_interpretation(final_judgment.get("market_regime", {})),
+        "recommendations": final_judgment.get("recommendations", {})
     }
     
     with open(market_file, "w", encoding="utf-8") as f:
@@ -495,7 +517,7 @@ def generate_full_report(analyzer, final_judgment):
         pattern_catalog["levels"][level] = {
             "technical_name":  MOVEMENT_LEVELS[level]["technical"],
             "pip_range": f"{MOVEMENT_LEVELS[level]['min']}-{MOVEMENT_LEVELS[level]['max']}",
-            "directions": final_judgment["level_analysis"]. get(level, {})
+            "directions": final_judgment.get("level_analysis", {}). get(level, {})
         }
     
     with open(catalog_file, "w", encoding="utf-8") as f:
@@ -517,9 +539,9 @@ def generate_full_report(analyzer, final_judgment):
         "version": "2.0",
         
         "key_findings": {
-            "market_regime": final_judgment["market_regime"]["regime"],
-            "primary_strategy": final_judgment["recommendations"]["primary_strategy"],
-            "confidence_level": final_judgment["recommendations"]["confidence"],
+            "market_regime": final_judgment.get("market_regime", {}).get("regime", "Unknown"),
+            "primary_strategy": final_judgment.get("recommendations", {}).get("primary_strategy", "N/A"),
+            "confidence_level": final_judgment.get("recommendations", {}).get("confidence", "N/A"),
             "optimal_configuration": {
                 "interval": best_config.get("interval", "N/A"),
                 "lookback": best_config.get("lookback", "N/A"),
@@ -528,19 +550,19 @@ def generate_full_report(analyzer, final_judgment):
         },
         
         "statistics": {
-            "universes_analyzed": final_judgment["summary"]["universes_analyzed"],
-            "total_patterns_found": final_judgment["summary"]["total_patterns"],
-            "analysis_power": f"{final_judgment['summary']['light_power']}%"
+            "universes_analyzed": final_judgment.get("summary", {}).get("universes_analyzed", 0),
+            "total_patterns_found": final_judgment.get("summary", {}).get("total_patterns", 0),
+            "analysis_power": f"{final_judgment.get('summary', {}).get('light_power', 0)}%"
         },
         
         "market_characteristics": {
-            "trend_strength": "Strong" if final_judgment["market_regime"]["dfa_alpha"] > 0.55 else "Weak",
-            "memory_type": "Long" if final_judgment["market_regime"]["hurst_exponent"] > 0.55 else "Short",
-            "chaos_level": final_judgment["market_regime"]["chaos_level"],
-            "complexity": final_judgment["market_regime"]["complexity"]
+            "trend_strength": "Strong" if final_judgment.get("market_regime", {}).get("dfa_alpha", 0.5) > 0.55 else "Weak",
+            "memory_type": "Long" if final_judgment.get("market_regime", {}).get("hurst_exponent", 0.5) > 0.55 else "Short",
+            "chaos_level": final_judgment.get("market_regime", {}).get("chaos_level", "Unknown"),
+            "complexity": final_judgment.get("market_regime", {}).get("complexity", "Unknown")
         },
         
-        "action_items": final_judgment["recommendations"]["key_points"]
+        "action_items": final_judgment.get("recommendations", {}).get("key_points", [])
     }
     
     with open(summary_file, "w", encoding="utf-8") as f:
@@ -570,8 +592,8 @@ def generate_full_report(analyzer, final_judgment):
         
         "footer": {
             "theme":  THEME,
-            "evolution_achieved": final_judgment["summary"]["evolution_stage"],
-            "prismatic_cores_collected": final_judgment["summary"]["prismatic_cores"]
+            "evolution_achieved": final_judgment.get("summary", {}).get("evolution_stage", "Unknown"),
+            "prismatic_cores_collected": final_judgment.get("summary", {}).get("prismatic_cores", [])
         }
     }
     
@@ -662,22 +684,48 @@ def print_final_summary(analyzer, final_judgment, report_paths):
 ╚══════════════════════════════════════════════════════════════════════════════╝
     """)
     
-    # Summary stats
-    summary = final_judgment["summary"]
-    regime = final_judgment["market_regime"]
-    recommendations = final_judgment["recommendations"]
-    best = final_judgment. get("best_configuration", {})
+    # Handle case where no results were found
+    if final_judgment is None:
+        print("""
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ⚠️  NO RESULTS FOUND                                                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│   The analysis completed but no patterns were found.                         │
+│   This may be due to insufficient data or invalid data format.               │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+        """)
+        if report_paths:
+            print(f"""
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ 📂 GENERATED REPORTS                                                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │""")
+            from pathlib import Path
+            for name, path in report_paths.items():
+                filename = Path(path).name
+                print(f"│   • {filename:<60}   │")
+            print("│                                                                              │")
+            print("└─────────────────────────────────────────────────────────────────────────────┘")
+        return
+    
+    # Summary stats with safe get() calls
+    summary = final_judgment.get("summary", {})
+    regime = final_judgment.get("market_regime", {})
+    recommendations = final_judgment.get("recommendations", {})
+    best = final_judgment.get("best_configuration", {})
     
     print(f"""
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │ 📊 ANALYSIS SUMMARY                                                          │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│   🌌 Universes Analyzed:      {summary['universes_analyzed']: <10}                                │
-│   🎯 Total Patterns Found:   {summary['total_patterns']:<10,}                                │
-│   ⚡ Evolution Stage:        {summary['evolution_stage']:<15}                           │
-│   💎 Light Power:            {summary['light_power']:. 1f}%                                       │
-│   🌈 Prismatic Cores:        {len(summary['prismatic_cores'])}/7                                          │
+│   🌌 Universes Analyzed:      {summary.get('universes_analyzed', 0): <10}                                │
+│   🎯 Total Patterns Found:   {summary.get('total_patterns', 0):<10,}                                │
+│   ⚡ Evolution Stage:        {summary.get('evolution_stage', 'N/A'):<15}                           │
+│   💎 Light Power:            {summary.get('light_power', 0):. 1f}%                                       │
+│   🌈 Prismatic Cores:        {len(summary.get('prismatic_cores', []))}/7                                          │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
 
@@ -685,21 +733,21 @@ def print_final_summary(analyzer, final_judgment, report_paths):
 │ 📈 MARKET REGIME                                                             │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│   🎯 Regime:          {regime['regime']:<20}                              │
-│   🌊 DFA Alpha:       {regime['dfa_alpha']:.3f}                                              │
-│   🌀 Hurst:            {regime['hurst_exponent']:.3f}                                              │
-│   ⚡ Chaos Level:     {regime['chaos_level']: <15}                                   │
-│   📐 Complexity:      {regime['complexity']:<15}                                   │
+│   🎯 Regime:          {regime.get('regime', 'UNKNOWN'):<20}                              │
+│   🌊 DFA Alpha:       {regime.get('dfa_alpha', 0.5):.3f}                                              │
+│   🌀 Hurst:            {regime.get('hurst_exponent', 0.5):.3f}                                              │
+│   ⚡ Chaos Level:     {regime.get('chaos_level', 'UNKNOWN'): <15}                                   │
+│   📐 Complexity:      {regime.get('complexity', 'UNKNOWN'):<15}                                   │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-┌──────────────────────���──────────────────────────────────────────────────────┐
+┌─────────────────────────────────────────────────────────────────────────────┐
 │ 💡 RECOMMENDATIONS                                                           │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│   🎯 Strategy:        {recommendations['primary_strategy']:<30}         │
-│   📊 Confidence:      {recommendations['confidence']:<15}                              │
-│   ⚠️  Risk Level:      {recommendations['risk_level']:<15}                              │
+│   🎯 Strategy:        {recommendations.get('primary_strategy', 'N/A'):<30}         │
+│   📊 Confidence:      {recommendations.get('confidence', 'N/A'):<15}                              │
+│   ⚠️  Risk Level:      {recommendations.get('risk_level', 'N/A'):<15}                              │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
     """)
@@ -724,94 +772,12 @@ def print_final_summary(analyzer, final_judgment, report_paths):
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │""")
     
+    from pathlib import Path
     for name, path in report_paths.items():
         filename = Path(path).name
-        print(f"│   📄 {filename:<65} │")
+        print(f"│   • {filename:<60}   │")
     
-    print(f"""│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-⚡🌟💎 "The light reveals all patterns.  Trade wisely." 💎🌟⚡
-    """)
+    print("│                                                                              │")
+    print("└─────────────────────────────────────────────────────────────────────────────┘")
 
 
-# ═════════════════════════════════════��═════════════════════════
-# 🎮 TEST
-# ═══════════════════════════════════════════════════════════════
-
-if __name__ == "__main__":
-    print("""
-╔══════════════════════════════════════════════════════════════╗
-║                                                              ║
-║           ⚡ ULTRA NECROZMA REPORTS TEST ⚡                  ║
-║                                                              ║
-╚══════════════════════════════════════════════════════════════╝
-    """)
-    
-    # Create mock data for testing
-    print("📊 Creating mock analyzer for testing...")
-    
-    class MockAnalyzer:
-        def __init__(self):
-            self.results = {
-                "universe_5m_10lb": {
-                    "name":  "universe_5m_10lb",
-                    "config": {"interval": 5, "lookback": 10},
-                    "processing_time": 10.5,
-                    "total_patterns": 150,
-                    "results": {
-                        "Pequeno": {
-                            "up":  {
-                                "total_occurrences": 50,
-                                "patterns": {"pat1": {"count": 10, "features": []}},
-                                "feature_stats": {"dfa_alpha_mean": 0.55}
-                            },
-                            "down": {
-                                "total_occurrences": 40,
-                                "patterns": {},
-                                "feature_stats":  {}
-                            }
-                        },
-                        "Médio":  {"up": {"total_occurrences": 30, "patterns": {}, "feature_stats": {}}, "down": {"total_occurrences": 20, "patterns": {}, "feature_stats": {}}},
-                        "Grande": {"up": {"total_occurrences": 5, "patterns": {}, "feature_stats": {}}, "down":  {"total_occurrences": 3, "patterns": {}, "feature_stats": {}}},
-                        "Muito Grande": {"up": {"total_occurrences": 1, "patterns": {}, "feature_stats": {}}, "down": {"total_occurrences": 1, "patterns": {}, "feature_stats": {}}}
-                    }
-                }
-            }
-            self.evolution_stage = "Ultra Necrozma"
-            self.light_power = 100.0
-            self.prismatic_cores = ["Red", "Blue", "Yellow"]
-        
-        def get_rankings(self):
-            return [
-                {"name": "universe_5m_10lb", "interval": 5, "lookback": 10, "total_patterns": 150, "high_conf_patterns": 10, "dfa_mean": 0.55, "score": 200, "processing_time": 10.5},
-                {"name": "universe_15m_20lb", "interval": 15, "lookback": 20, "total_patterns": 100, "high_conf_patterns":  8, "dfa_mean": 0.52, "score": 150, "processing_time": 8.2}
-            ]
-        
-        def get_pattern_summary(self):
-            return {
-                level: {
-                    direction: {"total_occurrences": 50, "unique_patterns": 5}
-                    for direction in DIRECTIONS
-                }
-                for level in MOVEMENT_LEVELS. keys()
-            }
-    
-    mock_analyzer = MockAnalyzer()
-    
-    # Test light_that_burns_the_sky
-    print("\n⚡ Testing Z-Move:  Light That Burns The Sky...")
-    final_judgment = light_that_burns_the_sky(mock_analyzer)
-    
-    if final_judgment: 
-        print("\n✅ Final judgment generated successfully!")
-        
-        # Test report generation
-        print("\n📄 Testing report generation...")
-        report_paths = generate_full_report(mock_analyzer, final_judgment)
-        
-        # Test final summary
-        print("\n📊 Testing final summary...")
-        print_final_summary(mock_analyzer, final_judgment, report_paths)
-    
-    print("\n✅ Reports test complete!")
