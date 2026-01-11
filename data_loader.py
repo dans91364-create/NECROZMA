@@ -43,11 +43,17 @@ def ensure_datetime_column(df, column='timestamp', utc=True):
         
     Returns:
         DataFrame with converted column
+        
+    Note:
+        This function creates a copy of the DataFrame when conversion is needed
+        to avoid modifying the original data. For large DataFrames, consider
+        converting timestamps before loading into the main pipeline.
     """
     if column not in df.columns:
         return df
     
     if df[column].dtype == 'object' or pd.api.types.is_string_dtype(df[column]):
+        # Copy to avoid modifying original DataFrame
         df = df.copy()
         df[column] = pd.to_datetime(df[column], utc=utc, errors='coerce')
     elif df[column].dtype.name.startswith('datetime') and utc:
@@ -397,7 +403,7 @@ def crystal_info(df):
             duration = ts_col.max() - ts_col.min()
             print(f"   Duration: {duration}")
         except Exception as e:
-            print(f"   Duration: Unable to calculate ({type(e).__name__})")
+            print(f"   Duration: Unable to calculate ({type(e).__name__}: {str(e)})")
     print()
     
     if "mid_price" in df.columns:
