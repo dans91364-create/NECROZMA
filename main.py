@@ -773,8 +773,8 @@ Price Range: {min_price:.5f} - {max_price:.5f}"""
 The light begins to pierce through all dimensions..."""
     )
     
-    analyzer = UltraNecrozmaAnalyzer(df, num_workers=num_workers)
-    analyzer.run_full_analysis()
+    analyzer = UltraNecrozmaAnalyzer(df, num_workers=num_workers, lore=lore)
+    analyzer.run_analysis()
     
     # Strategy discovery (if enabled)
     discovery_results = None

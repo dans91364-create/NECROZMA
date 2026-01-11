@@ -406,17 +406,20 @@ class UltraNecrozmaAnalyzer:
     Technical: Orchestrates parallel universe processing
     """
     
-    def __init__(self, df, output_dir=None):
+    def __init__(self, df, output_dir=None, num_workers=None, lore=None):
         """
         Initialize analyzer with data
         
         Args:
             df:  Tick DataFrame (from data_loader)
             output_dir: Output directory path
+            num_workers: Number of workers for parallel processing (uses config default if None)
+            lore: LoreSystem instance for notifications
         """
         self.df = df
         self.output_dirs = get_output_dirs()
         self.output_dir = output_dir or self.output_dirs["root"]
+        self.lore = lore
         
         self.configs = get_all_configs()
         self.results = {}
@@ -430,6 +433,9 @@ class UltraNecrozmaAnalyzer:
         self.light_power = 0.0
         self.prismatic_cores = []
         
+        # Store num_workers (will be used by run_analysis)
+        self.num_workers = num_workers if num_workers is not None else NUM_WORKERS
+        
         print(f"""
 ╔══════════════════════════════════════════════════════════════╗
 ║                                                              ║
@@ -440,7 +446,7 @@ class UltraNecrozmaAnalyzer:
 ╠══════════════════════════════════════════════════════════════╣
 ║   📊 Data Points:      {len(df):>15,}                         ║
 ║   🌌 Universes:       {len(self.configs):>15}                         ║
-║   ⚡ Workers:         {NUM_WORKERS: >15}                         ║
+║   ⚡ Workers:         {self.num_workers: >15}                         ║
 ║   📂 Output:           {str(self.output_dir):<25}   ║
 ╚══════════════════════════════════════════════════════════════╝
         """)
@@ -494,7 +500,7 @@ class UltraNecrozmaAnalyzer:
         
         analysis_start = time.time()
         
-        if parallel and NUM_WORKERS > 1:
+        if parallel and self.num_workers > 1:
             self._run_parallel()
         else:
             self._run_sequential()
@@ -534,8 +540,10 @@ class UltraNecrozmaAnalyzer:
         print(f"🔄 Running sequential analysis ({len(self.configs)} universes)...")
         print("─" * 60)
         
+        total_universes = len(self.configs)
+        
         for i, config in enumerate(self.configs, 1):
-            print(f"\n🌌 [{i}/{len(self.configs)}] Creating {config['name']}...")
+            print(f"\n🌌 [{i}/{total_universes}] Creating {config['name']}...")
             
             result = process_universe(
                 self.df,
@@ -556,6 +564,11 @@ class UltraNecrozmaAnalyzer:
             
             self.evolve()
             
+            # Send progress notification every 5 universes or 20% progress
+            percentage = (i / total_universes) * 100
+            if i % 5 == 0 or percentage % 20 < (100 / total_universes):
+                self._send_progress_notification(i, total_universes, percentage)
+            
             # Checkpoint every 5 universes
             if i % 5 == 0:
                 self._save_checkpoint(i)
@@ -563,7 +576,7 @@ class UltraNecrozmaAnalyzer:
     
     def _run_parallel(self):
         """Run analysis in parallel (Photon Burst Mode)"""
-        print(f"⚡ Running parallel analysis ({len(self.configs)} universes, {NUM_WORKERS} workers)...")
+        print(f"⚡ Running parallel analysis ({len(self.configs)} universes, {self.num_workers} workers)...")
         print("─" * 60)
         
         # Prepare arguments
@@ -573,9 +586,10 @@ class UltraNecrozmaAnalyzer:
         ]
         
         completed = 0
+        total_universes = len(self.configs)
         
         # Use ProcessPoolExecutor for parallel processing
-        with ProcessPoolExecutor(max_workers=NUM_WORKERS) as executor:
+        with ProcessPoolExecutor(max_workers=self.num_workers) as executor:
             # Submit all tasks
             future_to_config = {
                 executor.submit(process_universe_wrapper, args): args[3]
@@ -595,22 +609,25 @@ class UltraNecrozmaAnalyzer:
                         self.universes_processed += 1
                         self.total_patterns += result["total_patterns"]
                         
-                        print(f"   ✅ [{completed}/{len(self.configs)}] {universe_name}:  "
+                        print(f"   ✅ [{completed}/{total_universes}] {universe_name}:  "
                               f"{result['total_patterns']} patterns ({result['processing_time']:.1f}s)")
                     else:
-                        print(f"   ⚠️ [{completed}/{len(self.configs)}] {universe_name}: No results")
+                        print(f"   ⚠️ [{completed}/{total_universes}] {universe_name}: No results")
                     
                 except Exception as e: 
-                    print(f"   ❌ [{completed}/{len(self.configs)}] {universe_name}: Error - {e}")
+                    print(f"   ❌ [{completed}/{total_universes}] {universe_name}: Error - {e}")
                 
                 self.evolve()
                 
                 # Progress update and checkpoint
-                if completed % 5 == 0:
-                    progress = completed / len(self.configs) * 100
-                    print(f"\n   📊 Progress: {progress:.1f}% | "
+                percentage = (completed / total_universes) * 100
+                if completed % 5 == 0 or percentage % 20 < (100 / total_universes):
+                    print(f"\n   📊 Progress: {percentage:.1f}% | "
                           f"Evolution: {self.evolution_stage} | "
                           f"Power: {self.light_power:.1f}%\n")
+                    
+                    # Send progress notification
+                    self._send_progress_notification(completed, total_universes, percentage)
                     self._save_checkpoint(completed)
                     gc.collect()
     
@@ -631,6 +648,54 @@ class UltraNecrozmaAnalyzer:
         
         with open(checkpoint_file, "w") as f:
             json.dump(checkpoint_data, f, indent=2, default=str)
+    
+    def _send_progress_notification(self, completed, total, percentage):
+        """
+        Send progress notification via Lore System
+        
+        Args:
+            completed: Number of universes completed
+            total: Total number of universes
+            percentage: Completion percentage
+        """
+        if not self.lore:
+            return
+        
+        try:
+            from lore import EventType
+            
+            # Calculate estimated remaining time
+            elapsed = time.time() - self.start_time
+            if completed > 0:
+                avg_time_per_universe = elapsed / completed
+                remaining_universes = total - completed
+                estimated_remaining = avg_time_per_universe * remaining_universes
+                
+                # Format remaining time
+                if estimated_remaining > 3600:
+                    remaining_str = f"{estimated_remaining / 3600:.1f} hours"
+                elif estimated_remaining > 60:
+                    remaining_str = f"{estimated_remaining / 60:.1f} minutes"
+                else:
+                    remaining_str = f"{estimated_remaining:.0f} seconds"
+            else:
+                remaining_str = "calculating..."
+            
+            # Send notification
+            self.lore.broadcast(
+                EventType.UNIVERSE_PROGRESS,
+                message=f"""📊 ANALYSIS PROGRESS: {percentage:.0f}%
+
+🌌 Universes processed: {completed}/{total}
+🎯 Patterns found: {self.total_patterns:,}
+⚡ Evolution: {self.evolution_stage}
+💎 Light Power: {self.light_power:.0f}%
+
+{remaining_str} estimated remaining..."""
+            )
+        except Exception as e:
+            # Don't crash on notification failure
+            print(f"⚠️ Progress notification failed: {e}")
     
     def get_rankings(self):
         """
