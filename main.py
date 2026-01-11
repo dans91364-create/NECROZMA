@@ -662,8 +662,12 @@ The Blinding One prepares to analyze the markets..."""
             'timestamp': timestamps,
             'bid': base_price + cumsum - 0.00005,
             'ask': base_price + cumsum + 0.00005,
-            'mid': base_price + cumsum
+            'mid_price': base_price + cumsum
         })
+        
+        # Add derived fields like the real data loader does
+        df['spread_pips'] = (df['ask'] - df['bid']) * 10000
+        df['pips_change'] = df['mid_price'].diff() * 10000
         
         print(f"✅ Generated {len(df):,} synthetic ticks\n")
         

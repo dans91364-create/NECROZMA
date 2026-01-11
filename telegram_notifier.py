@@ -32,7 +32,8 @@ except ImportError:
     REQUESTS_AVAILABLE = False
     print("⚠️  requests not available. Install with: pip install requests")
 
-from lore import LoreSystem, EventType
+# Delay lore import to avoid circular dependency
+# from lore import LoreSystem, EventType
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -102,7 +103,8 @@ class TelegramNotifier:
             lore_enabled: Whether to use lore system for messages
         """
         self.config = config or TelegramConfig()
-        self.lore = LoreSystem(enabled=lore_enabled)
+        self.lore_enabled = lore_enabled
+        self.lore = None  # Will be set lazily when needed
         self.enabled = self.config.is_configured()
         
         # Message queue for async sending
@@ -228,26 +230,37 @@ class TelegramNotifier:
             response = requests.post(url, data=payload, files=files, timeout=30)
             response.raise_for_status()
     
-    def send_message(self, deity_name: str, event_type: EventType, 
+    def send_message(self, deity_name: str, event_type, 
                     custom_message: str = None, **kwargs):
         """
         Send a lore-based message
         
         Args:
             deity_name: Deity who speaks (ARCEUS, DIALGA, PALKIA, GIRATINA, NECROZMA)
-            event_type: Type of event
+            event_type: Type of event (EventType enum value)
             custom_message: Optional custom message (overrides lore)
             **kwargs: Variables for lore formatting
         """
         if not self.enabled:
             return
         
+        # Lazy initialize lore to avoid circular dependency
+        if self.lore is None and self.lore_enabled:
+            from lore import LoreSystem
+            self.lore = LoreSystem(enabled=True, enable_telegram=False)  # Don't create another TelegramNotifier
+        
         # Generate message
         if custom_message:
-            deity = self.lore.deities.get(deity_name.upper())
-            text = f"{deity.emoji} {deity.name}: {custom_message}" if deity else custom_message
+            if self.lore:
+                deity = self.lore.deities.get(deity_name.upper())
+                text = f"{deity.emoji} {deity.name}: {custom_message}" if deity else custom_message
+            else:
+                text = custom_message
         else:
-            text = self.lore.speak(deity_name, event_type, **kwargs)
+            if self.lore:
+                text = self.lore.speak(deity_name, event_type, **kwargs)
+            else:
+                text = f"{deity_name}: {kwargs}"
         
         if not text:
             return
@@ -260,41 +273,50 @@ class TelegramNotifier:
     
     def send_awakening(self):
         """Convenience: Send awakening message"""
+        from lore import EventType
         self.send_message("ARCEUS", EventType.AWAKENING)
     
     def send_progress(self, deity: str, progress: float, **kwargs):
         """Convenience: Send progress update"""
+        from lore import EventType
         self.send_message(deity, EventType.PROGRESS, progress=progress, **kwargs)
     
     def send_discovery(self, pattern: str, deity: str = "NECROZMA"):
         """Convenience: Send discovery message"""
+        from lore import EventType
         self.send_message(deity, EventType.DISCOVERY, pattern=pattern)
     
     def send_light_found(self, strategy: str, score: float):
         """Convenience: Send light found message"""
+        from lore import EventType
         self.send_message("NECROZMA", EventType.LIGHT_FOUND, 
                          strategy=strategy, score=score)
     
     def send_top_strategy(self, strategy: str, sharpe: float, rank: int):
         """Convenience: Send top strategy message"""
+        from lore import EventType
         self.send_message("NECROZMA", EventType.TOP_STRATEGY,
                          strategy=strategy, sharpe=sharpe, rank=rank)
     
     def send_regime_change(self, old_regime: str, new_regime: str):
         """Convenience: Send regime change message"""
+        from lore import EventType
         self.send_message("GIRATINA", EventType.REGIME_CHANGE,
                          old_regime=old_regime, new_regime=new_regime)
     
     def send_warning(self, warning: str, deity: str = "GIRATINA"):
         """Convenience: Send warning message"""
+        from lore import EventType
         self.send_message(deity, EventType.WARNING, warning=warning)
     
     def send_milestone(self, milestone: str, deity: str = "ARCEUS", **kwargs):
         """Convenience: Send milestone message"""
+        from lore import EventType
         self.send_message(deity, EventType.MILESTONE, milestone=milestone, **kwargs)
     
     def send_completion(self, deity: str = "NECROZMA"):
         """Convenience: Send completion message"""
+        from lore import EventType
         self.send_message(deity, EventType.COMPLETION)
     
     def send_system_init(self, python_version: str = None, timestamp: str = None):
