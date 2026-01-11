@@ -23,6 +23,9 @@ sys.path.insert(0, str(Path(__file__).parent))
 # Common version attribute names to check when getting module versions
 VERSION_ATTRIBUTES = ['__version__', 'version', 'VERSION', '_version']
 
+# Pip conversion factor (for EURUSD and most major pairs)
+PIPS_MULTIPLIER = 10000
+
 
 # ═══════════════════════════════════════════════════════════════
 # 🌟 ULTRA NECROZMA ASCII BANNER
@@ -653,7 +656,7 @@ def main():
             'ask': base_price + cumsum + 0.00005,
             'mid_price': base_price + cumsum,
             'spread_pips': 1.0,
-            'pips_change': np.concatenate([[0], np.diff(cumsum) * 10000])
+            'pips_change': np.concatenate([[0], np.diff(cumsum) * PIPS_MULTIPLIER])
         })
         
         print(f"✅ Generated {len(df):,} synthetic ticks\n")

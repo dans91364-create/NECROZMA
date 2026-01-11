@@ -517,7 +517,7 @@ def generate_full_report(analyzer, final_judgment):
         pattern_catalog["levels"][level] = {
             "technical_name":  MOVEMENT_LEVELS[level]["technical"],
             "pip_range": f"{MOVEMENT_LEVELS[level]['min']}-{MOVEMENT_LEVELS[level]['max']}",
-            "directions": final_judgment.get("level_analysis", {}). get(level, {})
+            "directions": final_judgment.get("level_analysis", {}).get(level, {})
         }
     
     with open(catalog_file, "w", encoding="utf-8") as f:
@@ -758,7 +758,7 @@ def print_final_summary(analyzer, final_judgment, report_paths):
 │ 💎 OPTIMAL CONFIGURATION                                                     │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
-│   🏆 Universe:        {best. get('name', 'N/A'):<30}                    │
+│   🏆 Universe:        {best.get('name', 'N/A'):<30}                    │
 │   ⏱️  Interval:        {best.get('interval', 'N/A')} minutes                                          │
 │   🔮 Lookback:        {best.get('lookback', 'N/A')} periods                                          │
 │   📊 Score:           {best.get('score', 0):.1f}                                               │
