@@ -297,6 +297,46 @@ class TelegramNotifier:
         """Convenience: Send completion message"""
         self.send_message(deity, EventType.COMPLETION)
     
+    def send_system_init(self, python_version: str = None, timestamp: str = None):
+        """Convenience: Send system initialization message"""
+        from lore import EventType
+        self.send_message("ARCEUS", EventType.SYSTEM_INIT,
+                         python_version=python_version, timestamp=timestamp)
+    
+    def send_system_check(self, status: str = "checking", dependencies: list = None):
+        """Convenience: Send system check message"""
+        from lore import EventType
+        deps_str = ", ".join(dependencies) if dependencies else "core dependencies"
+        self.send_message("ARCEUS", EventType.SYSTEM_CHECK,
+                         status=status, dependencies=deps_str)
+    
+    def send_data_loading(self, filename: str = None, size_gb: float = None):
+        """Convenience: Send data loading start message"""
+        from lore import EventType
+        self.send_message("NECROZMA", EventType.DATA_LOADING,
+                         filename=filename, size_gb=size_gb)
+    
+    def send_data_loaded(self, rows: int = None, memory_gb: float = None, 
+                        load_time: float = None, **kwargs):
+        """Convenience: Send data loaded complete message"""
+        from lore import EventType
+        self.send_message("NECROZMA", EventType.DATA_LOADED,
+                         rows=rows, memory_gb=memory_gb, load_time=load_time, **kwargs)
+    
+    def send_analysis_start(self, num_universes: int = None, num_workers: int = None, **kwargs):
+        """Convenience: Send analysis phase start message"""
+        from lore import EventType
+        self.send_message("NECROZMA", EventType.ANALYSIS_START,
+                         num_universes=num_universes, num_workers=num_workers, **kwargs)
+    
+    def send_universe_progress(self, completed: int, total: int, percentage: float, 
+                              power: float = None, **kwargs):
+        """Convenience: Send universe processing progress message"""
+        from lore import EventType
+        self.send_message("NECROZMA", EventType.UNIVERSE_PROGRESS,
+                         completed=completed, total=total, percentage=percentage,
+                         power=power, **kwargs)
+    
     def send_photo(self, photo_path: str, caption: str = ""):
         """
         Send a photo

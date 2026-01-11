@@ -203,9 +203,12 @@ Examples:
 # 🔍 SYSTEM CHECK
 # ═══════════════════════════════════════════════════════════════
 
-def check_system():
+def check_system(lore=None):
     """
     Verify system dependencies are available
+    
+    Args:
+        lore: Optional LoreSystem instance for notifications
     
     Returns:
         bool: True if all dependencies are available
@@ -213,6 +216,18 @@ def check_system():
     print("\n" + "═" * 80)
     print("🔍 SYSTEM CHECK - Verifying Dependencies")
     print("═" * 80)
+    
+    # Send system check notification
+    if lore:
+        from lore import EventType
+        lore.broadcast(
+            EventType.SYSTEM_CHECK,
+            message="""🔍 SYSTEM CHECK IN PROGRESS
+
+✅ Verifying all dependencies...
+⚙️ Checking NumPy, Pandas, PyArrow, SciPy
+💎 Preparing prismatic cores..."""
+        )
     
     issues = []
     
@@ -277,9 +292,37 @@ def check_system():
     if issues:
         print(f"\n❌ Missing required dependencies: {', '.join(issues)}")
         print("Install with: pip install -r requirements.txt")
+        
+        # Send failure notification
+        if lore:
+            from lore import EventType
+            lore.broadcast(
+                EventType.SYSTEM_CHECK,
+                message=f"""🔍 SYSTEM CHECK FAILED
+
+❌ Missing dependencies: {', '.join(issues)}
+⚠️ Please install requirements
+
+Status: FAIL"""
+            )
         return False
     
     print("\n✅ All required dependencies available!\n")
+    
+    # Send success notification
+    if lore:
+        from lore import EventType
+        lore.broadcast(
+            EventType.SYSTEM_CHECK,
+            message="""🔍 SYSTEM CHECK COMPLETE
+
+✅ All dependencies verified
+⚙️ NumPy, Pandas, PyArrow, SciPy ready
+💎 Prismatic cores online
+
+Status: PASS"""
+        )
+    
     return True
 
 
@@ -562,8 +605,24 @@ def main():
     print(f"\n⚡ ULTRA NECROZMA v1.0 - Supreme Analysis Engine")
     print(f"   Python {sys.version.split()[0]} | {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
     
+    # Initialize Lore System with Telegram
+    from lore import LoreSystem, EventType
+    lore = LoreSystem(enable_telegram=not args.skip_telegram)
+    
+    # Send system initialization notification
+    lore.broadcast(
+        EventType.SYSTEM_INIT,
+        message=f"""🌟 ULTRA NECROZMA AWAKENING 🌟
+
+⚡ System initializing...
+🐍 Python {sys.version.split()[0]}
+📅 {time.strftime('%Y-%m-%d %H:%M:%S')}
+
+The Blinding One prepares to analyze the markets..."""
+    )
+    
     # System check
-    if not check_system():
+    if not check_system(lore):
         sys.exit(1)
     
     # Import config (after system check)
@@ -624,7 +683,48 @@ def main():
         
         # Load data
         print(f"📊 Loading data from Parquet...\n")
+        
+        # Send data loading notification
+        parquet_size_gb = parquet_path.stat().st_size / (1024**3) if parquet_path.exists() else 0
+        lore.broadcast(
+            EventType.DATA_LOADING,
+            message=f"""💎 CRYSTAL LOADING INITIATED
+
+📊 Dataset: {parquet_path.name}
+💾 Size: {parquet_size_gb:.2f} GB
+⏱️ Loading in progress...
+
+Temporal shift commencing..."""
+        )
+        
+        load_start_time = time.time()
         df = load_crystal(parquet_path)
+        load_elapsed = time.time() - load_start_time
+        
+        # Send data loaded notification
+        rows = len(df)
+        mem_gb = df.memory_usage(deep=True).sum() / (1024**3)
+        rows_per_sec = rows / load_elapsed if load_elapsed > 0 else 0
+        
+        # Get date range
+        start_date = df['timestamp'].min() if 'timestamp' in df.columns else "N/A"
+        end_date = df['timestamp'].max() if 'timestamp' in df.columns else "N/A"
+        min_price = df['mid_price'].min() if 'mid_price' in df.columns else 0
+        max_price = df['mid_price'].max() if 'mid_price' in df.columns else 0
+        
+        lore.broadcast(
+            EventType.DATA_LOADED,
+            message=f"""✅ CRYSTAL LOADED SUCCESSFULLY
+
+📊 Rows: {rows:,}
+💾 Memory: {mem_gb:.2f} GB
+⏱️ Time: {load_elapsed:.2f}s
+⚡ Speed: {rows_per_sec:,.0f} rows/sec
+
+Period: {start_date} → {end_date}
+Price Range: {min_price:.5f} - {max_price:.5f}"""
+        )
+        
         crystal_info(df)
     
     # Test Mode Sampling (NEW - from PR #3)
@@ -660,6 +760,18 @@ def main():
     print("\n" + "═" * 80)
     print("⚡ ANALYSIS PHASE - Processing All Universes")
     print("═" * 80 + "\n")
+    
+    # Send analysis start notification
+    lore.broadcast(
+        EventType.ANALYSIS_START,
+        message=f"""⚡ ANALYSIS PHASE INITIATED
+
+🌌 Universes to process: 25
+⚡ Workers: {num_workers}
+💎 Evolution stages: Multiple
+
+The light begins to pierce through all dimensions..."""
+    )
     
     analyzer = UltraNecrozmaAnalyzer(df, num_workers=num_workers)
     analyzer.run_full_analysis()

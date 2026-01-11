@@ -25,6 +25,12 @@ import random
 
 class EventType(Enum):
     """Types of events that can occur during analysis"""
+    SYSTEM_INIT = "system_init"       # System initialization
+    SYSTEM_CHECK = "system_check"     # Dependency verification
+    DATA_LOADING = "data_loading"     # Data loading start
+    DATA_LOADED = "data_loaded"       # Data loading complete
+    ANALYSIS_START = "analysis_start" # Analysis phase start
+    UNIVERSE_PROGRESS = "universe_progress"  # Universe processing progress
     AWAKENING = "awakening"           # System startup
     PROGRESS = "progress"             # General progress update
     DISCOVERY = "discovery"           # Pattern/insight discovered
@@ -89,6 +95,14 @@ ARCEUS = Deity(
 )
 
 ARCEUS.quotes = {
+    EventType.SYSTEM_INIT: [
+        "⚪ ARCEUS: The Original One awakens. Reality begins to form...",
+        "⚪ ARCEUS: From the void, I emerge. Initializing genesis protocol...",
+    ],
+    EventType.SYSTEM_CHECK: [
+        "⚪ ARCEUS: Verifying the pillars of creation. Dependencies align...",
+        "⚪ ARCEUS: The foundation must be solid. Checking system integrity...",
+    ],
     EventType.AWAKENING: [
         "⚪ ARCEUS: From the void, I shape reality. The analysis begins...",
         "⚪ ARCEUS: The Alpha awakens. Let creation commence.",
@@ -220,6 +234,26 @@ NECROZMA = Deity(
 )
 
 NECROZMA.quotes = {
+    EventType.SYSTEM_INIT: [
+        "🌟 NECROZMA: The Blinding One stirs... Light shall be devoured.",
+        "🌟 NECROZMA: I awaken from the void. Prepare for illumination.",
+    ],
+    EventType.DATA_LOADING: [
+        "🌟 NECROZMA: The crystal forms... Light begins to coalesce.",
+        "🌟 NECROZMA: Temporal shift commencing. I sense the photons gathering...",
+    ],
+    EventType.DATA_LOADED: [
+        "🌟 NECROZMA: The crystal pulses with energy! Data illumination complete.",
+        "🌟 NECROZMA: Such radiance! {rows:,} rows of pure light absorbed.",
+    ],
+    EventType.ANALYSIS_START: [
+        "🌟 NECROZMA: The light begins to pierce through all dimensions!",
+        "🌟 NECROZMA: {num_universes} universes await my judgment. Let the devouring commence!",
+    ],
+    EventType.UNIVERSE_PROGRESS: [
+        "🌟 NECROZMA: {completed}/{total} dimensions consumed. The light intensifies!",
+        "🌟 NECROZMA: Progress: {percentage}%. Light power at {power}%!",
+    ],
     EventType.AWAKENING: [
         "🌟 NECROZMA: I hunger for light... The hunt begins.",
         "🌟 NECROZMA: Darkness fades before me. Awakening to devour all illumination.",
@@ -264,8 +298,11 @@ NECROZMA.quotes = {
 class LoreSystem:
     """Centralized lore management system"""
     
-    def __init__(self, enabled: bool = True):
+    def __init__(self, enabled: bool = True, enable_telegram: bool = True):
         self.enabled = enabled
+        self.telegram_enabled = enable_telegram
+        self.telegram_notifier = None
+        
         self.deities = {
             "ARCEUS": ARCEUS,
             "DIALGA": DIALGA,
@@ -273,6 +310,17 @@ class LoreSystem:
             "GIRATINA": GIRATINA,
             "NECROZMA": NECROZMA,
         }
+        
+        # Initialize Telegram if enabled
+        if self.telegram_enabled:
+            try:
+                from telegram_notifier import TelegramNotifier
+                self.telegram_notifier = TelegramNotifier(lore_enabled=True)
+                if not self.telegram_notifier.enabled:
+                    self.telegram_enabled = False
+            except Exception as e:
+                print(f"⚠️ Telegram initialization failed: {e}")
+                self.telegram_enabled = False
     
     def speak(self, deity_name: str, event_type: EventType, **kwargs) -> str:
         """
@@ -295,6 +343,56 @@ class LoreSystem:
         
         deity = self.deities[deity_name]
         return deity.speak(event_type, **kwargs)
+    
+    def broadcast(self, event_type: EventType, message: str = None, **kwargs):
+        """
+        Broadcast notification via Telegram if enabled
+        
+        Automatically selects appropriate deity based on event type and
+        sends formatted message through Telegram.
+        
+        Args:
+            event_type: Type of event to broadcast
+            message: Optional custom message (overrides lore quote)
+            **kwargs: Variables for message formatting
+        """
+        if not self.telegram_enabled or not self.telegram_notifier:
+            return
+        
+        try:
+            # Select deity based on event type
+            deity_map = {
+                EventType.SYSTEM_INIT: "ARCEUS",
+                EventType.SYSTEM_CHECK: "ARCEUS",
+                EventType.DATA_LOADING: "NECROZMA",
+                EventType.DATA_LOADED: "NECROZMA",
+                EventType.ANALYSIS_START: "NECROZMA",
+                EventType.UNIVERSE_PROGRESS: "NECROZMA",
+                EventType.AWAKENING: "ARCEUS",
+                EventType.PROGRESS: "DIALGA",
+                EventType.DISCOVERY: "NECROZMA",
+                EventType.LIGHT_FOUND: "NECROZMA",
+                EventType.TOP_STRATEGY: "NECROZMA",
+                EventType.WARNING: "GIRATINA",
+                EventType.REGIME_CHANGE: "GIRATINA",
+                EventType.MILESTONE: "ARCEUS",
+                EventType.INSIGHT: "PALKIA",
+                EventType.COMPLETION: "NECROZMA",
+                EventType.ERROR: "GIRATINA",
+                EventType.HEARTBEAT: "DIALGA",
+            }
+            
+            deity = deity_map.get(event_type, "NECROZMA")
+            
+            # Send via telegram notifier
+            if message:
+                self.telegram_notifier.send_message(deity, event_type, custom_message=message, **kwargs)
+            else:
+                self.telegram_notifier.send_message(deity, event_type, **kwargs)
+                
+        except Exception as e:
+            # Don't crash if telegram fails
+            print(f"⚠️ Telegram notification failed: {e}")
     
     def get_deity_info(self, deity_name: str) -> Dict:
         """Get information about a deity"""
