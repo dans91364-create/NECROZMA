@@ -217,7 +217,7 @@ def get_version(module):
     for attr in ['__version__', 'version', 'VERSION', '__VERSION__']:
         if hasattr(module, attr):
             version = getattr(module, attr)
-            # Handle version_info tuples
+            # Handle version tuples
             if isinstance(version, tuple):
                 return '.'.join(map(str, version))
             return str(version)
