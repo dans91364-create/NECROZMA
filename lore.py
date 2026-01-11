@@ -22,9 +22,9 @@ import os
 # Try to import requests for Telegram (optional)
 try:
     import requests
-    REQUESTS_AVAILABLE = True
+    HAS_REQUESTS = True
 except ImportError:
-    REQUESTS_AVAILABLE = False
+    HAS_REQUESTS = False
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -336,7 +336,7 @@ class LoreSystem:
         
         try:
             # Convert EventType enum to string if needed
-            if hasattr(event_type, 'value'):
+            if isinstance(event_type, EventType):
                 event_str = event_type.value
             else:
                 event_str = str(event_type)
@@ -471,8 +471,8 @@ class LoreSystem:
         if not self.bot_token or not self.chat_id:
             return
         
-        if not REQUESTS_AVAILABLE:
-            print("⚠️ requests library not available for Telegram")
+        if not HAS_REQUESTS:
+            print("⚠️ requests library not available for Telegram. Install with: pip install requests")
             return
         
         try:

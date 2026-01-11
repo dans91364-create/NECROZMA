@@ -17,6 +17,14 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 
 # ═══════════════════════════════════════════════════════════════
+# 🔧 CONSTANTS
+# ═══════════════════════════════════════════════════════════════
+
+# Common version attribute names to check when getting module versions
+VERSION_ATTRIBUTES = ['__version__', 'version', 'VERSION', '_version']
+
+
+# ═══════════════════════════════════════════════════════════════
 # 🌟 ULTRA NECROZMA ASCII BANNER
 # ═══════════════════════════════════════════════════════════════
 
@@ -214,7 +222,7 @@ def get_version(module):
         str: Version string or "installed" if version not found
     """
     # Try common version attributes
-    for attr in ['__version__', 'version', 'VERSION', '_version']:
+    for attr in VERSION_ATTRIBUTES:
         if hasattr(module, attr):
             version = getattr(module, attr)
             # Handle version_info tuples
