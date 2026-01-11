@@ -85,10 +85,12 @@ class TestModeSampler:
         for week_key, (start, end) in weeks.items():
             is_holiday = False
             for holiday_str in holiday_dates:
-                # Ensure timezone awareness matches
+                # Ensure timezone awareness matches start/end
                 holiday = pd.to_datetime(holiday_str)
-                if start.tz is not None:
-                    holiday = holiday.tz_localize('UTC')
+                if start.tz is not None or end.tz is not None:
+                    # If either start or end is timezone-aware, make holiday tz-aware
+                    if holiday.tz is None:
+                        holiday = holiday.tz_localize('UTC')
                     
                 if start <= holiday <= end:
                     is_holiday = True
@@ -470,7 +472,8 @@ Estimated time:   ~{est_time:.0f} minutes
         Returns:
             Estimativa em minutos
         """
-        return (n_ticks / 1_000_000) * baseline_time_per_million
+        TICKS_PER_MILLION = 1_000_000
+        return (n_ticks / TICKS_PER_MILLION) * baseline_time_per_million
 
 
 # ═══════════════════════════════════════════════════════════════

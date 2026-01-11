@@ -479,7 +479,6 @@ Random seed:        {args.test_seed}
             sys.exit(1)
         
         # Display sampling summary
-        weeks = df['timestamp'].dt.isocalendar().week.unique()
         print(f"""
 📊 SAMPLED WEEKS SELECTED:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
