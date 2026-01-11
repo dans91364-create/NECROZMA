@@ -341,14 +341,14 @@ def main():
         n_ticks = 100_000
         
         timestamps = pd.date_range("2025-01-01", periods=n_ticks, freq="1s")
-        prices = 1. 10 + np.cumsum(np.random.randn(n_ticks) * 0.00005)
+        prices = 1.10 + np.cumsum(np.random.randn(n_ticks) * 0.00005)
         
         df = pd.DataFrame({
             "timestamp": timestamps,
             "bid": prices - 0.00005,
             "ask": prices + 0.00005,
             "mid_price": prices,
-            "spread_pips": 1. 0,
+            "spread_pips": 1.0,
             "pips_change": np.concatenate([[0], np.diff(prices) * 10000])
         })
         

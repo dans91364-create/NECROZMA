@@ -922,7 +922,7 @@ if __name__ == "__main__":
     # Generate test data (random walk)
     np.random.seed(42)
     n = 500
-    prices = 1. 10 + np.cumsum(np.random.randn(n) * 0.0001)
+    prices = 1.10 + np.cumsum(np.random.randn(n) * 0.0001)
     
     print(f"📊 Test data: {n} prices")
     print(f"   Range: {prices.min():.5f} - {prices.max():.5f}")

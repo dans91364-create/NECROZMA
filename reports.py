@@ -757,7 +757,7 @@ if __name__ == "__main__":
                 "universe_5m_10lb": {
                     "name":  "universe_5m_10lb",
                     "config": {"interval": 5, "lookback": 10},
-                    "processing_time": 10. 5,
+                    "processing_time": 10.5,
                     "total_patterns": 150,
                     "results": {
                         "Pequeno": {
@@ -779,7 +779,7 @@ if __name__ == "__main__":
                 }
             }
             self.evolution_stage = "Ultra Necrozma"
-            self.light_power = 100. 0
+            self.light_power = 100.0
             self.prismatic_cores = ["Red", "Blue", "Yellow"]
         
         def get_rankings(self):

@@ -132,7 +132,7 @@ def correlation_dimension(data, max_dim=10):
     Technical: Grassberger-Procaccia algorithm approximation
     """
     if len(data) < 100:
-        return 1. 0
+        return 1.0
     
     data = np.asarray(data, dtype=np.float64)
     
@@ -438,7 +438,7 @@ def detect_patterns(prices, pips=None):
         elif current_dir < 0:
             down_streaks.append(current_streak)
         
-        features["pattern_max_up_streak"] = float(max(up_streaks)) if up_streaks else 0. 0
+        features["pattern_max_up_streak"] = float(max(up_streaks)) if up_streaks else 0.0
         features["pattern_max_down_streak"] = float(max(down_streaks)) if down_streaks else 0.0
         features["pattern_avg_up_streak"] = float(np.mean(up_streaks)) if up_streaks else 0.0
         features["pattern_avg_down_streak"] = float(np.mean(down_streaks)) if down_streaks else 0.0
@@ -475,7 +475,7 @@ def detect_patterns(prices, pips=None):
         for i in range(1, len(pips)):
             diff_sign = np.sign(pips[i]) != np.sign(pips[i-1])
             if diff_sign and abs(pips[i-1]) > 0:
-                if abs(pips[i]) > 1. 5 * abs(pips[i-1]):
+                if abs(pips[i]) > 1.5 * abs(pips[i-1]):
                     reversal_count += 1
         features["crystal_reversal"] = float(reversal_count)
         
@@ -693,7 +693,7 @@ def z_crystal_features(prices, pips=None):
                 features["z_move_charge_ratio"] = float(vol_ratio)
                 
                 # Z-Move ready if volatility compressing (low ratio) then might explode
-                features["z_move_ready"] = float(1. 0 if vol_ratio < 0.5 else 0.0)
+                features["z_move_ready"] = float(1.0 if vol_ratio < 0.5 else 0.0)
         
         # ═══ PRISMATIC SPECTRUM ═══
         # Analyze movement "colors" (different magnitude ranges)
@@ -844,7 +844,7 @@ if __name__ == "__main__":
     # Generate test data
     np.random.seed(42)
     n = 500
-    prices = 1. 10 + np.cumsum(np.random.randn(n) * 0.0001)
+    prices = 1.10 + np.cumsum(np.random.randn(n) * 0.0001)
     pips = np.diff(prices) * 10000
     
     print(f"📊 Test data:  {n} prices, {len(pips)} pips")
