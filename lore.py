@@ -345,10 +345,12 @@ class LoreSystem:
             if message:
                 final_message = message
             else:
-                # Try specific formatting first, fall back to default
+                # Get formatted message - use specific formatting or fall back to default
                 final_message = self._format_message(event_type, message, **kwargs)
-                if not final_message or (isinstance(final_message, str) and final_message.startswith(event_str)):
-                    # Use default formatting if specific formatting wasn't found
+                
+                # If we got the generic fallback (event_type.value: kwargs), use nicer default formatting
+                if final_message and ": {" in final_message and "}" in final_message:
+                    # This looks like the generic fallback, use custom default formatting
                     final_message = self._format_default_message(event_str, **kwargs)
             
             # Send via telegram
