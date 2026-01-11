@@ -927,13 +927,19 @@ const directionCtx = document.getElementById('directionChart');
 if (directionCtx) {{
     const colors = getChartColors();
     
-    // Calculate total up and down
+    // Calculate total up and down safely
     let totalUp = 0;
     let totalDown = 0;
-    {json.dumps(list(level_analysis.values()))}.forEach(level => {{
-        totalUp += level.up?.total || 0;
-        totalDown += level.down?.total || 0;
-    }});
+    const levelData = {json.dumps(list(level_analysis.values()))};
+    
+    if (Array.isArray(levelData)) {{
+        levelData.forEach(level => {{
+            if (level && typeof level === 'object') {{
+                totalUp += (level.up && level.up.total) ? level.up.total : 0;
+                totalDown += (level.down && level.down.total) ? level.down.total : 0;
+            }}
+        }});
+    }}
     
     new Chart(directionCtx, {{
         type: 'pie',
