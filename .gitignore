@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter
+.ipynb_checkpoints
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Data files
+*.parquet
+*.csv
+data/
+
+# Output
+ultra_necrozma_results/
+*.png
+*.jpg
+*.jpeg
+
+# Logs
+*.log
+logs/
+
+# Cache
+.cache/
+*.cache
+joblib_cache/
+
+# OS
+.DS_Store
+Thumbs.db
