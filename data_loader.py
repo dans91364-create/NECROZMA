@@ -325,7 +325,14 @@ def resample_to_ohlc(df, interval_minutes):
     Returns:
         pd.DataFrame: OHLC data
     """
+    from lore import print_legendary_banner
+    
+    # Show Dialga banner for temporal transformation
+    if interval_minutes >= 5:  # Only show for major timeframes
+        print_legendary_banner('dialga', count=len(df))
+    
     print(f"   🕐 Resampling to {interval_minutes}min candles (Dialga Temporal Shift)...")
+    print(f"   ⏰ Time itself bends to reveal market cycles...")
     
     # BUGFIX: Ensure timestamp column is datetime type
     if "timestamp" in df.columns:
@@ -364,7 +371,7 @@ def resample_to_ohlc(df, interval_minutes):
     
     ohlc = ohlc.reset_index()
     
-    print(f"   ✅ {len(ohlc):,} candles created")
+    print(f"   ✅ {len(ohlc):,} candles created (Temporal signatures detected)")
     
     return ohlc
 
