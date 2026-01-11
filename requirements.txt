@@ -15,10 +15,37 @@ pyarrow>=14.0.0
 scipy>=1.11.0
 
 # JIT Compilation (Light Speed Processing)
-numba>=0.58.0
+numba>=0.57.0
 
 # System Monitoring (Arceus Judgment)
 psutil>=5.9.0
 
 # Progress Display (Evolution Tracker)
 tqdm>=4.66.0
+
+# ═══════════════════════════════════════════════════════════════
+# 🆕 NEW DEPENDENCIES - PR #2 (Ultra Evolution)
+# ═══════════════════════════════════════════════════════════════
+
+# ML & Optimization
+optuna>=3.0.0              # Hyperparameter tuning with pruning
+xgboost>=1.7.0             # Gradient boosting
+lightgbm>=3.3.0            # Light gradient boosting
+scikit-learn>=1.3.0        # ML utilities
+boruta>=0.3                # Feature selection
+shap>=0.42.0               # SHAP values for interpretability
+
+# Configuration & Serialization
+PyYAML>=6.0                # YAML configuration files
+joblib>=1.3.0              # Caching and serialization
+
+# Testing
+pytest>=7.0.0              # Unit testing framework
+pytest-cov>=4.0.0          # Coverage reporting
+
+# Wavelets
+PyWavelets>=1.4.0          # Wavelet transforms
+
+# Visualization
+matplotlib>=3.7.0          # Plotting
+seaborn>=0.12.0            # Statistical visualizations
