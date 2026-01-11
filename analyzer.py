@@ -564,9 +564,8 @@ class UltraNecrozmaAnalyzer:
             
             self.evolve()
             
-            # Send progress notification every 5 universes or 20% progress
-            percentage = (i / total_universes) * 100
-            if i % 5 == 0 or percentage % 20 < (100 / total_universes):
+            # Send progress notification every 5 universes
+            if i % 5 == 0:
                 self._send_progress_notification(i, total_universes, percentage)
             
             # Checkpoint every 5 universes
@@ -619,9 +618,9 @@ class UltraNecrozmaAnalyzer:
                 
                 self.evolve()
                 
-                # Progress update and checkpoint
-                percentage = (completed / total_universes) * 100
-                if completed % 5 == 0 or percentage % 20 < (100 / total_universes):
+                # Progress update and checkpoint every 5 universes
+                if completed % 5 == 0:
+                    percentage = (completed / total_universes) * 100
                     print(f"\n   📊 Progress: {percentage:.1f}% | "
                           f"Evolution: {self.evolution_stage} | "
                           f"Power: {self.light_power:.1f}%\n")
