@@ -171,7 +171,7 @@ def light_that_burns_the_sky(analyzer):
         complexity = "MODERATE"
         print(f"      → Complexity: {complexity} (simpler patterns)")
     
-    print(f"\n   🔮 Shannon Entropy: {entropy_mean:. 3f}")
+    print(f"\n   🔮 Shannon Entropy: {entropy_mean:.3f}")
     if entropy_mean > 3.0:
         print(f"      → Randomness: HIGH (unpredictable)")
     elif entropy_mean > 2.0:
