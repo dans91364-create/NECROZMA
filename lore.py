@@ -18,6 +18,7 @@ from enum import Enum
 from typing import Dict, List
 import random
 import os
+import warnings
 
 # Try to import requests for Telegram (optional)
 try:
@@ -710,12 +711,14 @@ def print_legendary_banner(legendary: str, **kwargs):
         print(ASCII_ART[legendary])
     
     # Print a random message
-    import random
     message = random.choice(lore["messages"])
     
     try:
         formatted_message = message.format(**kwargs)
-    except KeyError:
+    except KeyError as e:
+        # Log missing format key but still print the message
+        import warnings
+        warnings.warn(f"Missing format key in legendary message: {e}", UserWarning)
         formatted_message = message
     
     print(formatted_message)

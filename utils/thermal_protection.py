@@ -16,11 +16,8 @@ Features:
 import psutil
 import threading
 import time
-import warnings
 from typing import Optional, Dict, Callable
 from pathlib import Path
-
-warnings.filterwarnings("ignore")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -64,13 +61,16 @@ THERMAL_THRESHOLDS = {
         "worker_reduction": 0.75  # Reduce to 2 workers minimum
     },
     "critical": {
-        "max": 999,  # Above 95°C
+        "max": float('inf'),  # Above 95°C
         "emoji": "⛔",
         "status": "CRITICAL",
         "action": "pause",
         "worker_reduction": 1.0
     }
 }
+
+# Thread join timeout in seconds
+THREAD_JOIN_TIMEOUT = 5.0
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -228,6 +228,9 @@ class ThermalMonitor:
         self.thread = None
         self.throttle_callback = None
         
+        # Lock for thread-safe access to shared state
+        self._lock = threading.Lock()
+        
         # Statistics
         self.max_temperature = None
         self.warning_count = 0
@@ -271,7 +274,7 @@ class ThermalMonitor:
         """Stop monitoring"""
         self.running = False
         if self.thread:
-            self.thread.join(timeout=5.0)
+            self.thread.join(timeout=THREAD_JOIN_TIMEOUT)
             self.thread = None
     
     def _monitor_loop(self):
@@ -282,31 +285,38 @@ class ThermalMonitor:
             try:
                 # Get current temperature
                 temp = get_cpu_temperature()
-                self.current_temp = temp
+                
+                # Thread-safe update of shared state
+                with self._lock:
+                    self.current_temp = temp
                 
                 # Check thermal status
                 status = check_thermal_status(temp)
-                self.current_status = status
+                
+                with self._lock:
+                    self.current_status = status
                 
                 # Track statistics
                 if temp is not None:
-                    self.temperature_history.append(temp)
-                    if self.max_temperature is None or temp > self.max_temperature:
-                        self.max_temperature = temp
+                    with self._lock:
+                        self.temperature_history.append(temp)
+                        if self.max_temperature is None or temp > self.max_temperature:
+                            self.max_temperature = temp
                 
                 # Detect status changes
                 status_changed = (last_status is None or 
                                 last_status.get("status") != status.get("status"))
                 
                 if status_changed and status.get("action") != "continue":
-                    # Count events
-                    if status["action"] == "throttle":
-                        self.throttle_count += 1
-                        if status["status"] in ["warm", "hot"]:
-                            self.warning_count += 1
-                    elif status["action"] == "pause":
-                        self.pause_count += 1
-                        self.is_paused = True
+                    # Count events (thread-safe)
+                    with self._lock:
+                        if status["action"] == "throttle":
+                            self.throttle_count += 1
+                            if status["status"] in ["warm", "hot"]:
+                                self.warning_count += 1
+                        elif status["action"] == "pause":
+                            self.pause_count += 1
+                            self.is_paused = True
                     
                     # Call throttle callback
                     if self.throttle_callback:
@@ -316,8 +326,13 @@ class ThermalMonitor:
                             print(f"⚠️ Throttle callback error: {e}")
                 
                 # If paused, check if we can resume
-                if self.is_paused and status["action"] == "continue":
-                    self.is_paused = False
+                with self._lock:
+                    paused = self.is_paused
+                
+                if paused and status["action"] == "continue":
+                    with self._lock:
+                        self.is_paused = False
+                    
                     if self.throttle_callback:
                         try:
                             self.throttle_callback({
@@ -372,21 +387,22 @@ class ThermalMonitor:
         Returns:
             dict: Statistics including max temp, event counts, etc.
         """
-        avg_temp = None
-        if self.temperature_history:
-            avg_temp = sum(self.temperature_history) / len(self.temperature_history)
-        
-        return {
-            "max_temperature": self.max_temperature,
-            "average_temperature": avg_temp,
-            "current_temperature": self.current_temp,
-            "current_status": self.current_status,
-            "warning_count": self.warning_count,
-            "throttle_count": self.throttle_count,
-            "pause_count": self.pause_count,
-            "is_paused": self.is_paused,
-            "measurements": len(self.temperature_history)
-        }
+        with self._lock:
+            avg_temp = None
+            if self.temperature_history:
+                avg_temp = sum(self.temperature_history) / len(self.temperature_history)
+            
+            return {
+                "max_temperature": self.max_temperature,
+                "average_temperature": avg_temp,
+                "current_temperature": self.current_temp,
+                "current_status": self.current_status,
+                "warning_count": self.warning_count,
+                "throttle_count": self.throttle_count,
+                "pause_count": self.pause_count,
+                "is_paused": self.is_paused,
+                "measurements": len(self.temperature_history)
+            }
 
 
 # ═══════════════════════════════════════════════════════════════
