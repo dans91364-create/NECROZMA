@@ -291,7 +291,8 @@ def process_universe(df, interval, lookback, universe_name):
             "total_occurrences": 0,
             "patterns": defaultdict(lambda: {"count": 0, "features": []}),
             "all_features": [],
-            "feature_stats": {}
+            "feature_stats": {},
+            "debug_stats": {"targets_found": 0, "features_extracted": 0, "features_failed": 0}
         } for direction in DIRECTIONS}
         for level in MOVEMENT_LEVELS.keys()
     }
@@ -315,6 +316,7 @@ def process_universe(df, interval, lookback, universe_name):
                     continue
                 
                 results[level][direction]["total_occurrences"] = len(target_list)
+                results[level][direction]["debug_stats"]["targets_found"] = len(target_list)
                 
                 # Extract features for each target
                 for target in target_list:
@@ -323,11 +325,14 @@ def process_universe(df, interval, lookback, universe_name):
                     if features:
                         # Store features
                         results[level][direction]["all_features"].append(features)
+                        results[level][direction]["debug_stats"]["features_extracted"] += 1
                         
                         # Create pattern signature
                         signature = create_pattern_signature(features)
                         results[level][direction]["patterns"][signature]["count"] += 1
                         results[level][direction]["patterns"][signature]["features"].append(features)
+                    else:
+                        results[level][direction]["debug_stats"]["features_failed"] += 1
         
         # Calculate feature statistics
         for level in MOVEMENT_LEVELS.keys():
