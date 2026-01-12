@@ -409,16 +409,34 @@ class Backtester:
         Returns:
             BacktestResults object
         """
-        # Generate signals
-        signals = strategy.generate_signals(df)
+        # ═══ VALIDATION: Check data quality ═══
+        if df is None or len(df) == 0:
+            raise ValueError("❌ DataFrame is empty!")
         
-        # Get prices
+        # Check for price column
+        if "mid_price" not in df.columns and "close" not in df.columns:
+            raise ValueError("❌ DataFrame must have 'mid_price' or 'close' column")
+        
+        # Get prices early for validation
         if "mid_price" in df.columns:
             prices = df["mid_price"]
         elif "close" in df.columns:
             prices = df["close"]
         else:
             raise ValueError("DataFrame must have 'mid_price' or 'close' column")
+        
+        # Validate price data quality
+        if prices.isnull().all():
+            raise ValueError("❌ All prices are null!")
+        
+        if prices.std() == 0:
+            raise ValueError("❌ Price data has no variation (constant prices)!")
+        
+        if (prices <= 0).any():
+            raise ValueError("❌ Price data contains zero or negative values!")
+        
+        # Generate signals
+        signals = strategy.generate_signals(df)
         
         # Simulate trades
         stop_loss = strategy.params.get("stop_loss_pips", 20)
@@ -431,6 +449,13 @@ class Backtester:
         
         # Calculate metrics
         metrics = self._calculate_metrics(trades, equity_curve)
+        
+        # ═══ WARNING: Check if results look suspicious ═══
+        if metrics["total_return"] != 0:
+            # Returns suspiciously small (like e-07)?
+            if abs(metrics["total_return"]) < 1e-5:
+                import warnings
+                warnings.warn(f"⚠️  Suspiciously small return: {metrics['total_return']:.2e}", UserWarning)
         
         # Create results object
         results = BacktestResults(

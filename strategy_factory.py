@@ -314,7 +314,7 @@ class StrategyFactory:
             max_strategies: Maximum number of strategies (default: all)
             
         Returns:
-            List of Strategy objects
+            List of Strategy objects (with unique names)
         """
         print(f"\n🏭 Generating strategies from {len(self.templates)} templates...")
         
@@ -322,6 +322,9 @@ class StrategyFactory:
         param_combinations = self.generate_parameter_combinations()
         
         print(f"   Parameter combinations: {len(param_combinations)}")
+        
+        # Track strategy names to avoid duplicates
+        strategy_names = set()
         
         for template_name in self.templates:
             if template_name not in self.template_classes:
@@ -331,9 +334,23 @@ class StrategyFactory:
             template_class = self.template_classes[template_name]
             
             for params in param_combinations:
+                # Create unique name including all key parameters
+                strategy_name = (
+                    f"{template_name}_"
+                    f"L{params['lookback_periods']}_"
+                    f"T{params['threshold']}_"
+                    f"SL{params['stop_loss_pips']}_"
+                    f"TP{params['take_profit_pips']}"
+                )
+                
+                # Check for duplicates
+                if strategy_name in strategy_names:
+                    continue  # Skip duplicate
+                
                 strategy = template_class(params)
-                strategy.name = f"{template_name}_L{params['lookback_periods']}_T{params['threshold']}"
+                strategy.name = strategy_name
                 strategies.append(strategy)
+                strategy_names.add(strategy_name)
                 
                 if max_strategies and len(strategies) >= max_strategies:
                     break
@@ -341,9 +358,20 @@ class StrategyFactory:
             if max_strategies and len(strategies) >= max_strategies:
                 break
         
-        print(f"   ✅ Generated {len(strategies)} strategies")
+        # Final deduplication check (just in case)
+        unique_strategies = []
+        seen_names = set()
+        for strategy in strategies:
+            if strategy.name not in seen_names:
+                unique_strategies.append(strategy)
+                seen_names.add(strategy.name)
         
-        return strategies
+        if len(unique_strategies) < len(strategies):
+            print(f"   ⚠️  Removed {len(strategies) - len(unique_strategies)} duplicate strategies")
+        
+        print(f"   ✅ Generated {len(unique_strategies)} unique strategies")
+        
+        return unique_strategies
     
     def create_strategy_from_rules(self, rules: List[Dict], 
                                    name: str = "CustomStrategy") -> Strategy:
