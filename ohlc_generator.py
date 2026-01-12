@@ -231,9 +231,9 @@ def validate_ohlc_data(ohlc: pd.DataFrame) -> Dict:
     results["stats"]["price_std"] = float(ohlc["close"].std())
     
     # Check for constant price
-    if results["stats"]["price_std"] == 0:
+    if results["stats"]["price_std"] < 1e-10:  # Near-zero threshold for floating point
         results["valid"] = False
-        results["errors"].append("Price data is constant (std dev = 0)")
+        results["errors"].append("Price data is constant (std dev ≈ 0)")
     
     # Check for suspicious price values
     if results["stats"]["price_min"] <= 0:
