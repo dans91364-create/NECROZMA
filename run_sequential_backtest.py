@@ -29,7 +29,8 @@ from strategy_factory import StrategyFactory
 from light_finder import LightFinder
 from light_report import LightReportGenerator
 from lore import LoreSystem, EventType
-from config import RANDOM_SEED
+from config import RANDOM_SEED, PARQUET_FILE
+from ohlc_generator import generate_ohlc_bars, validate_ohlc_data
 
 # Import psutil for monitoring (optional)
 try:
@@ -228,77 +229,155 @@ def generate_strategies_for_universe(universe_data: Dict, max_strategies: int = 
 # 📊 BACKTESTING
 # ═══════════════════════════════════════════════════════════════
 
-def create_mock_dataframe(universe_data: Dict, n_samples: int = 1000, seed: int = None) -> pd.DataFrame:
+def load_ohlc_for_universe(universe_data: Dict, parquet_path: Path = None, verbose: bool = False) -> pd.DataFrame:
     """
-    Create a mock dataframe for backtesting from universe metadata
+    Load OHLC data for a universe from Parquet file
     
-    In a real implementation, this would load actual price data.
-    For now, we create synthetic data based on universe parameters.
+    This replaces the old create_mock_dataframe function and loads real price data.
     
     Args:
         universe_data: Universe result dictionary
-        n_samples: Number of samples to generate
-        seed: Random seed for reproducibility (uses RANDOM_SEED from config if None)
+        parquet_path: Path to parquet file (default: from config)
+        verbose: Whether to print detailed output
         
     Returns:
-        DataFrame with price and feature data
+        DataFrame with OHLC price data ready for backtesting
     """
     # Extract universe parameters
     lookback = universe_data.get('lookback', 20)
     interval = universe_data.get('interval', 5)
     
-    # Generate synthetic price data
-    if seed is None:
-        seed = RANDOM_SEED
-    np.random.seed(seed)
+    if parquet_path is None:
+        parquet_path = PARQUET_FILE
+    
+    if verbose:
+        print(f"      📂 Loading OHLC data (interval={interval}min, lookback={lookback})...", flush=True)
+    
+    # Generate OHLC bars from tick data
+    try:
+        ohlc_df = generate_ohlc_bars(
+            parquet_path=parquet_path,
+            interval_minutes=interval,
+            lookback=lookback
+        )
+        
+        # Validate the data
+        validation = validate_ohlc_data(ohlc_df)
+        
+        if not validation["valid"]:
+            raise ValueError(f"OHLC validation failed: {validation['errors']}")
+        
+        if verbose and validation["warnings"]:
+            for warning in validation["warnings"]:
+                print(f"      ⚠️  {warning}", flush=True)
+        
+        # Add some basic features for strategy signals
+        ohlc_df['momentum'] = ohlc_df['close'].diff()
+        ohlc_df['volatility'] = ohlc_df['close'].rolling(20).std()
+        ohlc_df['trend_strength'] = abs(ohlc_df['close'].rolling(20).mean() - ohlc_df['close']) / ohlc_df['close']
+        
+        # Fill NaN values from calculations
+        ohlc_df = ohlc_df.fillna(method='bfill').fillna(0)
+        
+        return ohlc_df
+        
+    except FileNotFoundError:
+        print(f"      ⚠️  Parquet file not found: {parquet_path}", flush=True)
+        print(f"      ⚠️  Falling back to synthetic data for testing...", flush=True)
+        return create_mock_dataframe_fallback(universe_data, interval, lookback)
+    except Exception as e:
+        print(f"      ⚠️  Error loading OHLC data: {e}", flush=True)
+        print(f"      ⚠️  Falling back to synthetic data for testing...", flush=True)
+        return create_mock_dataframe_fallback(universe_data, interval, lookback)
+
+
+def create_mock_dataframe_fallback(universe_data: Dict, interval: int = 5, lookback: int = 20) -> pd.DataFrame:
+    """
+    Fallback: Create synthetic OHLC data for testing when real data is unavailable
+    
+    This is used only when the Parquet file is not found.
+    
+    Args:
+        universe_data: Universe result dictionary
+        interval: Interval in minutes
+        lookback: Lookback period
+        
+    Returns:
+        DataFrame with synthetic OHLC data
+    """
+    np.random.seed(RANDOM_SEED)
+    
+    # Generate more realistic number of bars (1 year of 5min data = ~105k bars)
+    # For testing, use a smaller but reasonable amount
+    n_bars = 10000
     
     # Start from a base price
     base_price = 1.10
     
-    # Generate random walk
-    returns = np.random.randn(n_samples) * 0.0001
-    prices = base_price + np.cumsum(returns)
+    # Generate random walk with realistic volatility
+    returns = np.random.randn(n_bars) * 0.0001
+    close_prices = base_price + np.cumsum(returns)
+    
+    # Generate OHLC from close prices
+    opens = np.roll(close_prices, 1)
+    opens[0] = base_price
+    
+    # High and low with some randomness
+    highs = np.maximum(opens, close_prices) + np.abs(np.random.randn(n_bars)) * 0.00005
+    lows = np.minimum(opens, close_prices) - np.abs(np.random.randn(n_bars)) * 0.00005
     
     # Create dataframe
     df = pd.DataFrame({
-        'mid_price': prices,
-        'close': prices,
-        'momentum': np.random.randn(n_samples),
-        'volatility': np.abs(np.random.randn(n_samples)),
-        'trend_strength': np.random.uniform(0, 1, n_samples),
+        'open': opens,
+        'high': highs,
+        'low': lows,
+        'close': close_prices,
+        'mid_price': close_prices,
+        'volume': np.random.randint(50, 500, n_bars),
+        'momentum': np.random.randn(n_bars) * 0.00001,
+        'volatility': np.abs(np.random.randn(n_bars)) * 0.00005,
+        'trend_strength': np.random.uniform(0, 1, n_bars),
     })
-    
-    # Add some features from universe if available
-    features = universe_data.get('features', {})
-    if features:
-        # Add a few random features to make it more realistic
-        for i, (feat_name, feat_value) in enumerate(list(features.items())[:5]):
-            if isinstance(feat_value, (int, float)):
-                # Add some variation
-                df[feat_name] = np.random.randn(n_samples) * 0.01 + float(feat_value)
     
     return df
 
 
-def backtest_universe(universe_data: Dict, strategies: List, verbose: bool = False, seed: int = None) -> Tuple[List[BacktestResults], Dict]:
+def backtest_universe(universe_data: Dict, strategies: List, parquet_path: Path = None, 
+                      verbose: bool = False) -> Tuple[List[BacktestResults], Dict]:
     """
     Backtest all strategies for a universe
     
     Args:
         universe_data: Universe result dictionary
         strategies: List of Strategy objects
+        parquet_path: Path to parquet file (default: from config)
         verbose: Whether to print detailed output
-        seed: Random seed for data generation
         
     Returns:
         Tuple of (list of BacktestResults, stats dict)
     """
     backtester = Backtester()
     
-    # Create dataframe for backtesting
-    # NOTE: In production, this should load actual historical price data
-    # For now, we use mock data
-    df = create_mock_dataframe(universe_data, n_samples=1000, seed=seed)
+    # Load OHLC data for this universe
+    # This now uses REAL price data from Parquet instead of mock data
+    df = load_ohlc_for_universe(universe_data, parquet_path, verbose)
+    
+    # Validate data before backtesting
+    if len(df) == 0:
+        raise ValueError("❌ No data loaded for backtesting!")
+    
+    if "close" not in df.columns and "mid_price" not in df.columns:
+        raise ValueError("❌ Price data missing (need 'close' or 'mid_price' column)!")
+    
+    # Check price variation
+    price_col = "mid_price" if "mid_price" in df.columns else "close"
+    price_std = df[price_col].std()
+    if price_std == 0:
+        raise ValueError("❌ Price data is constant (no variation)!")
+    
+    if verbose:
+        print(f"      📊 Data loaded: {len(df):,} bars", flush=True)
+        print(f"      📈 Price range: {df[price_col].min():.5f} - {df[price_col].max():.5f}", flush=True)
     
     results = []
     failed = 0
@@ -506,7 +585,7 @@ def main():
             # Backtest
             print(f"   📊 Backtesting... (CPU: {cpu_str})", flush=True)
             backtest_start = time.time()
-            results, backtest_stats = backtest_universe(universe_data, strategies, args.verbose, seed=idx)
+            results, backtest_stats = backtest_universe(universe_data, strategies, PARQUET_FILE, args.verbose)
             backtest_time = time.time() - backtest_start
             
             # Find best strategy for this universe
