@@ -43,7 +43,7 @@ analysis:
 
 # 🔥 PROCESSING CONFIGURATION
 processing:
-  num_workers: 16  # Ryzen 9: 16 cores available
+  num_workers: 1  # Sequential mode by default (low CPU usage)
   enable_caching: true
   enable_checkpointing: true
   checkpoint_interval: 5
@@ -81,7 +81,8 @@ output:
 
 # 🛡️ SYSTEM LIMITS
 limits:
-  memory_warning_gb: 80
+  memory_warning_gb: 50  # Sequential mode allows higher RAM usage
+  max_memory_gb: 50  # Soft limit for cleanup triggers
   max_universe_time: 600  # seconds (10 minutes)
 
 # 🧠 MACHINE LEARNING CONFIGURATION
