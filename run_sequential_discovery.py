@@ -18,6 +18,7 @@ import gc
 sys.path.insert(0, str(Path(__file__).parent))
 
 from data_chunker import DataChunker
+from config import MAX_MEMORY_GB
 
 # Import psutil for monitoring
 try:
@@ -94,7 +95,7 @@ def main():
     print(f"   Universes:  {len(universes)}")
     print(f"   Mode:       SEQUENTIAL (1 universe at a time)")
     print(f"   CPU limit:  85%")
-    print(f"   RAM limit:  50GB (soft, can go higher)")
+    print(f"   RAM limit:  {MAX_MEMORY_GB:.0f}GB (soft, can go higher)")
     print()
     
     # Create chunks if they don't exist
@@ -174,7 +175,7 @@ def main():
                 
                 # Light cleanup
                 del df
-                if mem_gb > 50:
+                if mem_gb > MAX_MEMORY_GB:
                     print(f"     💾 Cleaning up memory (RAM: {mem_gb:.1f}GB)...", flush=True)
                     gc.collect()
             else:

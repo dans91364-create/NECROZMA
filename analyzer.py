@@ -31,7 +31,7 @@ from config import (
     INTERVALS, LOOKBACKS, MOVEMENT_LEVELS, DIRECTIONS,
     NUM_WORKERS, MIN_SAMPLES, FEATURE_GROUPS,
     CONFIDENCE_THRESHOLDS, TOP_PATTERNS_PER_LEVEL,
-    get_all_configs, get_output_dirs, THEME
+    get_all_configs, get_output_dirs, THEME, MAX_MEMORY_GB
 )
 from data_loader import resample_to_ohlc
 from features_core import extract_core_features
@@ -620,10 +620,10 @@ class UltraNecrozmaAnalyzer:
                 
                 self._save_checkpoint(i)
                 
-                # Cleanup if RAM > 50GB
+                # Cleanup if RAM > MAX_MEMORY_GB
                 if has_psutil:
                     mem_gb = psutil.virtual_memory().used / 1e9
-                    if mem_gb > 50:
+                    if mem_gb > MAX_MEMORY_GB:
                         print(f"\n   💾 RAM usage high ({mem_gb:.1f}GB), running cleanup...", flush=True)
                         gc.collect()
                         mem_after = psutil.virtual_memory().used / 1e9
