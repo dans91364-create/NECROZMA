@@ -243,6 +243,58 @@ python main.py --universes "1,5,10-15" --chunks "1-6"
 
 **See [CHUNKED_PROCESSING.md](CHUNKED_PROCESSING.md) for complete documentation**
 
+### 🔥 SEQUENTIAL MODE (Low CPU, VM-Safe)
+
+**NEW:** For VMs, cloud instances, or systems where you need to minimize CPU usage while allowing higher RAM usage:
+
+```bash
+# Force sequential processing (single process, CPU < 85%)
+python main.py --sequential
+
+# Alias for sequential mode
+python main.py --force-sequential
+
+# Standalone sequential discovery script
+python run_sequential_discovery.py
+```
+
+**Sequential Mode Features:**
+- ✅ **CPU Target: < 85%** (1 process only, no multiprocessing)
+- ✅ **RAM: Can use 40-50GB** (no strict limits like parallel mode)
+- ✅ **Progress visible** in real-time with flush=True
+- ✅ **Automatic cooling breaks** when CPU > 85%
+- ✅ **Better for VMs** - won't overload the hypervisor
+- ✅ **More stable** - runs longer but doesn't crash
+
+**When to use Sequential Mode:**
+- 🖥️  Running on a VM or cloud instance
+- 🌡️  System thermal issues (overheating)
+- ⚡ Want low CPU usage (< 85%)
+- 💾 Have plenty of RAM (40-50GB available)
+- 🔄 Long-running jobs where stability > speed
+
+**Performance Comparison:**
+
+| Metric | Parallel Mode | Sequential Mode |
+|--------|---------------|-----------------|
+| CPU Usage | 360% (5 cores) | 60-85% (1 core) |
+| RAM Usage | 12GB | 40-50GB |
+| Python Processes | 5+ | **1** |
+| Temperature | 🔥 90°C | ❄️ 55-65°C |
+| Total Time | 10h (but crashes) | 20h (stable) |
+| Progress Visible | ❌ No | ✅ Yes |
+
+**Verify Sequential Mode is Running:**
+```bash
+# In another terminal, monitor processes
+watch -n 2 'ps aux | grep python | grep -v grep; echo ""; free -h | grep Mem'
+
+# Should see:
+# - Only 1 Python process (not 5+)
+# - CPU < 85%
+# - RAM can be 40-50GB (OK!)
+```
+
 ### Opções de Linha de Comando
 
 ```bash

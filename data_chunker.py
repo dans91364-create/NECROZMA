@@ -82,6 +82,9 @@ class DataChunker:
         Returns:
             List[Path]: Paths to chunk files
         """
+        # Convert to Path if string (fix for line 85 bug)
+        parquet_path = Path(parquet_path)
+        
         print(f"\n💎 Splitting {parquet_path.name} into {chunk_size} chunks...")
         print("─" * 60)
         

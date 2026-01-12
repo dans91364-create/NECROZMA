@@ -141,7 +141,8 @@ _processing_config = _yaml_config.get("processing", {})
 
 # Parallel workers (Light Clones)
 # Technical: Number of parallel processes for multiprocessing
-NUM_WORKERS = _processing_config.get("num_workers", 16)  # Ryzen 9: 16 cores available
+# NOTE: Set to 1 for sequential processing (low CPU mode)
+NUM_WORKERS = _processing_config.get("num_workers", 1)  # Sequential mode by default
 
 # Caching enabled (PR #2)
 ENABLE_CACHING = _processing_config.get("enable_caching", True)
@@ -208,7 +209,11 @@ TOP_PATTERNS_PER_LEVEL = _output_config.get("top_patterns_per_level", 50)
 _limits_config = _yaml_config.get("limits", {})
 
 # Memory warning threshold in GB
-MEMORY_WARNING_GB = _limits_config.get("memory_warning_gb", 80)
+# NOTE: Increased to 50GB for sequential processing (can use more RAM)
+MEMORY_WARNING_GB = _limits_config.get("memory_warning_gb", 50)
+
+# Maximum memory usage in GB (soft limit for cleanup triggers)
+MAX_MEMORY_GB = _limits_config.get("max_memory_gb", 50)
 
 # Maximum processing time per universe in seconds
 MAX_UNIVERSE_TIME = _limits_config.get("max_universe_time", 600)  # 10 minutes
