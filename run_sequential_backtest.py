@@ -14,6 +14,7 @@ import json
 import time
 import gc
 import argparse
+import traceback
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
@@ -28,6 +29,7 @@ from strategy_factory import StrategyFactory
 from light_finder import LightFinder
 from light_report import LightReportGenerator
 from lore import LoreSystem, EventType
+from config import RANDOM_SEED
 
 # Import psutil for monitoring (optional)
 try:
@@ -226,7 +228,7 @@ def generate_strategies_for_universe(universe_data: Dict, max_strategies: int = 
 # 📊 BACKTESTING
 # ═══════════════════════════════════════════════════════════════
 
-def create_mock_dataframe(universe_data: Dict, n_samples: int = 1000) -> pd.DataFrame:
+def create_mock_dataframe(universe_data: Dict, n_samples: int = 1000, seed: int = None) -> pd.DataFrame:
     """
     Create a mock dataframe for backtesting from universe metadata
     
@@ -236,6 +238,7 @@ def create_mock_dataframe(universe_data: Dict, n_samples: int = 1000) -> pd.Data
     Args:
         universe_data: Universe result dictionary
         n_samples: Number of samples to generate
+        seed: Random seed for reproducibility (uses RANDOM_SEED from config if None)
         
     Returns:
         DataFrame with price and feature data
@@ -245,7 +248,9 @@ def create_mock_dataframe(universe_data: Dict, n_samples: int = 1000) -> pd.Data
     interval = universe_data.get('interval', 5)
     
     # Generate synthetic price data
-    np.random.seed(42)
+    if seed is None:
+        seed = RANDOM_SEED
+    np.random.seed(seed)
     
     # Start from a base price
     base_price = 1.10
@@ -275,7 +280,7 @@ def create_mock_dataframe(universe_data: Dict, n_samples: int = 1000) -> pd.Data
     return df
 
 
-def backtest_universe(universe_data: Dict, strategies: List, verbose: bool = False) -> Tuple[List[BacktestResults], Dict]:
+def backtest_universe(universe_data: Dict, strategies: List, verbose: bool = False, seed: int = None) -> Tuple[List[BacktestResults], Dict]:
     """
     Backtest all strategies for a universe
     
@@ -283,6 +288,7 @@ def backtest_universe(universe_data: Dict, strategies: List, verbose: bool = Fal
         universe_data: Universe result dictionary
         strategies: List of Strategy objects
         verbose: Whether to print detailed output
+        seed: Random seed for data generation
         
     Returns:
         Tuple of (list of BacktestResults, stats dict)
@@ -292,7 +298,7 @@ def backtest_universe(universe_data: Dict, strategies: List, verbose: bool = Fal
     # Create dataframe for backtesting
     # NOTE: In production, this should load actual historical price data
     # For now, we use mock data
-    df = create_mock_dataframe(universe_data, n_samples=1000)
+    df = create_mock_dataframe(universe_data, n_samples=1000, seed=seed)
     
     results = []
     failed = 0
@@ -475,7 +481,8 @@ def main():
     # Track overall statistics
     start_time = time.time()
     all_results = []
-    all_backtest_results = {}  # Strategy name -> BacktestResults
+    all_backtest_results = {}  # (universe_name, strategy_name) -> BacktestResults for unique key
+    all_backtest_results_list = []  # List of all BacktestResults for ranking
     total_strategies_tested = 0
     
     # Process each universe sequentially
@@ -499,7 +506,7 @@ def main():
             # Backtest
             print(f"   📊 Backtesting... (CPU: {cpu_str})", flush=True)
             backtest_start = time.time()
-            results, backtest_stats = backtest_universe(universe_data, strategies, args.verbose)
+            results, backtest_stats = backtest_universe(universe_data, strategies, args.verbose, seed=idx)
             backtest_time = time.time() - backtest_start
             
             # Find best strategy for this universe
@@ -509,8 +516,10 @@ def main():
                 if result.sharpe_ratio > best_sharpe:
                     best_sharpe = result.sharpe_ratio
                     best_result = result
-                # Store in global dict
-                all_backtest_results[result.strategy_name] = result
+                # Store in global dict with unique key (universe_name, strategy_name)
+                all_backtest_results[(universe_name, result.strategy_name)] = result
+                # Also add to list for ranking
+                all_backtest_results_list.append(result)
             
             print(f"   ✅ Complete! Best Sharpe: {best_sharpe:.2f}", flush=True)
             
@@ -542,7 +551,6 @@ def main():
         except Exception as e:
             print(f"   ❌ Error processing universe: {e}", flush=True)
             if args.verbose:
-                import traceback
                 traceback.print_exc()
             continue
     
@@ -552,8 +560,6 @@ def main():
     print(f"\n{'═'*63}", flush=True)
     print(f"🌟 Ranking strategies...", flush=True)
     print(f"{'═'*63}", flush=True)
-    
-    all_backtest_results_list = list(all_backtest_results.values())
     
     if all_backtest_results_list:
         finder = LightFinder()
@@ -576,10 +582,15 @@ def main():
     # Generate final Light Report
     print(f"\n📝 Generating final Light Report...", flush=True)
     
+    # Convert backtest results list to dict for report (use last occurrence of each strategy name)
+    backtest_results_dict = {}
+    for result in all_backtest_results_list:
+        backtest_results_dict[result.strategy_name] = result
+    
     report_generator = LightReportGenerator(output_dir=output_dir)
     report = report_generator.generate_report(
         top_strategies=ranked_strategies,
-        all_backtest_results=all_backtest_results,
+        all_backtest_results=backtest_results_dict,
         total_strategies=total_strategies_tested
     )
     
