@@ -160,7 +160,14 @@ Examples:
     parser.add_argument(
         "--sequential",
         action="store_true",
-        help="Disable multiprocessing (use single thread)"
+        help="Force sequential processing (recommended for VMs, low CPU mode, single thread)"
+    )
+    
+    parser.add_argument(
+        "--force-sequential",
+        action="store_true",
+        dest="sequential",
+        help="Alias for --sequential (force single-threaded processing)"
     )
     
     parser.add_argument(
@@ -1057,7 +1064,9 @@ def main():
     )
     
     analyzer = UltraNecrozmaAnalyzer(df, lore_system=lore)
-    analyzer.run_analysis()
+    # Use parallel only if num_workers > 1 and not in sequential mode
+    use_parallel = (num_workers > 1) and not args.sequential
+    analyzer.run_analysis(parallel=use_parallel)
     
     # Strategy discovery (if enabled)
     discovery_results = None

@@ -475,13 +475,13 @@ class UltraNecrozmaAnalyzer:
             self.prismatic_cores.append(color)
             print(f"   💎 Prismatic Core collected: {color} ({len(self.prismatic_cores)}/7)")
     
-    def run_analysis(self, parallel=True):
+    def run_analysis(self, parallel=False):
         """
         Run the complete analysis (Light That Burns The Sky)
         Technical: Process all universes with optional parallelization
         
         Args:
-            parallel: Use multiprocessing if True
+            parallel: Use multiprocessing if True (DEFAULT: False for low CPU usage)
             
         Returns: 
             dict: All analysis results
@@ -499,8 +499,12 @@ class UltraNecrozmaAnalyzer:
         analysis_start = time.time()
         
         if parallel and NUM_WORKERS > 1:
+            print("⚠️  WARNING: Parallel mode may cause high CPU usage!")
+            print("   Recommended: Use sequential mode for VMs and low CPU systems\n")
             self._run_parallel()
         else:
+            if parallel and NUM_WORKERS == 1:
+                print("ℹ️  Parallel mode requested but NUM_WORKERS=1, using sequential\n")
             self._run_sequential()
         
         analysis_time = time.time() - analysis_start
@@ -550,11 +554,21 @@ class UltraNecrozmaAnalyzer:
     
     def _run_sequential(self):
         """Run analysis sequentially (Single Thread Mode)"""
-        print(f"🔄 Running sequential analysis ({len(self.configs)} universes)...")
+        print(f"🔄 Running SEQUENTIAL analysis ({len(self.configs)} universes)...")
+        print(f"   Mode: LOW CPU (1 process, < 85% target)")
+        print(f"   RAM: Can use up to 50GB")
         print("─" * 60)
         
+        # Import psutil for monitoring
+        try:
+            import psutil
+            has_psutil = True
+        except ImportError:
+            has_psutil = False
+            print("⚠️  psutil not available - CPU/RAM monitoring disabled")
+        
         for i, config in enumerate(self.configs, 1):
-            print(f"\n🌌 [{i}/{len(self.configs)}] Creating {config['name']}...")
+            print(f"\n🌌 [{i}/{len(self.configs)}] Creating {config['name']}...", flush=True)
             
             result = process_universe(
                 self.df,
@@ -568,10 +582,18 @@ class UltraNecrozmaAnalyzer:
                 self.universes_processed += 1
                 self.total_patterns += result["total_patterns"]
                 
-                print(f"   ✅ {result['total_patterns']} patterns found "
-                      f"({result['processing_time']:.1f}s)")
+                # Get CPU and RAM stats
+                if has_psutil:
+                    cpu = psutil.cpu_percent(interval=0.5)
+                    mem_gb = psutil.virtual_memory().used / 1e9
+                    print(f"   ✅ {result['total_patterns']:,} patterns found "
+                          f"({result['processing_time']:.1f}s) | "
+                          f"CPU: {cpu:.1f}% | RAM: {mem_gb:.1f}GB", flush=True)
+                else:
+                    print(f"   ✅ {result['total_patterns']:,} patterns found "
+                          f"({result['processing_time']:.1f}s)", flush=True)
             else:
-                print(f"   ⚠️ No results for {config['name']}")
+                print(f"   ⚠️ No results for {config['name']}", flush=True)
             
             self.evolve()
             
@@ -597,7 +619,17 @@ class UltraNecrozmaAnalyzer:
                         pass
                 
                 self._save_checkpoint(i)
-                gc.collect()
+                
+                # Cleanup if RAM > 50GB
+                if has_psutil:
+                    mem_gb = psutil.virtual_memory().used / 1e9
+                    if mem_gb > 50:
+                        print(f"\n   💾 RAM usage high ({mem_gb:.1f}GB), running cleanup...", flush=True)
+                        gc.collect()
+                        mem_after = psutil.virtual_memory().used / 1e9
+                        print(f"   💾 RAM after cleanup: {mem_after:.1f}GB\n", flush=True)
+                    else:
+                        gc.collect()
     
     def _run_parallel(self):
         """Run analysis in parallel (Photon Burst Mode)"""
