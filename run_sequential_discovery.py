@@ -30,7 +30,7 @@ except ImportError:
 
 def cooling_break(duration=120, cpu_threshold=85):
     """
-    Pausa se CPU muito alto
+    Pause if CPU is too high
     
     Args:
         duration: Duration in seconds
@@ -80,7 +80,7 @@ def main():
     RESULTS_DIR = Path('results')
     RESULTS_DIR.mkdir(exist_ok=True)
     
-    # Universos - as specified in problem statement
+    # Universes - as specified in problem statement
     timeframes = [5]
     lookbacks = [5, 10, 20, 30, 50, 75, 100, 120, 150, 180, 200, 220, 250, 
                  270, 300, 350, 400, 450, 500, 600, 700, 800, 900, 1000, 1200]
@@ -97,7 +97,7 @@ def main():
     print(f"   RAM limit:  50GB (soft, can go higher)")
     print()
     
-    # Criar chunks se não existir
+    # Create chunks if they don't exist
     if not CHUNKS_DIR.exists() or len(list(CHUNKS_DIR.glob('*.parquet'))) == 0:
         print("📦 Creating chunks...", flush=True)
         chunker = DataChunker()
@@ -107,7 +107,7 @@ def main():
     chunks = sorted(CHUNKS_DIR.glob('chunk_*.parquet'))
     print(f"📁 Found {len(chunks)} chunks\n")
     
-    # Processar
+    # Process
     total_start = time.time()
     
     # Import analyzer here to avoid early loading
@@ -121,16 +121,16 @@ def main():
         
         universe_results = []
         
-        # Processar cada chunk SEQUENCIALMENTE
+        # Process each chunk SEQUENTIALLY
         for chunk_idx, chunk_file in enumerate(chunks):
             print(f"  📦 Chunk {chunk_idx+1}/{len(chunks)}: {chunk_file.name}", flush=True)
             
             chunk_start = time.time()
             
-            # Carregar chunk (RAM ok)
+            # Load chunk (RAM ok)
             df = pd.read_parquet(chunk_file)
             
-            # Processar
+            # Process
             try:
                 # Import and use the real analyzer
                 from data_loader import resample_to_ohlc
@@ -168,11 +168,11 @@ def main():
                 print(f"     ⏱️  {elapsed:6.1f}s | Patterns: {pattern_count:7,} | "
                       f"CPU: {cpu:5.1f}% | RAM: {mem_gb:5.1f}GB", flush=True)
                 
-                # Cooling break se CPU alto
+                # Cooling break if CPU high
                 if cpu > 85:
                     cooling_break(60, cpu_threshold=85)
                 
-                # Cleanup leve
+                # Light cleanup
                 del df
                 if mem_gb > 50:
                     print(f"     💾 Cleaning up memory (RAM: {mem_gb:.1f}GB)...", flush=True)
@@ -182,7 +182,7 @@ def main():
                 del df
                 gc.collect()
         
-        # Merge resultados do universo
+        # Merge universe results
         if universe_results:
             total_patterns = sum(r['patterns'] for r in universe_results)
             
@@ -190,15 +190,15 @@ def main():
             print(f"   Total patterns: {total_patterns:,}")
             print(f"   Chunks processed: {len(universe_results)}\n")
             
-            # Cleanup entre universos
+            # Cleanup between universes
             del universe_results
             gc.collect()
         
-        # Cooling break a cada 5 universos
+        # Cooling break every 5 universes
         if (universe_idx + 1) % 5 == 0 and universe_idx + 1 < len(universes):
             cooling_break(120, cpu_threshold=70)
     
-    # Fim
+    # End
     total_elapsed = time.time() - total_start
     print("\n" + "═"*70)
     print("🎉 DISCOVERY COMPLETE!")
