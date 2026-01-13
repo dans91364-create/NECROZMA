@@ -342,7 +342,7 @@ def create_mock_dataframe_fallback(universe_data: Dict, interval: int = 5, lookb
         lookback: Lookback period
         
     Returns:
-        DataFrame with synthetic OHLC data
+        DataFrame with synthetic OHLC data + extracted features
     """
     np.random.seed(RANDOM_SEED)
     
@@ -365,20 +365,26 @@ def create_mock_dataframe_fallback(universe_data: Dict, interval: int = 5, lookb
     highs = np.maximum(opens, close_prices) + np.abs(np.random.randn(n_bars)) * 0.00005
     lows = np.minimum(opens, close_prices) - np.abs(np.random.randn(n_bars)) * 0.00005
     
-    # Create dataframe
-    df = pd.DataFrame({
+    # Create OHLC dataframe
+    ohlc_df = pd.DataFrame({
         'open': opens,
         'high': highs,
         'low': lows,
         'close': close_prices,
         'mid_price': close_prices,
         'volume': np.random.randint(50, 500, n_bars),
-        'momentum': np.random.randn(n_bars) * 0.00001,
-        'volatility': np.abs(np.random.randn(n_bars)) * 0.00005,
-        'trend_strength': np.random.uniform(0, 1, n_bars),
     })
     
-    return df
+    # ✅ Extract features from universe JSON patterns
+    features_df = extract_features_from_universe(universe_data)
+    
+    # ✅ Combine OHLC + features
+    combined_df = combine_ohlc_with_features(ohlc_df, features_df)
+    
+    # Fill NaN values
+    combined_df = combined_df.fillna(method='bfill').fillna(0)
+    
+    return combined_df
 
 
 def backtest_universe(universe_data: Dict, strategies: List, parquet_path: Path = None, 
