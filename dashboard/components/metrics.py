@@ -144,12 +144,14 @@ def calculate_sl_tp_matrix(strategies_df: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame()
     
     if 'strategy_name' in strategies_df.columns:
-        strategies_df[['sl', 'tp']] = strategies_df['strategy_name'].apply(
+        # Create a copy to avoid modifying the original DataFrame
+        df_copy = strategies_df.copy()
+        df_copy[['sl', 'tp']] = df_copy['strategy_name'].apply(
             lambda x: pd.Series(extract_sl_tp_from_name(x))
         )
         
         # Filter rows with SL/TP data
-        valid_rows = strategies_df.dropna(subset=['sl', 'tp'])
+        valid_rows = df_copy.dropna(subset=['sl', 'tp'])
         
         if not valid_rows.empty:
             matrix = valid_rows.groupby(['sl', 'tp'])['total_return'].mean().unstack(fill_value=0)

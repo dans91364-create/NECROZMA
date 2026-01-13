@@ -7,6 +7,7 @@ Utilities for loading backtest results from JSON files
 """
 
 import json
+import re
 import pandas as pd
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -229,8 +230,6 @@ def extract_sl_tp_from_name(strategy_name):
         >>> extract_sl_tp_from_name('NoSLTP_Strategy')
         (None, None)
     """
-    import re
-    
     if not strategy_name:
         return None, None
     
