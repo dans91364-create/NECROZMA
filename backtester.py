@@ -106,6 +106,32 @@ class Backtester:
         """
         self.config = config or BACKTEST_CONFIG
         
+        # Extract position sizing parameters
+        capital_config = self.config.get('capital', {})
+        self.initial_capital = capital_config.get('initial_capital', 10000)
+        self.lot_size = capital_config.get('default_lot_size', 0.1)
+        self.pip_value_per_lot = capital_config.get('pip_value_per_lot', 10)
+        self.pip_decimal_places = capital_config.get('pip_decimal_places', 4)
+    
+    def _pips_to_usd(self, pips: float) -> float:
+        """
+        Convert pips to USD based on lot size
+        
+        For EUR/USD with 0.1 lot:
+        - 1 pip = 0.0001 price change
+        - pip value = $10 per pip per standard lot (1.0 lot)
+        - For 0.1 lot: pip value = $10 * 0.1 = $1 per pip
+        - 20 pips = 20 * $1 = $20
+        
+        Args:
+            pips: Number of pips (positive or negative)
+            
+        Returns:
+            USD value of the pips for current lot size
+        """
+        pip_value = self.pip_value_per_lot * self.lot_size
+        return pips * pip_value
+        
     def _calculate_returns(self, trades: pd.DataFrame) -> pd.Series:
         """Calculate returns from trades"""
         if len(trades) == 0:
@@ -116,14 +142,20 @@ class Backtester:
     
     def _calculate_equity_curve(self, trades: pd.DataFrame, 
                                 initial_capital: float = 10000) -> pd.Series:
-        """Calculate equity curve"""
+        """Calculate equity curve starting from initial capital"""
         if len(trades) == 0:
             return pd.Series([initial_capital])
         
-        cumulative_pnl = trades["pnl"].cumsum()
-        equity = initial_capital + cumulative_pnl
+        # Build equity curve: start with initial capital, then add each trade's PnL
+        equity_values = [initial_capital]
+        running_capital = initial_capital
         
-        return equity
+        for pnl in trades["pnl"]:
+            running_capital += pnl
+            equity_values.append(running_capital)
+        
+        # Return as Series (first value is initial capital, rest track after each trade)
+        return pd.Series(equity_values)
     
     def _calculate_sharpe_ratio(self, returns: pd.Series, 
                                risk_free_rate: float = 0.0) -> float:
@@ -274,17 +306,22 @@ class Backtester:
                        take_profit_pips: float = 40,
                        pip_value: float = 0.0001) -> pd.DataFrame:
         """
-        Simulate trades from signals
+        Simulate trades from signals with Forex position sizing
+        
+        PnL is calculated in USD based on lot size:
+        - Pips are calculated from price changes
+        - Pips are converted to USD using lot_size and pip_value_per_lot
+        - For 0.1 lot EUR/USD: 20 pips = 20 * ($10/pip/lot * 0.1) = $20
         
         Args:
             signals: Series with signals (1=buy, -1=sell, 0=neutral)
             prices: Series with prices
             stop_loss_pips: Stop loss in pips
             take_profit_pips: Take profit in pips
-            pip_value: Value of 1 pip
+            pip_value: Value of 1 pip in price terms (0.0001 for EUR/USD)
             
         Returns:
-            DataFrame with trade results
+            DataFrame with trade results (pnl in USD)
         """
         trades = []
         in_position = False
@@ -303,8 +340,8 @@ class Backtester:
                     
                     # Check stop/target
                     if pips <= -stop_loss_pips:
-                        # Stop loss hit
-                        pnl = -stop_loss_pips * pip_value
+                        # Stop loss hit - convert pips to USD
+                        pnl = self._pips_to_usd(-stop_loss_pips)
                         trades.append({
                             "entry_idx": entry_idx,
                             "exit_idx": i,
@@ -316,8 +353,8 @@ class Backtester:
                         })
                         in_position = False
                     elif pips >= take_profit_pips:
-                        # Take profit hit
-                        pnl = take_profit_pips * pip_value
+                        # Take profit hit - convert pips to USD
+                        pnl = self._pips_to_usd(take_profit_pips)
                         trades.append({
                             "entry_idx": entry_idx,
                             "exit_idx": i,
@@ -329,8 +366,8 @@ class Backtester:
                         })
                         in_position = False
                     elif signals.iloc[i] == -1:
-                        # Exit signal
-                        pnl = pips * pip_value
+                        # Exit signal - convert pips to USD
+                        pnl = self._pips_to_usd(pips)
                         trades.append({
                             "entry_idx": entry_idx,
                             "exit_idx": i,
@@ -348,8 +385,8 @@ class Backtester:
                     
                     # Check stop/target
                     if pips <= -stop_loss_pips:
-                        # Stop loss hit
-                        pnl = -stop_loss_pips * pip_value
+                        # Stop loss hit - convert pips to USD
+                        pnl = self._pips_to_usd(-stop_loss_pips)
                         trades.append({
                             "entry_idx": entry_idx,
                             "exit_idx": i,
@@ -361,8 +398,8 @@ class Backtester:
                         })
                         in_position = False
                     elif pips >= take_profit_pips:
-                        # Take profit hit
-                        pnl = take_profit_pips * pip_value
+                        # Take profit hit - convert pips to USD
+                        pnl = self._pips_to_usd(take_profit_pips)
                         trades.append({
                             "entry_idx": entry_idx,
                             "exit_idx": i,
@@ -374,8 +411,8 @@ class Backtester:
                         })
                         in_position = False
                     elif signals.iloc[i] == 1:
-                        # Exit signal
-                        pnl = pips * pip_value
+                        # Exit signal - convert pips to USD
+                        pnl = self._pips_to_usd(pips)
                         trades.append({
                             "entry_idx": entry_idx,
                             "exit_idx": i,
@@ -397,18 +434,22 @@ class Backtester:
         return pd.DataFrame(trades)
     
     def backtest(self, strategy, df: pd.DataFrame,
-                initial_capital: float = 10000) -> BacktestResults:
+                initial_capital: float = None) -> BacktestResults:
         """
         Backtest a strategy
         
         Args:
             strategy: Strategy object with generate_signals method
             df: DataFrame with price and feature data
-            initial_capital: Starting capital
+            initial_capital: Starting capital (uses config default if None)
             
         Returns:
             BacktestResults object
         """
+        # Use config default if not specified
+        if initial_capital is None:
+            initial_capital = self.initial_capital
+        
         # ═══ VALIDATION: Check data quality ═══
         if df is None or len(df) == 0:
             raise ValueError("❌ DataFrame is empty!")

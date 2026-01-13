@@ -120,6 +120,14 @@ ml:
 
 # 📈 BACKTEST CONFIGURATION
 backtest:
+  # Capital & Position Sizing
+  capital:
+    initial_capital: 10000        # Starting capital in USD
+    default_lot_size: 0.1         # Default lot size (0.1 = 10,000 units)
+    pip_value_per_lot: 10         # $10 per pip for 1.0 lot EUR/USD
+    pip_decimal_places: 4         # EUR/USD uses 4 decimals (0.0001 = 1 pip)
+    leverage: 100                 # Forex leverage (1:100)
+  
   # Transaction Costs
   costs:
     base_spread_pips: 0.8
