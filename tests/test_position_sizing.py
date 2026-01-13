@@ -18,6 +18,99 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from backtester import Backtester
 
 
+# ═══════════════════════════════════════════════════════════════
+# 🧪 TEST HELPERS
+# ═══════════════════════════════════════════════════════════════
+
+class SimpleStrategy:
+    """Simple test strategy for backtesting"""
+    
+    def __init__(self, name="SimpleTest", stop_loss=100, take_profit=100):
+        self.name = name
+        self.params = {
+            "stop_loss_pips": stop_loss,
+            "take_profit_pips": take_profit
+        }
+    
+    def generate_signals(self, df):
+        """Generate simple buy/sell signals"""
+        signals = pd.Series(0, index=df.index)
+        if len(signals) > 30:
+            signals.iloc[10] = 1   # Buy
+            signals.iloc[30] = -1  # Sell
+        return signals
+
+
+class StopLossStrategy:
+    """Strategy with specific stop loss for testing"""
+    
+    def __init__(self, stop_loss_pips=15):
+        self.name = "StopLossTest"
+        self.params = {
+            "stop_loss_pips": stop_loss_pips,
+            "take_profit_pips": 100
+        }
+    
+    def generate_signals(self, df):
+        signals = pd.Series(0, index=df.index)
+        if len(signals) > 10:
+            signals.iloc[10] = 1   # Buy (price will drop, hitting stop)
+        return signals
+
+
+class TakeProfitStrategy:
+    """Strategy with specific take profit for testing"""
+    
+    def __init__(self, take_profit_pips=30):
+        self.name = "TakeProfitTest"
+        self.params = {
+            "stop_loss_pips": 100,
+            "take_profit_pips": take_profit_pips
+        }
+    
+    def generate_signals(self, df):
+        signals = pd.Series(0, index=df.index)
+        if len(signals) > 10:
+            signals.iloc[10] = 1   # Buy (price will rise, hitting TP)
+        return signals
+
+
+class TrendStrategy:
+    """Trend following strategy for testing"""
+    
+    def __init__(self):
+        self.name = "TrendTest"
+        self.params = {"stop_loss_pips": 20, "take_profit_pips": 40}
+    
+    def generate_signals(self, df):
+        # Buy when price is rising
+        signals = pd.Series(0, index=df.index)
+        for i in range(20, len(df) - 20, 40):
+            signals.iloc[i] = 1   # Buy
+            signals.iloc[i + 20] = -1  # Sell
+        return signals
+
+
+class VolatileStrategy:
+    """Strategy for testing drawdown scenarios"""
+    
+    def __init__(self):
+        self.name = "VolatileTest"
+        self.params = {"stop_loss_pips": 60, "take_profit_pips": 40}
+    
+    def generate_signals(self, df):
+        signals = pd.Series(0, index=df.index)
+        if len(signals) > 250:
+            signals.iloc[50] = 1   # Buy before drawdown
+            signals.iloc[250] = -1  # Sell after
+        return signals
+
+
+# ═══════════════════════════════════════════════════════════════
+# 🧪 TESTS
+# ═══════════════════════════════════════════════════════════════
+
+
 class DummyStrategy:
     """Simple test strategy"""
     
@@ -91,18 +184,7 @@ def test_single_trade_return_calculation():
         'momentum': np.random.randn(n) * 0.1
     })
     
-    # Create a strategy that buys at position 10, sells at position 30
-    class SimpleStrategy:
-        def __init__(self):
-            self.name = "SimpleTest"
-            self.params = {"stop_loss_pips": 100, "take_profit_pips": 100}
-        
-        def generate_signals(self, df):
-            signals = pd.Series(0, index=df.index)
-            signals.iloc[10] = 1   # Buy
-            signals.iloc[30] = -1  # Sell
-            return signals
-    
+    # Use module-level strategy
     strategy = SimpleStrategy()
     results = backtester.backtest(strategy, df)
     
@@ -149,18 +231,8 @@ def test_stop_loss_pnl_calculation():
         'momentum': np.random.randn(n) * 0.1
     })
     
-    # Strategy with 15 pip stop loss
-    class StopLossStrategy:
-        def __init__(self):
-            self.name = "StopLossTest"
-            self.params = {"stop_loss_pips": 15, "take_profit_pips": 100}
-        
-        def generate_signals(self, df):
-            signals = pd.Series(0, index=df.index)
-            signals.iloc[10] = 1   # Buy (price will drop, hitting stop)
-            return signals
-    
-    strategy = StopLossStrategy()
+    # Use module-level strategy with 15 pip stop loss
+    strategy = StopLossStrategy(stop_loss_pips=15)
     results = backtester.backtest(strategy, df)
     
     # Should have at least 1 trade that hit stop loss
@@ -204,18 +276,8 @@ def test_take_profit_pnl_calculation():
         'momentum': np.random.randn(n) * 0.1
     })
     
-    # Strategy with 30 pip take profit
-    class TakeProfitStrategy:
-        def __init__(self):
-            self.name = "TakeProfitTest"
-            self.params = {"stop_loss_pips": 100, "take_profit_pips": 30}
-        
-        def generate_signals(self, df):
-            signals = pd.Series(0, index=df.index)
-            signals.iloc[10] = 1   # Buy (price will rise, hitting TP)
-            return signals
-    
-    strategy = TakeProfitStrategy()
+    # Use module-level strategy with 30 pip take profit
+    strategy = TakeProfitStrategy(take_profit_pips=30)
     results = backtester.backtest(strategy, df)
     
     # Should have at least 1 trade that hit take profit
@@ -260,20 +322,7 @@ def test_equity_curve_realistic_values():
         'momentum': np.random.randn(n) * 0.1
     })
     
-    # Simple trend following strategy
-    class TrendStrategy:
-        def __init__(self):
-            self.name = "TrendTest"
-            self.params = {"stop_loss_pips": 20, "take_profit_pips": 40}
-        
-        def generate_signals(self, df):
-            # Buy when price is rising
-            signals = pd.Series(0, index=df.index)
-            for i in range(20, len(df) - 20, 40):
-                signals.iloc[i] = 1   # Buy
-                signals.iloc[i + 20] = -1  # Sell
-            return signals
-    
+    # Use module-level trend strategy
     strategy = TrendStrategy()
     results = backtester.backtest(strategy, df)
     
@@ -322,17 +371,7 @@ def test_max_drawdown_realistic():
         'momentum': np.random.randn(n) * 0.1
     })
     
-    class VolatileStrategy:
-        def __init__(self):
-            self.name = "VolatileTest"
-            self.params = {"stop_loss_pips": 60, "take_profit_pips": 40}
-        
-        def generate_signals(self, df):
-            signals = pd.Series(0, index=df.index)
-            signals.iloc[50] = 1   # Buy before drawdown
-            signals.iloc[250] = -1  # Sell after
-            return signals
-    
+    # Use module-level volatile strategy
     strategy = VolatileStrategy()
     results = backtester.backtest(strategy, df)
     

@@ -35,6 +35,12 @@ TRADING_DAYS_PER_YEAR = 252
 # Risk-free rate (default)
 DEFAULT_RISK_FREE_RATE = 0.0
 
+# Default position sizing parameters (used if config doesn't specify)
+DEFAULT_INITIAL_CAPITAL = 10000
+DEFAULT_LOT_SIZE = 0.1
+DEFAULT_PIP_VALUE_PER_LOT = 10
+DEFAULT_PIP_DECIMAL_PLACES = 4
+
 
 # ═══════════════════════════════════════════════════════════════
 # 📊 PERFORMANCE METRICS
@@ -108,10 +114,10 @@ class Backtester:
         
         # Extract position sizing parameters
         capital_config = self.config.get('capital', {})
-        self.initial_capital = capital_config.get('initial_capital', 10000)
-        self.lot_size = capital_config.get('default_lot_size', 0.1)
-        self.pip_value_per_lot = capital_config.get('pip_value_per_lot', 10)
-        self.pip_decimal_places = capital_config.get('pip_decimal_places', 4)
+        self.initial_capital = capital_config.get('initial_capital', DEFAULT_INITIAL_CAPITAL)
+        self.lot_size = capital_config.get('default_lot_size', DEFAULT_LOT_SIZE)
+        self.pip_value_per_lot = capital_config.get('pip_value_per_lot', DEFAULT_PIP_VALUE_PER_LOT)
+        self.pip_decimal_places = capital_config.get('pip_decimal_places', DEFAULT_PIP_DECIMAL_PLACES)
     
     def _pips_to_usd(self, pips: float) -> float:
         """
@@ -141,21 +147,31 @@ class Backtester:
         return pd.Series(returns)
     
     def _calculate_equity_curve(self, trades: pd.DataFrame, 
-                                initial_capital: float = 10000) -> pd.Series:
-        """Calculate equity curve starting from initial capital"""
+                                initial_capital: float = None) -> pd.Series:
+        """
+        Calculate equity curve starting from initial capital
+        
+        Args:
+            trades: DataFrame with trade results
+            initial_capital: Starting capital (uses default if None)
+            
+        Returns:
+            Series with equity values (starts with initial capital)
+        """
+        if initial_capital is None:
+            initial_capital = DEFAULT_INITIAL_CAPITAL
+            
         if len(trades) == 0:
             return pd.Series([initial_capital])
         
-        # Build equity curve: start with initial capital, then add each trade's PnL
-        equity_values = [initial_capital]
-        running_capital = initial_capital
+        # Build equity curve: start with initial capital, then cumsum of PnL
+        # This is more efficient than a loop for large trade counts
+        equity_curve = pd.concat([
+            pd.Series([initial_capital]),
+            initial_capital + trades["pnl"].cumsum()
+        ], ignore_index=True)
         
-        for pnl in trades["pnl"]:
-            running_capital += pnl
-            equity_values.append(running_capital)
-        
-        # Return as Series (first value is initial capital, rest track after each trade)
-        return pd.Series(equity_values)
+        return equity_curve
     
     def _calculate_sharpe_ratio(self, returns: pd.Series, 
                                risk_free_rate: float = 0.0) -> float:
