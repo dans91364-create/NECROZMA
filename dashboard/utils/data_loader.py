@@ -1,18 +1,74 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+⚡🌟💎 NECROZMA DASHBOARD - DATA LOADER 💎🌟⚡
+
+Load backtest results from universe_*_backtest.json files
+"""
+
 import os
 import json
 import pandas as pd
+import re
+import streamlit as st
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 
 
 def get_data_directory() -> Path:
-    """Get the data directory path."""
-    return Path(__file__).parent.parent.parent / "data"
+    """Get the backtest results directory path."""
+    # Look for ultra_necrozma_results/backtest_results/ directory
+    base_dir = Path(__file__).parent.parent.parent
+    results_dir = base_dir / "ultra_necrozma_results" / "backtest_results"
+    
+    # Fallback to data directory if results_dir doesn't exist
+    if not results_dir.exists():
+        results_dir = base_dir / "data"
+    
+    return results_dir
+
+
+def extract_sl_tp_from_name(strategy_name: str) -> Tuple[Optional[int], Optional[int]]:
+    """
+    Extract SL and TP parameters from strategy name using regex.
+    
+    Supports formats:
+    - TrendFollower_L5_T0.5_SL10_TP50
+    - strategy_sl_20_tp_40
+    - BreakoutStrategy_sl10tp50
+    - SL5_TP25_Strategy
+    
+    Args:
+        strategy_name: Strategy name string
+        
+    Returns:
+        Tuple of (sl, tp) as integers, or (None, None) if not found
+    """
+    if not strategy_name:
+        return None, None
+    
+    # Pattern 1: SL10_TP50 or sl10_tp50 (with separators like _ or space)
+    # Matches: [optional separator] SL [optional separator] digits [separator] TP [optional separator] digits
+    pattern1 = r'[_\s]?[sS][lL][\s_]?(\d+)[\s_]+[tT][pP][\s_]?(\d+)'
+    match = re.search(pattern1, strategy_name)
+    
+    if match:
+        return int(match.group(1)), int(match.group(2))
+    
+    # Pattern 2: sl10tp50 (no separators between SL/TP and values)
+    # Matches: SL digits TP digits (all concatenated)
+    pattern2 = r'[sS][lL](\d+)[tT][pP](\d+)'
+    match = re.search(pattern2, strategy_name)
+    
+    if match:
+        return int(match.group(1)), int(match.group(2))
+    
+    return None, None
 
 
 def get_universe_list() -> List[str]:
     """
-    Get list of available universes from the data directory.
+    Extract unique universe names from universe_*_backtest.json files.
     
     Returns:
         List of universe names
@@ -23,173 +79,173 @@ def get_universe_list() -> List[str]:
     if not data_dir.exists():
         return universes
     
-    # Look for universe directories or files
-    for item in data_dir.iterdir():
-        if item.is_dir():
-            universes.append(item.name)
-        elif item.is_file() and item.suffix == '.json':
-            # Check if it's a universe file
-            try:
-                with open(item, 'r') as f:
-                    data = json.load(f)
-                    if 'universe' in data:
-                        universes.append(data['universe'])
-            except:
-                pass
+    # Look for universe_*_backtest.json files
+    for filepath in data_dir.glob('universe_*_backtest.json'):
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
+                universe_name = data.get('universe_name')
+                if universe_name:
+                    universes.append(universe_name)
+        except Exception as e:
+            print(f"Error reading {filepath}: {e}")
     
     return sorted(list(set(universes)))
 
 
 def get_strategy_list(universe: Optional[str] = None) -> List[str]:
     """
-    Get list of available strategies, optionally filtered by universe.
+    Extract unique strategy names from loaded results.
     
     Args:
         universe: Optional universe name to filter strategies
         
     Returns:
-        List of strategy names
+        List of unique strategy names
     """
-    data_dir = get_data_directory()
-    strategies = []
+    results = load_all_results()
+    strategies = set()
     
-    if not data_dir.exists():
-        return strategies
+    for result in results.get('all_results', []):
+        if universe and result.get('universe_name') != universe:
+            continue
+        
+        strategy_name = result.get('strategy_name')
+        if strategy_name:
+            strategies.add(strategy_name)
     
-    # Look for strategy files or directories
-    if universe:
-        universe_dir = data_dir / universe
-        if universe_dir.exists() and universe_dir.is_dir():
-            for item in universe_dir.iterdir():
-                if item.is_file() and item.suffix in ['.json', '.csv']:
-                    strategy_name = item.stem
-                    strategies.append(strategy_name)
-                elif item.is_dir():
-                    strategies.append(item.name)
-    else:
-        # Get all strategies across all universes
-        for item in data_dir.rglob('*.json'):
-            try:
-                with open(item, 'r') as f:
-                    data = json.load(f)
-                    if 'strategy' in data:
-                        strategies.append(data['strategy'])
-            except:
-                pass
-    
-    return sorted(list(set(strategies)))
+    return sorted(list(strategies))
 
 
-def load_strategy_results(filepath: Path) -> Optional[Dict[str, Any]]:
+def get_strategy_data(strategy_name: str, universe: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """
-    Load results from a single strategy file.
+    Get specific strategy data including detailed trades if available.
     
     Args:
-        filepath: Path to the strategy results file
+        strategy_name: Name of the strategy
+        universe: Optional universe name to filter
         
     Returns:
-        Dictionary containing strategy results or None if loading fails
+        Dictionary with strategy data or None if not found
     """
-    try:
-        if filepath.suffix == '.json':
-            with open(filepath, 'r') as f:
-                return json.load(f)
-        elif filepath.suffix == '.csv':
-            df = pd.read_csv(filepath)
-            return {
-                'data': df.to_dict('records'),
-                'strategy': filepath.stem
-            }
-    except Exception as e:
-        print(f"Error loading {filepath}: {e}")
-        return None
+    results = load_all_results()
+    
+    for result in results.get('all_results', []):
+        if result.get('strategy_name') == strategy_name:
+            if universe and result.get('universe_name') != universe:
+                continue
+            return result
+    
+    return None
 
 
-def load_all_results(universe: Optional[str] = None, 
-                     strategy: Optional[str] = None) -> Dict[str, Any]:
+@st.cache_data(ttl=300)
+def load_all_results(results_dir: Optional[str] = None) -> Dict[str, Any]:
     """
-    Load all trading results with proper structure.
+    Load all backtest results from universe_*_backtest.json files.
+    
+    This function scans for universe_*_backtest.json files which contain
+    the complete strategy data including detailed trades (up to 4.6 GB files).
     
     Args:
-        universe: Optional universe filter
-        strategy: Optional strategy filter
+        results_dir: Optional custom results directory path
         
     Returns:
         Dictionary with structure:
         {
             'metadata': {
-                'universe': str,
-                'last_updated': str,
-                'data_directory': str
+                'total_strategies': int,
+                'total_universes': int,
+                'data_source': str,
+                'last_updated': str
             },
             'has_detailed_trades': bool,
-            'all_results': List[Dict],
-            'total_strategies': int
+            'all_results': List[Dict],  # Raw results from all strategies
+            'strategies_df': pd.DataFrame  # Complete DataFrame with all metrics
         }
     """
-    data_dir = get_data_directory()
+    if results_dir:
+        data_dir = Path(results_dir)
+    else:
+        data_dir = get_data_directory()
+    
     all_results = []
     has_detailed_trades = False
-    
-    metadata = {
-        'universe': universe or 'all',
-        'last_updated': pd.Timestamp.now().isoformat(),
-        'data_directory': str(data_dir)
-    }
+    total_universes = 0
     
     if not data_dir.exists():
         return {
-            'metadata': metadata,
+            'metadata': {
+                'total_strategies': 0,
+                'total_universes': 0,
+                'data_source': str(data_dir),
+                'last_updated': pd.Timestamp.now().isoformat()
+            },
             'has_detailed_trades': False,
             'all_results': [],
-            'total_strategies': 0
+            'strategies_df': pd.DataFrame()
         }
     
-    # Determine search path
-    if universe:
-        search_paths = [data_dir / universe]
-    else:
-        search_paths = [data_dir]
+    # Scan for universe_*_backtest.json files
+    universe_files = list(data_dir.glob('universe_*_backtest.json'))
+    total_universes = len(universe_files)
     
-    # Load results from all matching files
-    for search_path in search_paths:
-        if not search_path.exists():
-            continue
+    for filepath in universe_files:
+        try:
+            with open(filepath, 'r') as f:
+                data = json.load(f)
             
-        # Find all result files
-        for filepath in search_path.rglob('*.json'):
-            # Skip if strategy filter is specified and doesn't match
-            if strategy and filepath.stem != strategy:
-                continue
+            universe_name = data.get('universe_name', filepath.stem)
+            universe_metadata = data.get('universe_metadata', {})
+            
+            # Extract results from this universe
+            for strategy_result in data.get('results', []):
+                # Add universe context to each strategy
+                strategy_result['universe_name'] = universe_name
+                strategy_result['interval'] = universe_metadata.get('interval', 'unknown')
+                strategy_result['lookback'] = universe_metadata.get('lookback', 0)
                 
-            result = load_strategy_results(filepath)
-            if result:
-                # Check if detailed trades are available
-                if 'trades' in result or 'detailed_trades' in result:
+                # Check for detailed trades
+                if 'trades_detailed' in strategy_result:
                     has_detailed_trades = True
+                    strategy_result['n_detailed_trades'] = len(strategy_result['trades_detailed'])
                 
-                # Ensure result has required fields
-                if 'strategy' not in result:
-                    result['strategy'] = filepath.stem
-                if 'universe' not in result and universe:
-                    result['universe'] = universe
-                    
-                all_results.append(result)
+                all_results.append(strategy_result)
+                
+        except Exception as e:
+            print(f"Error loading {filepath}: {e}")
+            continue
+    
+    # Create DataFrame with proper numeric conversion
+    if all_results:
+        strategies_df = pd.DataFrame(all_results)
         
-        # Also check for CSV files
-        for filepath in search_path.rglob('*.csv'):
-            if strategy and filepath.stem != strategy:
-                continue
-                
-            result = load_strategy_results(filepath)
-            if result:
-                all_results.append(result)
+        # Convert numeric columns to proper types
+        numeric_columns = [
+            'total_return', 'sharpe_ratio', 'sortino_ratio', 'calmar_ratio',
+            'max_drawdown', 'win_rate', 'profit_factor', 'expectancy',
+            'n_trades', 'avg_win', 'avg_loss', 'largest_win', 'largest_loss',
+            'avg_win_size', 'avg_loss_size', 'lookback'
+        ]
+        
+        for col in numeric_columns:
+            if col in strategies_df.columns:
+                strategies_df[col] = pd.to_numeric(strategies_df[col], errors='coerce')
+    else:
+        strategies_df = pd.DataFrame()
+    
+    metadata = {
+        'total_strategies': len(all_results),
+        'total_universes': total_universes,
+        'data_source': str(data_dir),
+        'last_updated': pd.Timestamp.now().isoformat()
+    }
     
     return {
         'metadata': metadata,
         'has_detailed_trades': has_detailed_trades,
         'all_results': all_results,
-        'total_strategies': len(all_results)
+        'strategies_df': strategies_df
     }
 
 
@@ -204,13 +260,7 @@ def get_strategy_metrics(strategy_name: str, universe: Optional[str] = None) -> 
     Returns:
         Dictionary of strategy metrics or None if not found
     """
-    results = load_all_results(universe=universe, strategy=strategy_name)
-    
-    if results['total_strategies'] == 0:
-        return None
-    
-    # Return the first matching result
-    return results['all_results'][0] if results['all_results'] else None
+    return get_strategy_data(strategy_name, universe)
 
 
 def get_summary_statistics(universe: Optional[str] = None) -> Dict[str, Any]:
@@ -223,28 +273,32 @@ def get_summary_statistics(universe: Optional[str] = None) -> Dict[str, Any]:
     Returns:
         Dictionary of summary statistics
     """
-    results = load_all_results(universe=universe)
+    results = load_all_results()
+    strategies_df = results.get('strategies_df', pd.DataFrame())
+    
+    # Filter by universe if specified
+    if universe and not strategies_df.empty:
+        strategies_df = strategies_df[strategies_df['universe_name'] == universe]
+    
+    if strategies_df.empty:
+        return {
+            'total_strategies': 0,
+            'has_detailed_trades': False,
+            'universes': [],
+            'avg_sharpe': 0.0,
+            'avg_return': 0.0,
+            'avg_win_rate': 0.0
+        }
     
     summary = {
-        'total_strategies': results['total_strategies'],
+        'total_strategies': len(strategies_df),
         'has_detailed_trades': results['has_detailed_trades'],
         'universes': get_universe_list(),
-        'strategies': []
+        'avg_sharpe': strategies_df.get('sharpe_ratio', pd.Series([0])).mean(),
+        'avg_return': strategies_df.get('total_return', pd.Series([0])).mean(),
+        'avg_win_rate': strategies_df.get('win_rate', pd.Series([0])).mean(),
+        'max_sharpe': strategies_df.get('sharpe_ratio', pd.Series([0])).max(),
+        'max_return': strategies_df.get('total_return', pd.Series([0])).max(),
     }
-    
-    # Extract basic stats from each strategy
-    for result in results['all_results']:
-        strategy_summary = {
-            'name': result.get('strategy', 'unknown'),
-            'universe': result.get('universe', 'unknown')
-        }
-        
-        # Add common metrics if available
-        for metric in ['total_return', 'sharpe_ratio', 'max_drawdown', 
-                      'win_rate', 'num_trades']:
-            if metric in result:
-                strategy_summary[metric] = result[metric]
-        
-        summary['strategies'].append(strategy_summary)
     
     return summary
