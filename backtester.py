@@ -17,7 +17,7 @@ Features:
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Tuple, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -67,10 +67,11 @@ class BacktestResults:
     ulcer_index: float
     trades: pd.DataFrame
     equity_curve: pd.Series
+    trades_detailed: List[Dict] = field(default_factory=list)  # Detailed trade information
     
     def to_dict(self) -> Dict:
         """Convert to dictionary"""
-        return {
+        result = {
             "strategy_name": self.strategy_name,
             "n_trades": self.n_trades,
             "win_rate": self.win_rate,
@@ -88,6 +89,12 @@ class BacktestResults:
             "recovery_factor": self.recovery_factor,
             "ulcer_index": self.ulcer_index,
         }
+        
+        # Add detailed trades if available
+        if self.trades_detailed:
+            result["trades_detailed"] = self.trades_detailed
+        
+        return result
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -118,6 +125,10 @@ class Backtester:
         self.lot_size = capital_config.get('default_lot_size', DEFAULT_LOT_SIZE)
         self.pip_value_per_lot = capital_config.get('pip_value_per_lot', DEFAULT_PIP_VALUE_PER_LOT)
         self.pip_decimal_places = capital_config.get('pip_decimal_places', DEFAULT_PIP_DECIMAL_PLACES)
+        
+        # Track detailed trade information
+        self.trades_detailed = []
+        self.df = None  # Store DataFrame for context retrieval
     
     def _pips_to_usd(self, pips: float) -> float:
         """
@@ -317,6 +328,153 @@ class Backtester:
             "ulcer_index": 0.0,
         }
     
+    def _get_market_context(self, idx: int) -> Dict:
+        """
+        Extract market conditions at given index.
+        
+        Args:
+            idx (int): Index in DataFrame
+        
+        Returns:
+            dict: Market context including volatility, trend, volume, etc.
+        """
+        if self.df is None or idx >= len(self.df):
+            return {}
+        
+        bar = self.df.iloc[idx]
+        
+        # Calculate volatility (ATR-like measure over last 20 bars)
+        window_start = max(0, idx - 20)
+        window = self.df.iloc[window_start:idx + 1]
+        
+        if len(window) > 1:
+            high_low_range = window['high'] - window['low']
+            volatility = (high_low_range.mean() / window['close'].mean()) if window['close'].mean() > 0 else 0.0
+        else:
+            volatility = 0.0
+        
+        # Trend strength (momentum if available)
+        trend_strength = abs(float(bar.get('momentum', 0.0)))
+        
+        # Volume relative to average
+        if 'volume' in window.columns and len(window) > 1:
+            volume_avg = window['volume'].mean()
+            volume_relative = float(bar.get('volume', volume_avg) / volume_avg) if volume_avg > 0 else 1.0
+        else:
+            volume_relative = 1.0
+        
+        # Spread (use default if not available)
+        spread_pips = float(bar.get('spread', 1.5))
+        
+        # Pattern detected
+        pattern_detected = str(bar.get('pattern', 'unknown'))
+        
+        # Get pattern sequence (last 3 bars)
+        pattern_sequence = []
+        for i in range(max(0, idx - 2), idx + 1):
+            if i < len(self.df):
+                pattern_sequence.append(str(self.df.iloc[i].get('pattern', 'unknown')))
+        
+        # Time features
+        timestamp = self.df.index[idx]
+        hour_of_day = timestamp.hour if hasattr(timestamp, 'hour') else 0
+        day_of_week = timestamp.strftime('%A') if hasattr(timestamp, 'strftime') else 'Unknown'
+        
+        return {
+            'volatility': float(volatility),
+            'trend_strength': float(trend_strength),
+            'volume_relative': float(volume_relative),
+            'spread_pips': float(spread_pips),
+            'pattern_detected': pattern_detected,
+            'pattern_sequence': pattern_sequence,
+            'hour_of_day': int(hour_of_day),
+            'day_of_week': day_of_week
+        }
+    
+    def _get_price_history(self, entry_idx: int, exit_idx: int) -> Dict:
+        """
+        Get OHLCV data around the trade for charting.
+        
+        Args:
+            entry_idx (int): Entry bar index
+            exit_idx (int): Exit bar index
+        
+        Returns:
+            dict: Price history with timestamps and OHLC data
+        """
+        if self.df is None:
+            return {}
+        
+        # Get 50 bars before entry, all bars during trade, 20 bars after exit
+        start_idx = max(0, entry_idx - 50)
+        end_idx = min(len(self.df), exit_idx + 20)
+        
+        history_slice = self.df.iloc[start_idx:end_idx]
+        
+        return {
+            'timestamps': [str(ts) for ts in history_slice.index],
+            'open': [float(x) for x in history_slice['open'].tolist()],
+            'high': [float(x) for x in history_slice['high'].tolist()],
+            'low': [float(x) for x in history_slice['low'].tolist()],
+            'close': [float(x) for x in history_slice['close'].tolist()],
+            'volume': [float(x) for x in history_slice.get('volume', [0] * len(history_slice)).tolist()]
+        }
+    
+    def _record_detailed_trade(self, entry_idx: int, exit_idx: int, 
+                              entry_price: float, exit_price: float,
+                              direction: str, pnl_pips: float, pnl_usd: float, 
+                              exit_reason: str = 'unknown'):
+        """
+        Record a detailed trade with full context
+        
+        Args:
+            entry_idx: Entry bar index
+            exit_idx: Exit bar index
+            entry_price: Entry price
+            exit_price: Exit price
+            direction: 'long' or 'short'
+            pnl_pips: P&L in pips
+            pnl_usd: P&L in USD
+            exit_reason: Reason for exit ('stop_loss', 'take_profit', 'signal')
+        """
+        if self.df is None:
+            return
+        
+        # Get timestamps
+        entry_time = self.df.index[entry_idx] if entry_idx < len(self.df) else None
+        exit_time = self.df.index[exit_idx] if exit_idx < len(self.df) else None
+        
+        # Calculate duration
+        duration_minutes = 0
+        if entry_time and exit_time:
+            # Check if index is DatetimeIndex
+            if hasattr(entry_time, 'total_seconds') or hasattr(exit_time, 'total_seconds'):
+                duration_minutes = int((exit_time - entry_time).total_seconds() / 60)
+            else:
+                # If not datetime, use index difference as proxy (bars)
+                duration_minutes = exit_idx - entry_idx
+        
+        # Calculate P&L percentage
+        pnl_pct = (pnl_usd / self.initial_capital * 100) if self.initial_capital > 0 else 0.0
+        
+        # Create detailed trade record
+        trade_detail = {
+            'entry_time': str(entry_time) if entry_time else '',
+            'exit_time': str(exit_time) if exit_time else '',
+            'entry_price': float(entry_price),
+            'exit_price': float(exit_price),
+            'direction': direction,
+            'pnl_pips': float(pnl_pips),
+            'pnl_usd': float(pnl_usd),
+            'pnl_pct': float(pnl_pct),
+            'duration_minutes': duration_minutes,
+            'exit_reason': exit_reason,
+            'market_context': self._get_market_context(entry_idx),
+            'price_history': self._get_price_history(entry_idx, exit_idx)
+        }
+        
+        self.trades_detailed.append(trade_detail)
+    
     def simulate_trades(self, signals: pd.Series, prices: pd.Series,
                        stop_loss_pips: float = 20, 
                        take_profit_pips: float = 40,
@@ -367,6 +525,11 @@ class Backtester:
                             "type": "long",
                             "exit_reason": "stop_loss",
                         })
+                        # Record detailed trade
+                        self._record_detailed_trade(
+                            entry_idx, i, entry_price, current_price,
+                            "long", -stop_loss_pips, pnl, "stop_loss"
+                        )
                         in_position = False
                     elif pips >= take_profit_pips:
                         # Take profit hit - convert pips to USD
@@ -380,6 +543,11 @@ class Backtester:
                             "type": "long",
                             "exit_reason": "take_profit",
                         })
+                        # Record detailed trade
+                        self._record_detailed_trade(
+                            entry_idx, i, entry_price, current_price,
+                            "long", take_profit_pips, pnl, "take_profit"
+                        )
                         in_position = False
                     elif signals.iloc[i] == -1:
                         # Exit signal - convert pips to USD
@@ -393,6 +561,11 @@ class Backtester:
                             "type": "long",
                             "exit_reason": "signal",
                         })
+                        # Record detailed trade
+                        self._record_detailed_trade(
+                            entry_idx, i, entry_price, current_price,
+                            "long", pips, pnl, "signal"
+                        )
                         in_position = False
                         
                 else:  # Short position
@@ -412,6 +585,11 @@ class Backtester:
                             "type": "short",
                             "exit_reason": "stop_loss",
                         })
+                        # Record detailed trade
+                        self._record_detailed_trade(
+                            entry_idx, i, entry_price, current_price,
+                            "short", -stop_loss_pips, pnl, "stop_loss"
+                        )
                         in_position = False
                     elif pips >= take_profit_pips:
                         # Take profit hit - convert pips to USD
@@ -425,6 +603,11 @@ class Backtester:
                             "type": "short",
                             "exit_reason": "take_profit",
                         })
+                        # Record detailed trade
+                        self._record_detailed_trade(
+                            entry_idx, i, entry_price, current_price,
+                            "short", take_profit_pips, pnl, "take_profit"
+                        )
                         in_position = False
                     elif signals.iloc[i] == 1:
                         # Exit signal - convert pips to USD
@@ -438,6 +621,11 @@ class Backtester:
                             "type": "short",
                             "exit_reason": "signal",
                         })
+                        # Record detailed trade
+                        self._record_detailed_trade(
+                            entry_idx, i, entry_price, current_price,
+                            "short", pips, pnl, "signal"
+                        )
                         in_position = False
             
             # Check entry signals
@@ -462,6 +650,12 @@ class Backtester:
         Returns:
             BacktestResults object
         """
+        # Store DataFrame for context retrieval
+        self.df = df
+        
+        # Reset detailed trades for new backtest
+        self.trades_detailed = []
+        
         # Use config default if not specified
         if initial_capital is None:
             initial_capital = self.initial_capital
@@ -519,6 +713,7 @@ class Backtester:
             strategy_name=strategy.name,
             trades=trades,
             equity_curve=equity_curve,
+            trades_detailed=self.trades_detailed,  # Include detailed trades
             **metrics
         )
         
