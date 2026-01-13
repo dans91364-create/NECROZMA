@@ -31,6 +31,11 @@ from light_report import LightReportGenerator
 from lore import LoreSystem, EventType
 from config import RANDOM_SEED, PARQUET_FILE
 from ohlc_generator import generate_ohlc_bars, validate_ohlc_data
+from feature_extractor import (
+    extract_features_from_universe,
+    combine_ohlc_with_features,
+    validate_dataframe_for_backtesting
+)
 
 # Import psutil for monitoring (optional)
 try:
@@ -231,9 +236,12 @@ def generate_strategies_for_universe(universe_data: Dict, max_strategies: int = 
 
 def load_ohlc_for_universe(universe_data: Dict, parquet_path: Path = None, verbose: bool = False) -> pd.DataFrame:
     """
-    Load OHLC data for a universe from Parquet file
+    Load OHLC data for a universe from Parquet file and combine with pattern features
     
-    This replaces the old create_mock_dataframe function and loads real price data.
+    This function:
+    1. Generates OHLC bars from tick data
+    2. Extracts features from universe JSON patterns
+    3. Combines OHLC + features into a single DataFrame
     
     Args:
         universe_data: Universe result dictionary
@@ -241,7 +249,7 @@ def load_ohlc_for_universe(universe_data: Dict, parquet_path: Path = None, verbo
         verbose: Whether to print detailed output
         
     Returns:
-        DataFrame with OHLC price data ready for backtesting
+        DataFrame with OHLC price data + pattern features ready for backtesting
     """
     # Extract universe parameters
     lookback = universe_data.get('lookback', 20)
@@ -271,15 +279,46 @@ def load_ohlc_for_universe(universe_data: Dict, parquet_path: Path = None, verbo
             for warning in validation["warnings"]:
                 print(f"      ⚠️  {warning}", flush=True)
         
-        # Add some basic features for strategy signals
-        ohlc_df['momentum'] = ohlc_df['close'].diff()
-        ohlc_df['volatility'] = ohlc_df['close'].rolling(20).std()
-        ohlc_df['trend_strength'] = abs(ohlc_df['close'].rolling(20).mean() - ohlc_df['close']) / ohlc_df['close']
+        # ✅ NEW: Extract features from universe JSON patterns
+        if verbose:
+            print(f"      🔮 Extracting features from universe patterns...", flush=True)
         
-        # Fill NaN values from calculations
-        ohlc_df = ohlc_df.fillna(method='bfill').fillna(0)
+        features_df = extract_features_from_universe(universe_data)
         
-        return ohlc_df
+        if verbose:
+            if not features_df.empty:
+                print(f"      ✅ Extracted {len(features_df.columns)} features", flush=True)
+            else:
+                print(f"      ⚠️  No features extracted, using OHLC only", flush=True)
+        
+        # ✅ NEW: Combine OHLC + features
+        combined_df = combine_ohlc_with_features(ohlc_df, features_df)
+        
+        # Fill NaN values (may occur from feature broadcast or OHLC calculations)
+        combined_df = combined_df.fillna(method='bfill').fillna(0)
+        
+        if verbose:
+            print(f"      ✅ Combined DataFrame: {combined_df.shape}", flush=True)
+            print(f"      📊 Columns: {list(combined_df.columns)[:10]}...", flush=True)
+            
+            # Show sample feature values
+            if "momentum" in combined_df.columns:
+                momentum_stats = combined_df["momentum"].describe()
+                print(f"      📊 Sample momentum: mean={momentum_stats['mean']:.4f}, "
+                      f"std={momentum_stats['std']:.4f}", flush=True)
+        
+        # ✅ NEW: Validate DataFrame before returning
+        validation_result = validate_dataframe_for_backtesting(combined_df)
+        
+        if not validation_result["valid"]:
+            missing = validation_result["missing_required"]
+            raise ValueError(f"DataFrame missing required columns: {missing}")
+        
+        if verbose and validation_result["missing_recommended"]:
+            print(f"      ⚠️  Missing recommended features: {validation_result['missing_recommended']}", 
+                  flush=True)
+        
+        return combined_df
         
     except FileNotFoundError:
         print(f"      ⚠️  Parquet file not found: {parquet_path}", flush=True)
