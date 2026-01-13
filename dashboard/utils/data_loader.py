@@ -19,7 +19,7 @@ def load_all_results(results_dir: str = 'ultra_necrozma_results/backtest_results
     """
     Load all backtest results including trades_detailed.
     
-    Strategy:
+    Approach:
     1. Load consolidated file for summary metrics
     2. Load individual universe files for trades_detailed
     3. Merge the data
@@ -286,7 +286,7 @@ def _load_detailed_trades(universe_files: List[Path]) -> Dict[str, List[Dict]]:
     return trades_by_strategy
 
 
-def _merge_results(consolidated_data: Dict, detailed_trades: Dict[str, List]) -> List[Dict]:
+def _merge_results(consolidated_data: Dict, detailed_trades: Dict[str, List[Dict]]) -> List[Dict]:
     """
     Merge consolidated metrics with detailed trades.
     
@@ -370,7 +370,11 @@ def _calculate_win_rate(trades: List[Dict]) -> float:
         return 0.0
     
     try:
-        winning_trades = sum(1 for t in trades if isinstance(t.get('pnl_pips', 0), (int, float)) and t.get('pnl_pips', 0) > 0)
+        winning_trades = 0
+        for t in trades:
+            pnl_pips = t.get('pnl_pips', 0)
+            if isinstance(pnl_pips, (int, float)) and pnl_pips > 0:
+                winning_trades += 1
         return (winning_trades / len(trades))
     except (ZeroDivisionError, TypeError, ValueError) as e:
         st.warning(f"⚠️  Error calculating win rate: {e}")
