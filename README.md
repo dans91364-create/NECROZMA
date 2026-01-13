@@ -49,14 +49,14 @@ Sistema narrativo com 5 deidades:
 - Envio de relatórios finais
 
 ### 🎨 Interactive Dashboard (NOVO)
-- **Beautiful HTML Dashboard**: Visualize results in an interactive web interface
-- **Dark/Light Theme**: Prismatic purple/blue gradient design with theme toggle
-- **Interactive Charts**: Chart.js powered visualizations (regime radar, universe rankings, pattern distributions)
-- **Sortable Tables**: DataTables integration for top 20 universe configurations
+- **Streamlit Dashboard**: Modern, interactive web interface for analyzing backtest results
+- **6 Analysis Pages**: Overview, Universe Analysis, Strategy Deep Dive, SL/TP Optimization, Risk Analysis, Trade Analysis
+- **Interactive Charts**: Plotly-powered visualizations with zoom, pan, and hover
+- **Real-time Filtering**: Dynamic filters for drilling down into specific strategies
+- **Data Export**: Download filtered results as CSV
 - **Responsive Design**: Works on desktop, tablet, and mobile
-- **Single File Output**: Portable HTML with all data embedded
-- **Auto-generation**: Integrates with main.py analysis pipeline
-- See [DASHBOARD_README.md](DASHBOARD_README.md) for details
+- **Easy Launch**: One command to start: `streamlit run dashboard/app.py`
+- See [README_DASHBOARD.md](README_DASHBOARD.md) for details
 
 ### ⚡ Performance
 - **Parquet** para armazenamento otimizado (10-20x mais rápido que CSV)
@@ -96,7 +96,30 @@ NECROZMA/
 ├── backtester.py            # 📊 Motor de backtesting
 ├── light_finder.py          # 🌟 Ranking de estratégias
 ├── light_report.py          # 📝 Relatório final
-├── dashboard_generator.py   # 🎨 Interactive HTML dashboard
+├── dashboard_generator.py   # 🎨 Interactive HTML dashboard (legacy)
+│
+├── ========== NOVO: Streamlit Dashboard ==========
+├── dashboard/
+│   ├── app.py               # 🎨 Main Streamlit app
+│   ├── pages/               # 📄 Dashboard pages (6 pages)
+│   │   ├── 1_📊_Overview.py
+│   │   ├── 2_🌍_Universe_Analysis.py
+│   │   ├── 3_🎯_Strategy_Deep_Dive.py
+│   │   ├── 4_🔧_SL_TP_Optimization.py
+│   │   ├── 5_⚠️_Risk_Analysis.py
+│   │   └── 6_💰_Trade_Analysis.py
+│   ├── components/          # 🧩 Reusable components
+│   │   ├── charts.py        # Plotly charts
+│   │   ├── metrics.py       # KPI calculations
+│   │   ├── tables.py        # Data tables
+│   │   └── filters.py       # Filter components
+│   └── utils/               # 🔧 Utilities
+│       ├── data_loader.py   # Load JSON results
+│       ├── formatters.py    # Format numbers/dates
+│       └── trade_analyzer.py # Trade analysis
+├── requirements-dashboard.txt # Dashboard dependencies
+├── README_DASHBOARD.md      # Dashboard documentation
+├── dashboard_quickstart.py  # Quick start guide
 │
 ├── ========== NOVO: Chunked Processing Modules ==========
 ├── data_chunker.py          # 💎 Temporal data chunking

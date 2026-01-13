@@ -66,3 +66,6 @@ joblib_cache/
 # OS
 .DS_Store
 Thumbs.db
+# Dashboard test data
+ultra_necrozma_results/
+
