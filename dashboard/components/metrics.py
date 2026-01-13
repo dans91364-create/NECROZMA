@@ -21,13 +21,17 @@ def calculate_summary_metrics(strategies_df: pd.DataFrame) -> Dict:
     Returns:
         Dictionary with summary metrics
     """
-    if strategies_df.empty:
+    # Add null check to prevent NoneType errors
+    if strategies_df is None or strategies_df.empty:
         return {
             'total_strategies': 0,
             'avg_sharpe': 0.0,
             'avg_return': 0.0,
             'avg_win_rate': 0.0,
-            'viable_count': 0
+            'viable_count': 0,
+            'max_sharpe': 0.0,
+            'max_return': 0.0,
+            'min_drawdown': 0.0
         }
     
     # Viable strategies (Sharpe > 1.0, win_rate > 0.5)
