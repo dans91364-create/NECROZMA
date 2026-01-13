@@ -37,23 +37,48 @@ if results['total_strategies'] == 0:
     st.error("❌ No backtest results found. Please run backtests first.")
     st.stop()
 
+# Display data status in sidebar
+st.sidebar.info(f"""
+📊 **Data Status:**
+- Strategies: {results['metadata']['total_strategies']}
+- Universes: {results['metadata']['total_universes']}
+- Detailed Trades: {'✅ Available' if results['has_detailed_trades'] else '❌ Not found'}
+- Source: {results['metadata']['data_source']}
+""")
+
 strategies_df = results.get('strategies_df')
 
 if strategies_df is None or strategies_df.empty:
     st.error("❌ No strategy data available")
     st.stop()
 
-# Important note about trade detail data
-st.info("""
-📌 **Note**: This page requires detailed trade data from the enhanced backtester (Phase 5).
-
-Currently showing **summary-level analysis** only. To enable full trade-by-trade analysis:
-1. Implement the backtester enhancements to save detailed trade information
-2. Re-run backtests to generate detailed trade data
-3. Detailed trade cards with market context will then be available
-
-**Available now**: Pattern analysis, aggregate statistics, and insights from available data.
-""")
+# Check for detailed trades data
+if not results['has_detailed_trades']:
+    st.warning("""
+    ⚠️ **No detailed trade data found.**
+    
+    Detailed trades are stored in individual universe files.
+    Make sure you have run backtests with the updated backtester.
+    
+    Looking for files like: `universe_001_5min_5lb_backtest.json`
+    
+    Currently showing **summary-level analysis** only.
+    """)
+    # Continue with summary analysis
+else:
+    # Show success message if detailed trades are available
+    strategies_with_trades = [
+        s for s in results['all_results'] 
+        if s.get('trades_detailed') and len(s['trades_detailed']) > 0
+    ]
+    
+    if strategies_with_trades:
+        st.success(f"✅ Found {len(strategies_with_trades)} strategies with detailed trades!")
+        
+        # Display sample trade info for first strategy with trades
+        first_strategy = strategies_with_trades[0]
+        n_trades = first_strategy.get('n_detailed_trades', 0)
+        st.info(f"📊 Example: {first_strategy['strategy_name']} has {n_trades} detailed trades available")
 
 st.markdown("---")
 
