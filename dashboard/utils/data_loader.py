@@ -280,6 +280,10 @@ def load_all_results(results_dir: Optional[str] = None) -> Dict[str, Any]:
         # Smart storage found!
         strategies_with_trades = get_strategies_with_trades(results_dir)
         
+        # Ensure backward compatibility: add 'universe_name' field if not present
+        if 'universe' in metrics_df.columns and 'universe_name' not in metrics_df.columns:
+            metrics_df['universe_name'] = metrics_df['universe']
+        
         # Convert DataFrame to list of dicts for backward compatibility
         all_results = metrics_df.to_dict('records')
         

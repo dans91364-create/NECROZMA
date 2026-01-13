@@ -135,12 +135,12 @@ class SmartBacktestStorage:
         Returns:
             Sorted list of strategy results (best first)
         """
-        # Use composite_score if exists, else sharpe_ratio
-        for result in results:
-            if "composite_score" not in result:
-                result["composite_score"] = result.get("sharpe_ratio", 0.0)
+        # Sort using composite_score if exists, else sharpe_ratio
+        # Don't modify original results - use key function instead
+        def get_sort_key(result):
+            return result.get("composite_score", result.get("sharpe_ratio", 0.0))
         
-        return sorted(results, key=lambda x: x.get("composite_score", 0), reverse=True)
+        return sorted(results, key=get_sort_key, reverse=True)
     
     def _extract_metrics_only(self, result: Dict) -> Dict:
         """
