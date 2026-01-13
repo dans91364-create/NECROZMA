@@ -47,14 +47,16 @@ def extract_sl_tp_from_name(strategy_name: str) -> Tuple[Optional[int], Optional
     if not strategy_name:
         return None, None
     
-    # Pattern 1: SL10_TP50 or sl10_tp50 (with underscores)
+    # Pattern 1: SL10_TP50 or sl10_tp50 (with separators like _ or space)
+    # Matches: [optional separator] SL [optional separator] digits [separator] TP [optional separator] digits
     pattern1 = r'[_\s]?[sS][lL][\s_]?(\d+)[\s_]+[tT][pP][\s_]?(\d+)'
     match = re.search(pattern1, strategy_name)
     
     if match:
         return int(match.group(1)), int(match.group(2))
     
-    # Pattern 2: sl10tp50 (no separators)
+    # Pattern 2: sl10tp50 (no separators between SL/TP and values)
+    # Matches: SL digits TP digits (all concatenated)
     pattern2 = r'[sS][lL](\d+)[tT][pP](\d+)'
     match = re.search(pattern2, strategy_name)
     
