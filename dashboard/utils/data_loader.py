@@ -235,16 +235,16 @@ def _load_consolidated(consolidated_path: Path) -> Dict:
         
         # Validate structure
         if 'universes' not in data:
-            print(f"⚠️  Warning: consolidated file missing 'universes' key")
+            st.warning(f"⚠️  Warning: consolidated file missing 'universes' key")
             return {}
         
         return data
     
     except json.JSONDecodeError as e:
-        print(f"❌ Error loading consolidated file: {e}")
+        st.error(f"❌ Error loading consolidated file: {e}")
         return {}
     except Exception as e:
-        print(f"❌ Unexpected error loading consolidated: {e}")
+        st.error(f"❌ Unexpected error loading consolidated: {e}")
         return {}
 
 
@@ -280,7 +280,7 @@ def _load_detailed_trades(universe_files: List[Path]) -> Dict[str, List[Dict]]:
                     trades_by_strategy[strategy_name].extend(trades_detailed)
         
         except Exception as e:
-            print(f"⚠️  Warning: Could not load {universe_file.name}: {e}")
+            st.warning(f"⚠️  Warning: Could not load {universe_file.name}: {e}")
             continue
     
     return trades_by_strategy
@@ -352,9 +352,15 @@ def _calculate_return_from_trades(trades: List[Dict]) -> float:
         return 0.0
     
     try:
-        total_pnl_pct = sum(t.get('pnl_pct', 0) for t in trades)
+        # Only sum valid numeric pnl_pct values
+        total_pnl_pct = 0.0
+        for t in trades:
+            pnl_pct = t.get('pnl_pct', 0)
+            if isinstance(pnl_pct, (int, float)):
+                total_pnl_pct += pnl_pct
         return total_pnl_pct
-    except:
+    except (TypeError, ValueError) as e:
+        st.warning(f"⚠️  Error calculating return from trades: {e}")
         return 0.0
 
 
@@ -364,9 +370,10 @@ def _calculate_win_rate(trades: List[Dict]) -> float:
         return 0.0
     
     try:
-        winning_trades = sum(1 for t in trades if t.get('pnl_pips', 0) > 0)
+        winning_trades = sum(1 for t in trades if isinstance(t.get('pnl_pips', 0), (int, float)) and t.get('pnl_pips', 0) > 0)
         return (winning_trades / len(trades))
-    except:
+    except (ZeroDivisionError, TypeError, ValueError) as e:
+        st.warning(f"⚠️  Error calculating win rate: {e}")
         return 0.0
 
 
