@@ -295,7 +295,7 @@ def load_ohlc_for_universe(universe_data: Dict, parquet_path: Path = None, verbo
         combined_df = combine_ohlc_with_features(ohlc_df, features_df)
         
         # Fill NaN values (may occur from feature broadcast or OHLC calculations)
-        combined_df = combined_df.fillna(method='bfill').fillna(0)
+        combined_df = combined_df.bfill().fillna(0)
         
         if verbose:
             print(f"      ✅ Combined DataFrame: {combined_df.shape}", flush=True)
@@ -382,7 +382,7 @@ def create_mock_dataframe_fallback(universe_data: Dict, interval: int = 5, lookb
     combined_df = combine_ohlc_with_features(ohlc_df, features_df)
     
     # Fill NaN values
-    combined_df = combined_df.fillna(method='bfill').fillna(0)
+    combined_df = combined_df.bfill().fillna(0)
     
     return combined_df
 

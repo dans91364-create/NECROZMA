@@ -31,8 +31,8 @@ def extract_features_from_universe(universe_data: Dict) -> pd.DataFrame:
         universe_data: Universe result dictionary from JSON file
         
     Returns:
-        DataFrame with aggregated features (currently returns empty DataFrame
-        as features will be aligned with timestamps during OHLC generation)
+        DataFrame with aggregated features (single row with mean statistics
+        across all patterns, to be broadcast to OHLC timestamps)
     """
     # Extract all features from patterns
     all_features = []
@@ -215,7 +215,7 @@ def validate_dataframe_for_backtesting(df: pd.DataFrame) -> Dict:
         Dictionary with validation results:
         - valid: bool
         - missing_required: list of missing required columns
-        - missing_optional: list of missing optional columns
+        - missing_recommended: list of missing recommended columns
         - warnings: list of warnings
     """
     # Required columns for basic backtesting
