@@ -1,400 +1,276 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-⚡🌟💎 NECROZMA DASHBOARD - DATA LOADER 💎🌟⚡
-
-Utilities for loading backtest results from JSON files
+Data loader utilities for the trading strategy dashboard.
+Handles loading and processing of strategy backtest results.
 """
 
 import json
-import re
 import pandas as pd
+import numpy as np
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-import streamlit as st
+from typing import List, Dict, Any, Optional
 
 
-@st.cache_data
-def load_all_results(results_dir: str = 'ultra_necrozma_results/backtest_results') -> Dict:
+def load_json_file(file_path: Path) -> Optional[Dict[str, Any]]:
     """
-    Load all backtest results including trades_detailed.
-    
-    Approach:
-    1. Load consolidated file for summary metrics
-    2. Load individual universe files for trades_detailed
-    3. Merge the data
+    Load a single JSON file with error handling.
     
     Args:
-        results_dir: Directory containing backtest result JSON files
+        file_path: Path to the JSON file
         
     Returns:
-        Dictionary with aggregated results and metadata including:
-        - all_results: List of all strategies with metrics + trades_detailed
-        - metadata: Backtest metadata
-        - universes: List of universe names
-        - has_detailed_trades: bool indicating if detailed trade data is available
+        Dictionary containing the JSON data, or None if error
     """
-    results_path = Path(results_dir)
-    
-    if not results_path.exists():
-        st.error(f"❌ Results directory not found: {results_dir}")
-        return _get_empty_results()
-    
-    # Load consolidated results if available
-    consolidated_file = results_path / 'consolidated_backtest_results.json'
-    consolidated_data = _load_consolidated(consolidated_file)
-    
-    # Load individual universe files for trades_detailed
-    universe_files = sorted(results_path.glob('universe_*_backtest.json'))
-    detailed_trades_by_strategy = _load_detailed_trades(universe_files)
-    
-    # Merge data
-    all_strategies = _merge_results(consolidated_data, detailed_trades_by_strategy)
-    
-    # Convert to DataFrame for easier analysis
-    if all_strategies:
-        strategies_df = pd.DataFrame(all_strategies)
-        
-        # Calculate viable strategies (Sharpe > 1.0, win_rate > 0.5)
-        viable_mask = (strategies_df.get('sharpe_ratio', 0) > 1.0) & \
-                      (strategies_df.get('win_rate', 0) > 0.5)
-        viable_count = viable_mask.sum()
-        
-        # Get best performers
-        best_sharpe_idx = strategies_df['sharpe_ratio'].idxmax() if 'sharpe_ratio' in strategies_df else 0
-        best_return_idx = strategies_df['total_return'].idxmax() if 'total_return' in strategies_df else 0
-        
-        # Build response with new structure
-        return {
-            'all_results': all_strategies,
-            'strategies': all_strategies,  # Keep for backward compatibility
-            'strategies_df': strategies_df,
-            'universes': [u.get('universe_name', f'universe_{i+1}') 
-                         for i, u in enumerate(consolidated_data.get('universes', []))],
-            'metadata': {
-                'backtest_timestamp': consolidated_data.get('backtest_timestamp', 'Unknown'),
-                'total_universes': consolidated_data.get('total_universes', len(universe_files)),
-                'total_strategies': len(all_strategies),
-                'data_source': 'merged' if detailed_trades_by_strategy else 'consolidated_only'
-            },
-            'has_detailed_trades': bool(detailed_trades_by_strategy),
-            'total_strategies': len(all_strategies),
-            'viable_count': int(viable_count) if viable_count is not None else 0,
-            'best_sharpe': strategies_df.loc[best_sharpe_idx, 'sharpe_ratio'] if len(strategies_df) > 0 else 0,
-            'best_return': strategies_df.loc[best_return_idx, 'total_return'] if len(strategies_df) > 0 else 0,
-            'best_sharpe_strategy': strategies_df.loc[best_sharpe_idx].to_dict() if len(strategies_df) > 0 else {},
-            'best_return_strategy': strategies_df.loc[best_return_idx].to_dict() if len(strategies_df) > 0 else {},
-        }
-    
-    return _get_empty_results()
-
-
-@st.cache_data
-def load_strategy_data(strategy_name: str, universe_name: str, 
-                       results_dir: str = 'ultra_necrozma_results/backtest_results') -> Optional[Dict]:
-    """
-    Load detailed data for a specific strategy
-    
-    Args:
-        strategy_name: Name of strategy
-        universe_name: Name of universe
-        results_dir: Directory containing results
-        
-    Returns:
-        Dictionary with strategy details or None
-    """
-    results_path = Path(results_dir)
-    
-    # Look for universe file
-    universe_file = results_path / f"{universe_name}_backtest.json"
-    
-    if not universe_file.exists():
-        return None
-    
     try:
-        with open(universe_file, 'r') as f:
-            data = json.load(f)
-        
-        # Find the strategy in results
-        for result in data.get('results', []):
-            if result.get('strategy_name') == strategy_name:
-                return result
-                
+        with open(file_path, 'r') as f:
+            return json.load(f)
+    except json.JSONDecodeError as e:
+        print(f"JSON decode error in {file_path}: {e}")
+        return None
     except Exception as e:
-        st.error(f"Error loading strategy data: {e}")
+        print(f"Error loading {file_path}: {e}")
+        return None
+
+
+def extract_strategy_data(data: Any) -> Optional[Dict[str, Any]]:
+    """
+    Extract strategy data from various JSON structures.
     
+    Args:
+        data: JSON data that could be dict, list, or other structure
+        
+    Returns:
+        Dictionary with strategy metrics, or None if invalid
+    """
+    if isinstance(data, dict):
+        # Check if this is already a strategy result with the expected fields
+        if 'strategy_name' in data:
+            return data
+        # Check for common wrapper keys
+        for key in ['results', 'strategy', 'metrics', 'data']:
+            if key in data and isinstance(data[key], dict):
+                if 'strategy_name' in data[key]:
+                    return data[key]
     return None
 
 
-def get_universe_list(results: Dict) -> List[str]:
+def load_all_results(base_path: str = "results") -> pd.DataFrame:
     """
-    Get list of unique universe names
+    Load all strategy results from JSON files.
     
     Args:
-        results: Results dictionary from load_all_results
+        base_path: Directory containing result JSON files
         
     Returns:
-        Sorted list of universe names
-    """
-    if 'strategies_df' in results and not results['strategies_df'].empty:
-        return sorted(results['strategies_df']['universe_name'].unique().tolist())
-    return []
-
-
-def get_strategy_list(results: Dict, universe_name: Optional[str] = None) -> List[str]:
-    """
-    Get list of strategy names, optionally filtered by universe
-    
-    Args:
-        results: Results dictionary from load_all_results
-        universe_name: Optional universe filter
-        
-    Returns:
-        Sorted list of strategy names
-    """
-    if 'strategies_df' not in results or results['strategies_df'].empty:
-        return []
-    
-    df = results['strategies_df']
-    
-    if universe_name:
-        df = df[df['universe_name'] == universe_name]
-    
-    if 'strategy_name' in df.columns:
-        return sorted(df['strategy_name'].unique().tolist())
-    
-    return []
-
-
-def extract_sl_tp_from_name(strategy_name):
-    """
-    Extract stop-loss and take-profit from strategy name.
-    
-    Supports multiple formats:
-    - TrendFollower_L5_T0.5_SL10_TP50
-    - strategy_sl_20_tp_40
-    - MomentumStrategy_SL15_TP30
-    
-    Args:
-        strategy_name (str): Strategy name
-    
-    Returns:
-        tuple: (sl, tp) as integers, or (None, None) if not found
-    
-    Examples:
-        >>> extract_sl_tp_from_name('TrendFollower_L5_T0.5_SL10_TP50')
-        (10, 50)
-        >>> extract_sl_tp_from_name('strategy_sl_20_tp_40')
-        (20, 40)
-        >>> extract_sl_tp_from_name('NoSLTP_Strategy')
-        (None, None)
-    """
-    if not strategy_name:
-        return None, None
-    
-    # Pattern 1: SL<number>_TP<number> (case-insensitive)
-    # Matches: SL10_TP50, sl10_tp50, SL15_TP30
-    match = re.search(r'SL(\d+)_TP(\d+)', strategy_name, re.IGNORECASE)
-    if match:
-        sl = int(match.group(1))
-        tp = int(match.group(2))
-        return sl, tp
-    
-    # Pattern 2: sl_<number>_tp_<number> (with underscores)
-    # Matches: sl_20_tp_40, SL_15_TP_30
-    match = re.search(r'sl[_-](\d+)[_-]tp[_-](\d+)', strategy_name, re.IGNORECASE)
-    if match:
-        sl = int(match.group(1))
-        tp = int(match.group(2))
-        return sl, tp
-    
-    # Pattern 3: sl<number>tp<number> (no separators)
-    # Matches: sl10tp50, SL15TP30
-    match = re.search(r'sl(\d+)tp(\d+)', strategy_name, re.IGNORECASE)
-    if match:
-        sl = int(match.group(1))
-        tp = int(match.group(2))
-        return sl, tp
-    
-    # No match found
-    return None, None
-
-
-# ═══════════════════════════════════════════════════════════════
-# 🔧 HELPER FUNCTIONS FOR TRADES_DETAILED LOADING
-# ═══════════════════════════════════════════════════════════════
-
-def _load_consolidated(consolidated_path: Path) -> Dict:
-    """Load consolidated backtest results."""
-    if not consolidated_path.exists():
-        return {}
-    
-    try:
-        with open(consolidated_path, 'r') as f:
-            data = json.load(f)
-        
-        # Validate structure
-        if 'universes' not in data:
-            st.warning(f"⚠️  Warning: consolidated file missing 'universes' key")
-            return {}
-        
-        return data
-    
-    except json.JSONDecodeError as e:
-        st.error(f"❌ Error loading consolidated file: {e}")
-        return {}
-    except Exception as e:
-        st.error(f"❌ Unexpected error loading consolidated: {e}")
-        return {}
-
-
-def _load_detailed_trades(universe_files: List[Path]) -> Dict[str, List[Dict]]:
-    """
-    Load trades_detailed from individual universe files.
-    
-    Args:
-        universe_files: List of paths to universe JSON files
-    
-    Returns:
-        dict: {strategy_name: [trades_detailed]}
-    """
-    trades_by_strategy = {}
-    
-    for universe_file in universe_files:
-        try:
-            with open(universe_file, 'r') as f:
-                universe_data = json.load(f)
-            
-            # Extract results
-            results = universe_data.get('results', [])
-            
-            for strategy in results:
-                strategy_name = strategy.get('strategy_name')
-                trades_detailed = strategy.get('trades_detailed', [])
-                
-                if strategy_name and trades_detailed:
-                    # Aggregate trades from multiple universes
-                    if strategy_name not in trades_by_strategy:
-                        trades_by_strategy[strategy_name] = []
-                    
-                    trades_by_strategy[strategy_name].extend(trades_detailed)
-        
-        except Exception as e:
-            st.warning(f"⚠️  Warning: Could not load {universe_file.name}: {e}")
-            continue
-    
-    return trades_by_strategy
-
-
-def _merge_results(consolidated_data: Dict, detailed_trades: Dict[str, List[Dict]]) -> List[Dict]:
-    """
-    Merge consolidated metrics with detailed trades.
-    
-    Args:
-        consolidated_data: Data from consolidated_backtest_results.json
-        detailed_trades: trades_detailed indexed by strategy_name
-    
-    Returns:
-        List of strategies with full data
+        DataFrame with all strategy results and metrics
     """
     all_results = []
+    results_path = Path(base_path)
     
-    # Extract strategies from consolidated
-    universes = consolidated_data.get('universes', [])
+    if not results_path.exists():
+        print(f"Warning: Results directory '{base_path}' does not exist")
+        return pd.DataFrame()
     
-    for universe in universes:
-        universe_name = universe.get('universe_name', 'unknown')
-        universe_meta = universe.get('universe_metadata', {})
+    # Find all JSON files in the results directory
+    json_files = list(results_path.glob("*.json"))
+    print(f"Found {len(json_files)} JSON files in {base_path}")
+    
+    for file_path in json_files:
+        data = load_json_file(file_path)
+        if data is None:
+            continue
+            
+        # Extract strategy data from the JSON structure
+        if isinstance(data, list):
+            # Handle array of results
+            for item in data:
+                strategy_data = extract_strategy_data(item)
+                if strategy_data:
+                    all_results.append(strategy_data)
+        else:
+            # Handle single result
+            strategy_data = extract_strategy_data(data)
+            if strategy_data:
+                all_results.append(strategy_data)
+    
+    if not all_results:
+        print("Warning: No valid strategy results found")
+        return pd.DataFrame()
+    
+    print(f"Loaded {len(all_results)} strategy results")
+    
+    # Create DataFrame from the results
+    # Use pd.DataFrame constructor which properly handles nested dicts
+    strategies_df = pd.DataFrame(all_results)
+    
+    # Debug: Print available columns
+    print(f"DataFrame shape: {strategies_df.shape}")
+    print(f"Available columns: {list(strategies_df.columns)}")
+    
+    # Define expected columns based on the JSON structure
+    expected_columns = [
+        'strategy_name',
+        'n_trades',
+        'win_rate',
+        'profit_factor',
+        'total_return',
+        'sharpe_ratio',
+        'sortino_ratio',
+        'calmar_ratio',
+        'max_drawdown',
+        'avg_win',
+        'avg_loss',
+        'largest_win',
+        'largest_loss',
+        'expectancy',
+        'recovery_factor',
+        'ulcer_index',
+        'trades_detailed'
+    ]
+    
+    # Check for missing columns
+    missing_columns = [col for col in expected_columns if col not in strategies_df.columns]
+    if missing_columns:
+        print(f"Warning: Missing expected columns: {missing_columns}")
+        # Add missing columns with NaN values
+        for col in missing_columns:
+            if col != 'trades_detailed':  # Don't add NaN for trades_detailed
+                strategies_df[col] = np.nan
+    
+    # Convert numeric columns to appropriate types
+    numeric_columns = [
+        'n_trades', 'win_rate', 'profit_factor', 'total_return',
+        'sharpe_ratio', 'sortino_ratio', 'calmar_ratio', 'max_drawdown',
+        'avg_win', 'avg_loss', 'largest_win', 'largest_loss',
+        'expectancy', 'recovery_factor', 'ulcer_index'
+    ]
+    
+    for col in numeric_columns:
+        if col in strategies_df.columns:
+            try:
+                strategies_df[col] = pd.to_numeric(strategies_df[col], errors='coerce')
+            except Exception as e:
+                print(f"Warning: Could not convert column '{col}' to numeric: {e}")
+    
+    return strategies_df
+
+
+def get_strategy_metrics(strategies_df: pd.DataFrame, strategy_name: str) -> Optional[Dict[str, Any]]:
+    """
+    Get metrics for a specific strategy.
+    
+    Args:
+        strategies_df: DataFrame with all strategies
+        strategy_name: Name of the strategy to retrieve
         
-        # Some consolidated files have results nested in universe
-        strategies = universe.get('results', [])
+    Returns:
+        Dictionary with strategy metrics, or None if not found
+    """
+    if strategies_df.empty:
+        return None
+    
+    if 'strategy_name' not in strategies_df.columns:
+        print("Error: 'strategy_name' column not found in DataFrame")
+        return None
+    
+    strategy_data = strategies_df[strategies_df['strategy_name'] == strategy_name]
+    
+    if strategy_data.empty:
+        print(f"Warning: Strategy '{strategy_name}' not found")
+        return None
+    
+    return strategy_data.iloc[0].to_dict()
+
+
+def get_top_strategies(strategies_df: pd.DataFrame, metric: str = 'sharpe_ratio', n: int = 10) -> pd.DataFrame:
+    """
+    Get top N strategies by a specific metric.
+    
+    Args:
+        strategies_df: DataFrame with all strategies
+        metric: Metric to rank by (default: 'sharpe_ratio')
+        n: Number of top strategies to return
         
-        for strategy in strategies:
-            strategy_name = strategy.get('strategy_name')
-            
-            # Build complete strategy data
-            strategy_data = {
-                'universe_name': universe_name,
-                'interval': universe_meta.get('interval'),
-                'lookback': universe_meta.get('lookback'),
-                **strategy
-            }
-            
-            # Add trades_detailed if available
-            if strategy_name and strategy_name in detailed_trades:
-                strategy_data['trades_detailed'] = detailed_trades[strategy_name]
-                strategy_data['n_detailed_trades'] = len(detailed_trades[strategy_name])
-            else:
-                strategy_data['trades_detailed'] = []
-                strategy_data['n_detailed_trades'] = 0
-            
-            all_results.append(strategy_data)
+    Returns:
+        DataFrame with top N strategies
+    """
+    if strategies_df.empty:
+        return pd.DataFrame()
     
-    # If no results in consolidated, try to build from detailed trades
-    if not all_results and detailed_trades:
-        for strategy_name, trades in detailed_trades.items():
-            all_results.append({
-                'strategy_name': strategy_name,
-                'trades_detailed': trades,
-                'n_detailed_trades': len(trades),
-                'n_trades': len(trades),
-                # Other metrics will be calculated from trades
-                'total_return': _calculate_return_from_trades(trades),
-                'win_rate': _calculate_win_rate(trades)
-            })
+    if metric not in strategies_df.columns:
+        print(f"Error: Metric '{metric}' not found in DataFrame")
+        print(f"Available columns: {list(strategies_df.columns)}")
+        # Fallback to sharpe_ratio or first numeric column
+        numeric_cols = strategies_df.select_dtypes(include=[np.number]).columns
+        if 'sharpe_ratio' in numeric_cols:
+            metric = 'sharpe_ratio'
+        elif len(numeric_cols) > 0:
+            metric = numeric_cols[0]
+        else:
+            return strategies_df.head(n)
     
-    return all_results
-
-
-def _calculate_return_from_trades(trades: List[Dict]) -> float:
-    """Calculate total return from trades_detailed."""
-    if not trades:
-        return 0.0
-    
+    # Sort by metric (descending) and return top N
     try:
-        # Only sum valid numeric pnl_pct values
-        total_pnl_pct = 0.0
-        for t in trades:
-            pnl_pct = t.get('pnl_pct', 0)
-            if isinstance(pnl_pct, (int, float)):
-                total_pnl_pct += pnl_pct
-        return total_pnl_pct
-    except (TypeError, ValueError) as e:
-        st.warning(f"⚠️  Error calculating return from trades: {e}")
-        return 0.0
+        return strategies_df.nlargest(n, metric)
+    except Exception as e:
+        print(f"Error sorting by '{metric}': {e}")
+        return strategies_df.head(n)
 
 
-def _calculate_win_rate(trades: List[Dict]) -> float:
-    """Calculate win rate from trades_detailed."""
-    if not trades:
-        return 0.0
+def validate_dataframe(df: pd.DataFrame) -> bool:
+    """
+    Validate that the DataFrame has the required structure.
     
-    try:
-        winning_trades = 0
-        for t in trades:
-            pnl_pips = t.get('pnl_pips', 0)
-            if isinstance(pnl_pips, (int, float)) and pnl_pips > 0:
-                winning_trades += 1
-        return (winning_trades / len(trades))
-    except (ZeroDivisionError, TypeError, ValueError) as e:
-        st.warning(f"⚠️  Error calculating win rate: {e}")
-        return 0.0
+    Args:
+        df: DataFrame to validate
+        
+    Returns:
+        True if valid, False otherwise
+    """
+    if df.empty:
+        print("Validation failed: DataFrame is empty")
+        return False
+    
+    required_columns = ['strategy_name', 'sharpe_ratio', 'total_return', 'max_drawdown']
+    missing = [col for col in required_columns if col not in df.columns]
+    
+    if missing:
+        print(f"Validation failed: Missing required columns: {missing}")
+        print(f"Available columns: {list(df.columns)}")
+        return False
+    
+    return True
 
 
-def _get_empty_results() -> Dict:
-    """Return empty results structure."""
-    return {
-        'all_results': [],
-        'strategies': [],
-        'metadata': {
-            'backtest_timestamp': 'No data',
-            'total_universes': 0,
-            'total_strategies': 0,
-            'data_source': 'none'
-        },
-        'universes': [],
-        'has_detailed_trades': False,
-        'total_strategies': 0,
-        'viable_count': 0,
-        'strategies_df': pd.DataFrame()
-    }
+# Main loading function for dashboard
+def load_dashboard_data(base_path: str = "results") -> pd.DataFrame:
+    """
+    Load and validate data for the dashboard.
+    
+    Args:
+        base_path: Directory containing result JSON files
+        
+    Returns:
+        Validated DataFrame ready for dashboard use
+    """
+    print(f"Loading dashboard data from: {base_path}")
+    df = load_all_results(base_path)
+    
+    if validate_dataframe(df):
+        print("Data loaded and validated successfully")
+        print(f"Total strategies: {len(df)}")
+        if 'sharpe_ratio' in df.columns:
+            print(f"Sharpe ratio range: {df['sharpe_ratio'].min():.2f} to {df['sharpe_ratio'].max():.2f}")
+    else:
+        print("Warning: Data validation failed, dashboard may not work correctly")
+    
+    return df
+
+
+if __name__ == "__main__":
+    # Test the data loader
+    print("Testing data loader...")
+    df = load_dashboard_data()
+    print(f"\nLoaded {len(df)} strategies")
+    if not df.empty:
+        print(f"\nColumns: {list(df.columns)}")
+        print(f"\nFirst strategy:\n{df.iloc[0]}")
