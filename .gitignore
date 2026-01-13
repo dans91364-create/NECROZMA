@@ -54,6 +54,12 @@ ultra_necrozma_results/
 *.jpg
 *.jpeg
 
+# Large backtest files (keep only metrics summary)
+ultra_necrozma_results/backtest_results/detailed_trades/
+
+# But keep the metrics file
+!ultra_necrozma_results/backtest_results/all_strategies_metrics.json
+
 # Logs
 *.log
 logs/

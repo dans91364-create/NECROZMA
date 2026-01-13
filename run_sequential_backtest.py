@@ -36,6 +36,7 @@ from feature_extractor import (
     combine_ohlc_with_features,
     validate_dataframe_for_backtesting
 )
+from core.storage.smart_storage import SmartBacktestStorage
 
 # Import psutil for monitoring (optional)
 try:
@@ -455,15 +456,21 @@ def backtest_universe(universe_data: Dict, strategies: List, parquet_path: Path 
 # ═══════════════════════════════════════════════════════════════
 
 def save_universe_backtest_results(universe_data: Dict, results: List[BacktestResults], 
-                                   stats: Dict, output_dir: Path):
+                                   stats: Dict, output_dir: Path, 
+                                   smart_storage: Optional[SmartBacktestStorage] = None):
     """
     Save backtest results for a universe
+    
+    This function now supports both legacy and smart storage formats:
+    - Legacy: Full universe JSON file (backward compatible)
+    - Smart Storage: Tiered storage (metrics + top N trades)
     
     Args:
         universe_data: Universe result dictionary
         results: List of BacktestResults
         stats: Statistics dictionary
         output_dir: Output directory
+        smart_storage: Optional SmartBacktestStorage instance for tiered storage
     """
     # Extract universe identifier
     filepath = Path(universe_data.get('_filepath', ''))
@@ -482,10 +489,20 @@ def save_universe_backtest_results(universe_data: Dict, results: List[BacktestRe
         "results": [r.to_dict() for r in results],
     }
     
-    # Save to file
+    # Save to legacy file format (for backward compatibility)
     output_file = output_dir / f"{universe_name}_backtest.json"
     with open(output_file, 'w') as f:
         json.dump(output, f, indent=2)
+    
+    # Also save using smart storage if provided
+    if smart_storage is not None:
+        # Convert BacktestResults to dict format
+        results_dicts = [r.to_dict() for r in results]
+        smart_storage.save_universe_results(
+            universe_name=universe_name,
+            results=results_dicts,
+            top_n=50  # Save detailed trades for top 50 strategies
+        )
     
     return output_file
 
@@ -597,10 +614,14 @@ def main():
     output_dir = results_dir / "backtest_results"
     output_dir.mkdir(parents=True, exist_ok=True)
     
+    # Initialize smart storage
+    smart_storage = SmartBacktestStorage(output_dir=str(output_dir))
+    
     print(f"\n💾 Output directory: {output_dir}", flush=True)
     print(f"⚙️  CPU threshold: {args.cpu_threshold}%", flush=True)
     print(f"❄️  Cooling duration: {args.cooling_duration}s", flush=True)
     print(f"📊 Max strategies per universe: {args.max_strategies}", flush=True)
+    print(f"🗄️  Smart storage enabled: Metrics + Top 50 trades per universe", flush=True)
     
     # Track overall statistics
     start_time = time.time()
@@ -649,7 +670,7 @@ def main():
             
             # Save individual universe results
             output_file = save_universe_backtest_results(
-                universe_data, results, backtest_stats, output_dir
+                universe_data, results, backtest_stats, output_dir, smart_storage
             )
             print(f"   💾 Saved: {output_file.name}", flush=True)
             print(f"   ⏱️  Time: {backtest_time:.1f}s", flush=True)

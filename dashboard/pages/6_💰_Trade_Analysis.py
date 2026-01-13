@@ -10,94 +10,288 @@ import streamlit as st
 import sys
 from pathlib import Path
 import pandas as pd
+import plotly.graph_objects as go
 
 # Add parent directories to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from dashboard.utils.data_loader import load_all_results, get_strategy_list
-from dashboard.components.charts import create_bar_chart, create_scatter_plot
-from dashboard.utils.trade_analyzer import (
-    analyze_patterns, analyze_market_conditions, generate_insights
+from dashboard.utils.data_loader import (
+    load_all_strategies_metrics,
+    load_strategy_detailed_trades,
+    get_strategies_with_trades,
+    load_all_results
 )
 from dashboard.utils.formatters import (
-    format_pips, format_currency, format_duration, format_datetime
+    format_currency, format_datetime
 )
 
 # Page config
 st.set_page_config(page_title="Trade Analysis", page_icon="💰", layout="wide")
 
-st.title("💰 Trade Analysis")
-st.markdown("Analyze individual trades to understand wins and losses")
+st.title("💰 Trade-by-Trade Analysis")
 
-# Load data
-with st.spinner("Loading backtest results..."):
-    results = load_all_results()
+# Load metrics (lightweight, fast)
+metrics_df = load_all_strategies_metrics()
 
-if results['total_strategies'] == 0:
-    st.error("❌ No backtest results found. Please run backtests first.")
-    st.stop()
-
-# Display data status in sidebar
-st.sidebar.info(f"""
-📊 **Data Status:**
-- Strategies: {results['metadata']['total_strategies']}
-- Universes: {results['metadata']['total_universes']}
-- Detailed Trades: {'✅ Available' if results['has_detailed_trades'] else '❌ Not found'}
-- Source: {results['metadata']['data_source']}
-""")
-
-strategies_df = results.get('strategies_df')
-
-if strategies_df is None or strategies_df.empty:
-    st.error("❌ No strategy data available")
-    st.stop()
-
-# Check for detailed trades data
-if not results['has_detailed_trades']:
-    st.warning("""
-    ⚠️ **No detailed trade data found.**
+if metrics_df.empty:
+    st.error("❌ No backtest results found")
+    st.info("""
+    **No results found.** Please run backtests first:
     
-    Detailed trades are stored in individual universe files.
-    Make sure you have run backtests with the updated backtester.
-    
-    Looking for files like: `universe_001_5min_5lb_backtest.json`
-    
-    Currently showing **summary-level analysis** only.
+    ```bash
+    python run_sequential_backtest.py
+    ```
     """)
-    # Continue with summary analysis
-else:
-    # Show success message if detailed trades are available
-    strategies_with_trades = [
-        s for s in results['all_results'] 
-        if s.get('trades_detailed') and len(s['trades_detailed']) > 0
-    ]
-    
-    if strategies_with_trades:
-        st.success(f"✅ Found {len(strategies_with_trades)} strategies with detailed trades!")
-        
-        # Display sample trade info for first strategy with trades
-        first_strategy = strategies_with_trades[0]
-        n_trades = first_strategy.get('n_detailed_trades', 0)
-        st.info(f"📊 Example: {first_strategy['strategy_name']} has {n_trades} detailed trades available")
-
-st.markdown("---")
-
-# Strategy selector for trade analysis
-st.sidebar.header("🔍 Select Strategy")
-
-strategy_names = get_strategy_list(results)
-
-if not strategy_names:
-    st.warning("No strategies available")
     st.stop()
 
-selected_strategy = st.sidebar.selectbox("Select Strategy", strategy_names[:50])  # Limit for performance
+# Get strategies with detailed trades available
+strategies_with_trades = get_strategies_with_trades()
 
-# Get selected strategy data
-strategy_data = strategies_df[strategies_df['strategy_name'] == selected_strategy].iloc[0].to_dict()
+if not strategies_with_trades:
+    st.warning("⚠️ No detailed trades available. Run backtest to generate trade data.")
+    st.info("""
+    **Note:** Only the top 50 strategies per universe have detailed trade data saved.
+    
+    This is by design to keep storage manageable while still allowing deep analysis 
+    of the best performers.
+    
+    **To generate detailed trades:**
+    1. Run backtests with the updated system
+    2. Top 50 strategies per universe will have detailed trades saved
+    3. Return to this page to analyze them
+    """)
+    
+    # Show summary statistics for all strategies
+    st.markdown("---")
+    st.header("📊 Summary Statistics (All Strategies)")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.metric("Total Strategies", f"{len(metrics_df):,}")
+    
+    with col2:
+        avg_sharpe = metrics_df['sharpe_ratio'].mean() if 'sharpe_ratio' in metrics_df.columns else 0
+        st.metric("Avg Sharpe Ratio", f"{avg_sharpe:.2f}")
+    
+    with col3:
+        avg_return = metrics_df['total_return'].mean() if 'total_return' in metrics_df.columns else 0
+        st.metric("Avg Return", f"{avg_return*100:.1f}%")
+    
+    with col4:
+        avg_win_rate = metrics_df['win_rate'].mean() if 'win_rate' in metrics_df.columns else 0
+        st.metric("Avg Win Rate", f"{avg_win_rate*100:.1f}%")
+    
+    st.stop()
 
-# Display strategy summary
-st.header(f"📋 {selected_strategy}")
+st.success(f"✅ {len(strategies_with_trades)} strategies have detailed trade data available")
+
+# Strategy selector (only show those with trades)
+available_metrics = metrics_df[metrics_df['strategy_name'].isin(strategies_with_trades)]
+
+if available_metrics.empty:
+    st.error("No matching strategies found")
+    st.stop()
+
+# Sidebar filters
+st.sidebar.header("🔍 Filter Strategies")
+
+# Universe filter
+if 'universe' in available_metrics.columns:
+    universes = ['All'] + sorted(available_metrics['universe'].unique().tolist())
+    selected_universe = st.sidebar.selectbox("Universe", universes)
+    
+    if selected_universe != 'All':
+        available_metrics = available_metrics[available_metrics['universe'] == selected_universe]
+
+# Sort by metric
+sort_options = {
+    'Sharpe Ratio': 'sharpe_ratio',
+    'Total Return': 'total_return',
+    'Win Rate': 'win_rate',
+    'Strategy Name': 'strategy_name'
+}
+
+sort_by = st.sidebar.selectbox("Sort By", list(sort_options.keys()), index=0)
+sort_col = sort_options[sort_by]
+
+if sort_col in available_metrics.columns:
+    available_metrics = available_metrics.sort_values(sort_col, ascending=False)
+
+selected_strategy = st.sidebar.selectbox(
+    "Select Strategy (Top 50 only)",
+    options=available_metrics['strategy_name'].tolist(),
+    help="Only top 50 strategies per universe have detailed trade data saved"
+)
+
+if selected_strategy:
+    # Load trades ON-DEMAND (only when user selects)
+    with st.spinner(f"Loading trades for {selected_strategy}..."):
+        strategy_data = load_strategy_detailed_trades(selected_strategy)
+    
+    if strategy_data is None:
+        st.error(f"Could not load trades for {selected_strategy}")
+        st.stop()
+    
+    # Display strategy info
+    st.header(f"📊 {selected_strategy}")
+    
+    col1, col2 = st.columns([3, 1])
+    
+    with col1:
+        st.caption(f"**Universe:** {strategy_data.get('universe', 'Unknown')}")
+    
+    with col2:
+        rank = strategy_data.get('rank', '?')
+        st.caption(f"**Rank:** #{rank} in universe")
+    
+    st.markdown("---")
+    
+    # Metrics
+    metrics = strategy_data.get("metrics", {})
+    
+    col1, col2, col3, col4, col5 = st.columns(5)
+    
+    with col1:
+        total_return = metrics.get('total_return', 0)
+        st.metric("Total Return", f"{total_return*100:.1f}%")
+    
+    with col2:
+        sharpe = metrics.get('sharpe_ratio', 0)
+        st.metric("Sharpe Ratio", f"{sharpe:.2f}")
+    
+    with col3:
+        win_rate = metrics.get('win_rate', 0)
+        st.metric("Win Rate", f"{win_rate*100:.1f}%")
+    
+    with col4:
+        n_trades = metrics.get('n_trades', 0)
+        st.metric("Total Trades", f"{n_trades:,}")
+    
+    with col5:
+        max_dd = metrics.get('max_drawdown', 0)
+        st.metric("Max Drawdown", f"{max_dd*100:.1f}%")
+    
+    # Equity curve
+    st.subheader("📈 Equity Curve")
+    
+    equity = strategy_data.get("equity_curve", [])
+    if equity and len(equity) > 0:
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            y=equity, 
+            mode='lines', 
+            name='Equity',
+            line=dict(color='#00CC96', width=2)
+        ))
+        fig.update_layout(
+            title="Equity Curve Over Time",
+            yaxis_title="Balance ($)",
+            xaxis_title="Trade Number",
+            height=400,
+            hovermode='x unified'
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("No equity curve data available")
+    
+    # Trades table
+    st.subheader("🔍 Trade History")
+    
+    trades = strategy_data.get("trades", [])
+    if trades and len(trades) > 0:
+        trades_df = pd.DataFrame(trades)
+        
+        # Format trades for display
+        display_cols = []
+        available_cols = trades_df.columns.tolist()
+        
+        # Prioritize these columns if available
+        priority_cols = [
+            'entry_time', 'exit_time', 'direction', 
+            'entry_price', 'exit_price', 'pnl_usd', 'pnl_pct', 
+            'duration_minutes', 'exit_reason'
+        ]
+        
+        for col in priority_cols:
+            if col in available_cols:
+                display_cols.append(col)
+        
+        # Add any remaining columns
+        for col in available_cols:
+            if col not in display_cols:
+                display_cols.append(col)
+        
+        # Show trade statistics
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric("Winning Trades", f"{sum(trades_df.get('pnl_usd', [0]) > 0) if 'pnl_usd' in trades_df else 0}")
+        
+        with col2:
+            st.metric("Losing Trades", f"{sum(trades_df.get('pnl_usd', [0]) < 0) if 'pnl_usd' in trades_df else 0}")
+        
+        with col3:
+            avg_pnl = trades_df['pnl_usd'].mean() if 'pnl_usd' in trades_df else 0
+            st.metric("Avg P&L per Trade", f"${avg_pnl:.2f}")
+        
+        st.markdown("---")
+        
+        # Show first 100 trades in UI
+        st.dataframe(
+            trades_df[display_cols].head(100),
+            use_container_width=True,
+            height=600
+        )
+        
+        if len(trades_df) > 100:
+            st.caption(f"Showing first 100 of {len(trades_df)} trades. Download CSV to see all trades.")
+        
+        # Download ALL trades as CSV
+        csv = trades_df.to_csv(index=False)
+        st.download_button(
+            label=f"📥 Download All {len(trades_df)} Trades as CSV",
+            data=csv,
+            file_name=f"{selected_strategy}_trades.csv",
+            mime="text/csv"
+        )
+    else:
+        st.warning("No trade data available for this strategy")
+    
+    # Additional insights
+    st.markdown("---")
+    st.subheader("💡 Insights")
+    
+    insights = []
+    
+    if win_rate > 0.6:
+        insights.append(f"🎯 **High win rate** ({win_rate*100:.1f}%) suggests good entry signals")
+    elif win_rate < 0.4:
+        insights.append(f"⚠️ **Low win rate** ({win_rate*100:.1f}%) - consider refining entry criteria")
+    
+    profit_factor = metrics.get('profit_factor', 0)
+    if profit_factor > 2.0:
+        insights.append(f"💰 **Excellent profit factor** ({profit_factor:.2f}) - strong risk/reward management")
+    elif profit_factor < 1.0:
+        insights.append(f"⚠️ **Profit factor below 1.0** ({profit_factor:.2f}) - losing more than winning")
+    
+    if n_trades < 30:
+        insights.append(f"📊 **Limited sample size** ({n_trades} trades) - results may not be statistically significant")
+    elif n_trades > 100:
+        insights.append(f"✅ **Large sample size** ({n_trades} trades) provides statistical confidence")
+    
+    if sharpe > 2.0:
+        insights.append(f"🌟 **Exceptional Sharpe ratio** ({sharpe:.2f}) - excellent risk-adjusted returns")
+    
+    if insights:
+        for insight in insights:
+            st.markdown(f"- {insight}")
+    else:
+        st.info("Insufficient data for detailed insights")
+
+# Footer
+st.markdown("---")
+st.markdown("💡 **Tip**: Use filters to find strategies by universe or sort by different metrics!")
 
 col1, col2, col3, col4 = st.columns(4)
 

@@ -3,7 +3,7 @@
 """
 ⚡🌟💎 NECROZMA DASHBOARD - DATA LOADER 💎🌟⚡
 
-Load backtest results from universe_*_backtest.json files
+Load backtest results from universe_*_backtest.json files and smart storage
 """
 
 import os
@@ -26,6 +26,115 @@ def get_data_directory() -> Path:
         results_dir = base_dir / "data"
     
     return results_dir
+
+
+# ═══════════════════════════════════════════════════════════════
+# 🗄️ SMART STORAGE FUNCTIONS (NEW)
+# ═══════════════════════════════════════════════════════════════
+
+@st.cache_data(ttl=300)
+def load_all_strategies_metrics(results_dir: Optional[str] = None) -> pd.DataFrame:
+    """
+    Load lightweight metrics for ALL strategies (Tier 1)
+    Fast loading: ~50 MB for 10,000 strategies
+    
+    Args:
+        results_dir: Optional custom results directory path
+        
+    Returns:
+        DataFrame with all strategy metrics
+    """
+    if results_dir:
+        data_dir = Path(results_dir)
+    else:
+        data_dir = get_data_directory()
+    
+    metrics_file = data_dir / "all_strategies_metrics.json"
+    
+    if not metrics_file.exists():
+        return pd.DataFrame()
+    
+    try:
+        with open(metrics_file) as f:
+            data = json.load(f)
+        
+        strategies = data.get("strategies", [])
+        
+        if not strategies:
+            return pd.DataFrame()
+        
+        # Convert to DataFrame
+        df = pd.DataFrame(strategies)
+        
+        # Flatten metrics dict into columns
+        if 'metrics' in df.columns:
+            metrics_df = pd.json_normalize(df['metrics'])
+            df = pd.concat([df[['strategy_name', 'universe']], metrics_df], axis=1)
+        
+        return df
+        
+    except Exception as e:
+        print(f"Error loading metrics file: {e}")
+        return pd.DataFrame()
+
+
+@st.cache_data(ttl=300)
+def load_strategy_detailed_trades(strategy_name: str, results_dir: Optional[str] = None) -> Optional[Dict]:
+    """
+    Load detailed trades for ONE strategy (Tier 2, on-demand)
+    Only available for top 50 strategies per universe
+    
+    Args:
+        strategy_name: Name of the strategy
+        results_dir: Optional custom results directory path
+        
+    Returns:
+        Dictionary with strategy data or None if not found
+    """
+    if results_dir:
+        data_dir = Path(results_dir)
+    else:
+        data_dir = get_data_directory()
+    
+    trade_file = data_dir / "detailed_trades" / f"{strategy_name}.json"
+    
+    if not trade_file.exists():
+        return None
+    
+    try:
+        with open(trade_file) as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Error loading trades for {strategy_name}: {e}")
+        return None
+
+
+def get_strategies_with_trades(results_dir: Optional[str] = None) -> List[str]:
+    """
+    Get list of strategies that have detailed trades available
+    
+    Args:
+        results_dir: Optional custom results directory path
+        
+    Returns:
+        List of strategy names with detailed trades
+    """
+    if results_dir:
+        data_dir = Path(results_dir)
+    else:
+        data_dir = get_data_directory()
+    
+    trades_dir = data_dir / "detailed_trades"
+    
+    if not trades_dir.exists():
+        return []
+    
+    return [f.stem for f in trades_dir.glob("*.json")]
+
+
+# ═══════════════════════════════════════════════════════════════
+# 📊 LEGACY FUNCTIONS (BACKWARD COMPATIBLE)
+# ═══════════════════════════════════════════════════════════════
 
 
 def extract_sl_tp_from_name(strategy_name: str) -> Tuple[Optional[int], Optional[int]]:
@@ -142,10 +251,10 @@ def get_strategy_data(strategy_name: str, universe: Optional[str] = None) -> Opt
 @st.cache_data(ttl=300)
 def load_all_results(results_dir: Optional[str] = None) -> Dict[str, Any]:
     """
-    Load all backtest results from universe_*_backtest.json files.
+    Load all backtest results from smart storage or legacy format.
     
-    This function scans for universe_*_backtest.json files which contain
-    the complete strategy data including detailed trades (up to 4.6 GB files).
+    This function now prioritizes smart storage (all_strategies_metrics.json)
+    but falls back to legacy universe_*_backtest.json files for backward compatibility.
     
     Args:
         results_dir: Optional custom results directory path
@@ -164,6 +273,39 @@ def load_all_results(results_dir: Optional[str] = None) -> Dict[str, Any]:
             'strategies_df': pd.DataFrame  # Complete DataFrame with all metrics
         }
     """
+    # Try loading from smart storage first
+    metrics_df = load_all_strategies_metrics(results_dir)
+    
+    if not metrics_df.empty:
+        # Smart storage found!
+        strategies_with_trades = get_strategies_with_trades(results_dir)
+        
+        # Ensure backward compatibility: add 'universe_name' field if not present
+        if 'universe' in metrics_df.columns and 'universe_name' not in metrics_df.columns:
+            metrics_df['universe_name'] = metrics_df['universe']
+        
+        # Convert DataFrame to list of dicts for backward compatibility
+        all_results = metrics_df.to_dict('records')
+        
+        # Get unique universes
+        universes = metrics_df['universe'].nunique() if 'universe' in metrics_df.columns else 0
+        
+        metadata = {
+            'total_strategies': len(metrics_df),
+            'total_universes': universes,
+            'data_source': 'smart_storage',
+            'last_updated': pd.Timestamp.now().isoformat()
+        }
+        
+        return {
+            'metadata': metadata,
+            'has_detailed_trades': len(strategies_with_trades) > 0,
+            'all_results': all_results,
+            'strategies_df': metrics_df,
+            'total_strategies': len(metrics_df)  # For backward compatibility
+        }
+    
+    # Fall back to legacy format
     if results_dir:
         data_dir = Path(results_dir)
     else:
