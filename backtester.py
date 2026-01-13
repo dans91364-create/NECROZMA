@@ -67,7 +67,20 @@ class BacktestResults:
     ulcer_index: float
     trades: pd.DataFrame
     equity_curve: pd.Series
-    trades_detailed: List[Dict] = field(default_factory=list)  # Detailed trade information
+    trades_detailed: List[Dict] = field(default_factory=list)  
+    """
+    Detailed trade information including:
+    - entry_time, exit_time: Timestamps as strings
+    - entry_price, exit_price: Trade prices
+    - direction: 'long' or 'short'
+    - pnl_pips, pnl_usd, pnl_pct: P&L in pips, USD, and percentage
+    - duration_minutes: Trade duration
+    - exit_reason: 'stop_loss', 'take_profit', or 'signal'
+    - market_context: Dict with volatility, trend_strength, volume_relative, 
+                      spread_pips, pattern_detected, pattern_sequence, 
+                      hour_of_day, day_of_week
+    - price_history: Dict with timestamps, open, high, low, close, volume arrays
+    """
     
     def to_dict(self) -> Dict:
         """Convert to dictionary"""
@@ -411,13 +424,19 @@ class Backtester:
         
         history_slice = self.df.iloc[start_idx:end_idx]
         
+        # Get volume data efficiently
+        if 'volume' in history_slice.columns:
+            volume_data = [float(x) for x in history_slice['volume'].tolist()]
+        else:
+            volume_data = [0.0] * len(history_slice)
+        
         return {
             'timestamps': [str(ts) for ts in history_slice.index],
             'open': [float(x) for x in history_slice['open'].tolist()],
             'high': [float(x) for x in history_slice['high'].tolist()],
             'low': [float(x) for x in history_slice['low'].tolist()],
             'close': [float(x) for x in history_slice['close'].tolist()],
-            'volume': [float(x) for x in history_slice.get('volume', [0] * len(history_slice)).tolist()]
+            'volume': volume_data
         }
     
     def _record_detailed_trade(self, entry_idx: int, exit_idx: int, 
@@ -447,10 +466,10 @@ class Backtester:
         # Calculate duration
         duration_minutes = 0
         if entry_time and exit_time:
-            # Check if index is DatetimeIndex
-            if hasattr(entry_time, 'total_seconds') or hasattr(exit_time, 'total_seconds'):
+            # Check if both timestamps support datetime operations
+            try:
                 duration_minutes = int((exit_time - entry_time).total_seconds() / 60)
-            else:
+            except (AttributeError, TypeError):
                 # If not datetime, use index difference as proxy (bars)
                 duration_minutes = exit_idx - entry_idx
         

@@ -113,11 +113,12 @@ def test_backtest_pipeline():
     
     # Try to serialize to JSON
     try:
+        import tempfile
         json_str = json.dumps(output, indent=2)
         
-        # Save to temp file
-        temp_file = Path("/tmp/test_backtest_detailed.json")
-        with open(temp_file, 'w') as f:
+        # Save to temp file using tempfile for cross-platform compatibility
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+            temp_file = Path(f.name)
             f.write(json_str)
         
         print(f"   ✅ JSON saved to: {temp_file}")
