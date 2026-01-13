@@ -71,6 +71,8 @@ Navigate using the sidebar to explore:
 - **🔧 SL/TP Optimization**: Optimize stop-loss and take-profit parameters
 - **⚠️ Risk Analysis**: Analyze risk-adjusted returns and drawdowns
 - **💰 Trade Analysis**: Examine best and worst trades with market context
+- **🏆 Composite Ranking**: Multi-factor composite score analysis (NEW!)
+- **💰 Max Profit Ranking**: Five profit-focused perspectives (NEW!)
 
 ### 🚀 Getting Started
 
@@ -86,6 +88,8 @@ Navigate using the sidebar to explore:
 - **Data Export**: Download filtered data as CSV
 - **Real-time Updates**: Charts update instantly with filter changes
 - **Responsive Design**: Works on desktop, tablet, and mobile
+- **Multi-Factor Analysis**: Composite scores across 4 key dimensions
+- **Profit Perspectives**: 5 different ways to analyze profitability
 
 ### 💡 Tips
 
@@ -95,6 +99,8 @@ Navigate using the sidebar to explore:
 - Optimize parameters with **SL/TP Optimization**
 - Assess risk with **Risk Analysis**
 - Learn from winning/losing trades in **Trade Analysis**
+- Find balanced strategies with **Composite Ranking**
+- Discover profit leaders with **Max Profit Ranking**
 
 ---
 

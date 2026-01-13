@@ -13,8 +13,10 @@ sys.path.insert(0, 'dashboard/utils')
 # Mock streamlit for testing
 class MockStreamlit:
     @staticmethod
-    def cache_data(func):
-        return func
+    def cache_data(ttl=None, **kwargs):
+        def decorator(func):
+            return func
+        return decorator
     
     @staticmethod
     def error(msg):
