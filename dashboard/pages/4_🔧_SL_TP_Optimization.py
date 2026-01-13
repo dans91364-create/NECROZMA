@@ -176,19 +176,24 @@ if not matrix.empty:
         st.metric("Most Profitable TP", f"{best_tp:.0f} pips")
 
 else:
-    st.warning("""
-    ⚠️ **SL/TP data not found in strategy names.**
-    
-    To use this page effectively:
-    1. Ensure strategies are named with SL/TP parameters (e.g., 'momentum_sl_20_tp_40')
-    2. Or implement explicit SL/TP tracking in the backtester
-    3. Re-run backtests with updated naming convention
-    
-    **Alternative**: You can manually analyze the effect of different SL/TP values by:
-    - Running multiple backtests with different parameters
-    - Naming strategies accordingly
-    - Regenerating this dashboard
-    """)
+    # Show sample strategy names for debugging
+    sample_strategies = strategies_df['strategy_name'].head(5).tolist()
+
+    st.warning(f"""
+⚠️ **SL/TP data not found in strategy names.**
+
+**Sample strategy names found:**
+{chr(10).join(f"- `{name}`" for name in sample_strategies)}
+
+**Supported formats:**
+- `TrendFollower_L5_T0.5_SL10_TP50` ✅
+- `strategy_sl_20_tp_40` ✅
+- `MomentumStrategy_SL15_TP30` ✅
+
+If your strategies don't include SL/TP in the name, you can:
+1. Re-run backtests with updated naming convention
+2. Or implement explicit SL/TP tracking in the backtester
+""")
     
     # Show summary statistics instead
     st.header("📊 Current Strategy Performance")
