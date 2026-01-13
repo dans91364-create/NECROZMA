@@ -138,31 +138,14 @@ def calculate_sl_tp_matrix(strategies_df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         Pivot table with SL x TP
     """
+    from dashboard.utils.data_loader import extract_sl_tp_from_name
+    
     if strategies_df.empty:
         return pd.DataFrame()
     
-    # Extract SL/TP from strategy name if available
-    # This is a simplified version - may need adjustment based on actual naming
-    def extract_sl_tp(name):
-        """Extract SL and TP from strategy name"""
-        try:
-            if 'sl' in name.lower() and 'tp' in name.lower():
-                parts = name.lower().split('_')
-                sl = None
-                tp = None
-                for i, part in enumerate(parts):
-                    if 'sl' in part and i + 1 < len(parts):
-                        sl = float(parts[i + 1])
-                    if 'tp' in part and i + 1 < len(parts):
-                        tp = float(parts[i + 1])
-                return sl, tp
-        except:
-            pass
-        return None, None
-    
     if 'strategy_name' in strategies_df.columns:
         strategies_df[['sl', 'tp']] = strategies_df['strategy_name'].apply(
-            lambda x: pd.Series(extract_sl_tp(x))
+            lambda x: pd.Series(extract_sl_tp_from_name(x))
         )
         
         # Filter rows with SL/TP data
@@ -236,3 +219,43 @@ def calculate_risk_metrics(strategies_df: pd.DataFrame) -> Dict:
         metrics['avg_calmar'] = strategies_df['calmar_ratio'].mean()
     
     return metrics
+
+
+def extract_sl_tp_statistics(strategies_df):
+    """
+    Extract SL/TP from all strategies and create statistics.
+    
+    Args:
+        strategies_df: DataFrame with strategy results
+    
+    Returns:
+        dict: Statistics about SL/TP usage
+    """
+    from dashboard.utils.data_loader import extract_sl_tp_from_name
+    
+    sl_tp_data = []
+    
+    for _, row in strategies_df.iterrows():
+        sl, tp = extract_sl_tp_from_name(row['strategy_name'])
+        if sl is not None and tp is not None:
+            sl_tp_data.append({
+                'strategy_name': row['strategy_name'],
+                'sl': sl,
+                'tp': tp,
+                'risk_reward_ratio': tp / sl if sl > 0 else 0,
+                'sharpe_ratio': row.get('sharpe_ratio', 0),
+                'total_return': row.get('total_return', 0),
+                'win_rate': row.get('win_rate', 0),
+                'n_trades': row.get('n_trades', 0)
+            })
+    
+    stats = {
+        'total_strategies': len(strategies_df),
+        'strategies_with_sl_tp': len(sl_tp_data),
+        'coverage_pct': (len(sl_tp_data) / len(strategies_df) * 100) if len(strategies_df) > 0 else 0,
+        'unique_sl_values': set(d['sl'] for d in sl_tp_data),
+        'unique_tp_values': set(d['tp'] for d in sl_tp_data),
+        'data': sl_tp_data
+    }
+    
+    return stats

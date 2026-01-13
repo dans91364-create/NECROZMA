@@ -204,3 +204,59 @@ def get_strategy_list(results: Dict, universe_name: Optional[str] = None) -> Lis
         return sorted(df['strategy_name'].unique().tolist())
     
     return []
+
+
+def extract_sl_tp_from_name(strategy_name):
+    """
+    Extract stop-loss and take-profit from strategy name.
+    
+    Supports multiple formats:
+    - TrendFollower_L5_T0.5_SL10_TP50
+    - strategy_sl_20_tp_40
+    - MomentumStrategy_SL15_TP30
+    
+    Args:
+        strategy_name (str): Strategy name
+    
+    Returns:
+        tuple: (sl, tp) as integers, or (None, None) if not found
+    
+    Examples:
+        >>> extract_sl_tp_from_name('TrendFollower_L5_T0.5_SL10_TP50')
+        (10, 50)
+        >>> extract_sl_tp_from_name('strategy_sl_20_tp_40')
+        (20, 40)
+        >>> extract_sl_tp_from_name('NoSLTP_Strategy')
+        (None, None)
+    """
+    import re
+    
+    if not strategy_name:
+        return None, None
+    
+    # Pattern 1: SL<number>_TP<number> (case-insensitive)
+    # Matches: SL10_TP50, sl10_tp50, SL15_TP30
+    match = re.search(r'SL(\d+)_TP(\d+)', strategy_name, re.IGNORECASE)
+    if match:
+        sl = int(match.group(1))
+        tp = int(match.group(2))
+        return sl, tp
+    
+    # Pattern 2: sl_<number>_tp_<number> (with underscores)
+    # Matches: sl_20_tp_40, SL_15_TP_30
+    match = re.search(r'sl[_-](\d+)[_-]tp[_-](\d+)', strategy_name, re.IGNORECASE)
+    if match:
+        sl = int(match.group(1))
+        tp = int(match.group(2))
+        return sl, tp
+    
+    # Pattern 3: sl<number>tp<number> (no separators)
+    # Matches: sl10tp50, SL15TP30
+    match = re.search(r'sl(\d+)tp(\d+)', strategy_name, re.IGNORECASE)
+    if match:
+        sl = int(match.group(1))
+        tp = int(match.group(2))
+        return sl, tp
+    
+    # No match found
+    return None, None
