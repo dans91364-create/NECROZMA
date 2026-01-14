@@ -72,7 +72,15 @@ def process_file(pair, year, current, total, force=False):
                 total_str = format_size(total_size)
                 print(f"\r   Progresso: {percent:.1f}% ({size_str}/{total_str})", end='', flush=True)
         
-        urllib.request.urlretrieve(url, zip_file, reporthook=download_progress)
+        # Set timeout for download
+        import socket
+        old_timeout = socket.getdefaulttimeout()
+        socket.setdefaulttimeout(300)  # 5 minutes timeout
+        try:
+            urllib.request.urlretrieve(url, zip_file, reporthook=download_progress)
+        finally:
+            socket.setdefaulttimeout(old_timeout)
+        
         file_size = zip_file.stat().st_size
         print(f"\n   ✓ Download: {format_size(file_size)}")
         
@@ -105,6 +113,13 @@ def process_file(pair, year, current, total, force=False):
             names=['broker', 'symbol', 'timestamp', 'bid', 'ask'],
             parse_dates=['timestamp']
         )
+        
+        # Validate data structure
+        if len(df.columns) != 5:
+            raise ValueError(f"CSV deve ter 5 colunas, encontrado {len(df.columns)}")
+        
+        if df.empty:
+            raise ValueError("CSV está vazio")
         
         # Validate data
         num_ticks = len(df)
@@ -251,7 +266,16 @@ Exemplos:
     
     # Parse pairs and years
     pairs = args.pairs.split(",") if args.pairs else ALL_PAIRS
-    years = [int(y) for y in args.years.split(",")] if args.years else ALL_YEARS
+    
+    # Parse years with error handling
+    if args.years:
+        try:
+            years = [int(y.strip()) for y in args.years.split(",")]
+        except ValueError as e:
+            print(f"❌ Erro: Anos inválidos '{args.years}'. Use números separados por vírgula (ex: 2023,2024)")
+            sys.exit(1)
+    else:
+        years = ALL_YEARS
     
     # Validate pairs
     for pair in pairs:
