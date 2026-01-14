@@ -290,7 +290,8 @@ class MeanReverterV2(Strategy):
             
             # Simple RSI approximation (change / range)
             price_change = price.diff()
-            rsi = 50 + (price_change.rolling(self.lookback).mean() / rolling_std * 100)
+            rolling_std_safe = rolling_std.replace(0, 1e-8)  # Prevent division by zero
+            rsi = 50 + (price_change.rolling(self.lookback).mean() / rolling_std_safe * 100)
             rsi = rsi.clip(0, 100)
             
             # Volume check
@@ -354,7 +355,7 @@ class ScalpingStrategy(Strategy):
             price = df.get("mid_price", df.get("close"))
             
             # Micro-momentum: very short-term price change
-            micro_momentum = price.diff(self.lookback)
+            micro_momentum = price.diff(periods=1)  # Fixed: correct pandas diff usage
             
             # Spread filter (only trade when spread is tight)
             if "spread_mean" in df.columns:
@@ -434,11 +435,11 @@ class SessionBreakout(Strategy):
             # Detect session opens
             is_session_open = df_copy["hour"].isin(list(self.session_times.values()))
             
-            # Buy on upward breakout at session open
+            # Buy on upward breakout at session open (consistent threshold application)
             buy_signal = is_session_open & (price > session_high * self.threshold)
             signals[buy_signal] = 1
             
-            # Sell on downward breakout at session open
+            # Sell on downward breakout at session open (consistent threshold application)
             sell_signal = is_session_open & (price < session_low / self.threshold)
             signals[sell_signal] = -1
         
@@ -543,8 +544,8 @@ class PatternRecognition(Strategy):
             body = df["close"] - df["open"]
             range_val = df["high"] - df["low"]
             
-            # Avoid division by zero
-            range_val = range_val.replace(0, np.nan)
+            # Avoid division by zero - use small epsilon instead of NaN
+            range_val = range_val.replace(0, 1e-8)
             
             # Body ratio (bullish/bearish strength)
             body_ratio = body / range_val

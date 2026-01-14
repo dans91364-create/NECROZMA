@@ -52,7 +52,8 @@ def extract_features_from_universe(universe_data: Dict) -> pd.DataFrame:
                 
                 if feature_stats:
                     for key, value in feature_stats.items():
-                        if isinstance(value, (int, float)) and not np.isnan(value):
+                        # Use pd.isna() to handle both int and float safely
+                        if isinstance(value, (int, float)) and not pd.isna(value):
                             if key not in all_features:
                                 all_features[key] = []
                             all_features[key].append(value)

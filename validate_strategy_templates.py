@@ -41,19 +41,27 @@ def create_mock_data():
     returns = np.random.randn(n) * 0.0001 + 0.00001
     prices = base_price + np.cumsum(returns)
     
+    # Generate OHLC with valid relationships
+    high_noise = np.random.uniform(0.0001, 0.0005, n)
+    low_noise = np.random.uniform(0.0001, 0.0005, n)
+    close_offset = np.random.uniform(-0.0002, 0.0002, n)
+    
     df = pd.DataFrame({
         "timestamp": pd.date_range("2025-01-01", periods=n, freq="5min"),
         "open": prices,
-        "high": prices + np.random.uniform(0.0001, 0.0005, n),
-        "low": prices - np.random.uniform(0.0001, 0.0005, n),
-        "close": prices + np.random.uniform(-0.0002, 0.0002, n),
-        "volume": np.random.uniform(50, 150, n),
-        "mid_price": prices,
-        "spread_mean": 0.0001,
-        "momentum": np.random.randn(n) * 0.5,
-        "trend_strength": np.random.uniform(0, 1, n),
-        "volatility": np.random.uniform(0.1, 0.5, n),
+        "close": prices + close_offset,
     })
+    
+    # Ensure high is the maximum and low is the minimum
+    df["high"] = df[["open", "close"]].max(axis=1) + high_noise
+    df["low"] = df[["open", "close"]].min(axis=1) - low_noise
+    
+    df["volume"] = np.random.uniform(50, 150, n)
+    df["mid_price"] = (df["high"] + df["low"]) / 2
+    df["spread_mean"] = 0.0001
+    df["momentum"] = np.random.randn(n) * 0.5
+    df["trend_strength"] = np.random.uniform(0, 1, n)
+    df["volatility"] = np.random.uniform(0.1, 0.5, n)
     
     return df
 
