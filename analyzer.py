@@ -833,21 +833,31 @@ class UltraNecrozmaAnalyzer:
     def save_results(self):
         """
         Save all results to files (Crystal Preservation)
-        Technical: Serialize results to JSON files
+        Technical: Serialize results to Parquet (preferred) or JSON (backward compatible)
         """
+        from config import STORAGE_CONFIG
+        
         print("\n💾 Saving results...")
+        
+        storage_format = STORAGE_CONFIG.get("format", "json")
+        use_parquet = (storage_format == "parquet")
         
         # Save each universe
         for name, result in self.results.items():
             if result:
-                # Simplify for JSON serialization
+                # Simplify for serialization
                 result_simplified = self._simplify_result(result)
                 
-                universe_file = self.output_dirs["universes"] / f"{name}.json"
-                with open(universe_file, "w") as f:
-                    json.dump(result_simplified, f, indent=2, default=str)
+                if use_parquet:
+                    # Save as Parquet
+                    self._save_universe_parquet(name, result_simplified)
+                else:
+                    # Save as JSON (legacy)
+                    universe_file = self.output_dirs["universes"] / f"{name}.json"
+                    with open(universe_file, "w") as f:
+                        json.dump(result_simplified, f, indent=2, default=str)
         
-        print(f"   ✅ Saved {len(self.results)} universe files")
+        print(f"   ✅ Saved {len(self.results)} universe files ({storage_format})")
         
         # Save rankings
         rankings = self.get_rankings()
@@ -859,7 +869,7 @@ class UltraNecrozmaAnalyzer:
         
         # Save summary
         summary = self.get_pattern_summary()
-        summary_file = self.output_dirs["reports"] / "pattern_summary. json"
+        summary_file = self.output_dirs["reports"] / "pattern_summary.json"
         with open(summary_file, "w") as f:
             json.dump(summary, f, indent=2, default=str)
         
@@ -870,6 +880,63 @@ class UltraNecrozmaAnalyzer:
             "rankings_file": str(rankings_file),
             "summary_file": str(summary_file)
         }
+    
+    def _save_universe_parquet(self, name: str, result_simplified: dict):
+        """
+        Save universe result as Parquet with metadata sidecar
+        
+        Args:
+            name: Universe name
+            result_simplified: Simplified result dictionary
+        """
+        from config import STORAGE_CONFIG
+        
+        # Convert results to DataFrame
+        rows = []
+        for level in result_simplified["results"]:
+            for direction in result_simplified["results"][level]:
+                level_data = result_simplified["results"][level][direction]
+                
+                # Get feature_stats
+                feature_stats = level_data.get("feature_stats", {})
+                
+                # Create row
+                row = {
+                    'level': level,
+                    'direction': direction,
+                }
+                
+                # Add all feature stats
+                for key, value in feature_stats.items():
+                    if isinstance(value, (int, float, str, bool)):
+                        row[key] = value
+                
+                # Add pattern_count if available
+                if 'pattern_count' in level_data:
+                    row['pattern_count'] = level_data['pattern_count']
+                
+                rows.append(row)
+        
+        if rows:
+            df = pd.DataFrame(rows)
+            
+            # Save as Parquet
+            compression = STORAGE_CONFIG.get("compression", "snappy")
+            parquet_file = self.output_dirs["universes"] / f"{name}.parquet"
+            df.to_parquet(parquet_file, compression=compression, index=False)
+            
+            # Save metadata separately if enabled
+            if STORAGE_CONFIG.get("enable_metadata_sidecar", True):
+                metadata = {
+                    "name": result_simplified.get("name", ""),
+                    "config": result_simplified.get("config", {}),
+                    "processing_time": result_simplified.get("processing_time", 0),
+                    "total_patterns": result_simplified.get("total_patterns", 0),
+                    "metadata": result_simplified.get("metadata", {})
+                }
+                metadata_file = self.output_dirs["universes"] / f"{name}_metadata.json"
+                with open(metadata_file, "w") as f:
+                    json.dump(metadata, f, indent=2, default=str)
     
     def _simplify_result(self, result):
         """Simplify result for JSON serialization"""

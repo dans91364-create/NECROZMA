@@ -328,31 +328,79 @@ def load_all_results(results_dir: Optional[str] = None) -> Dict[str, Any]:
             'strategies_df': pd.DataFrame()
         }
     
-    # Scan for universe_*_backtest.json files
-    universe_files = list(data_dir.glob('universe_*_backtest.json'))
-    total_universes = len(universe_files)
+    # Scan for backtest files (Parquet or JSON)
+    parquet_files = list(data_dir.glob('universe_*_backtest.parquet'))
+    json_files = list(data_dir.glob('universe_*_backtest.json'))
     
-    for filepath in universe_files:
+    # Build file list, preferring Parquet
+    backtest_files = []
+    processed_names = set()
+    
+    # Add Parquet files first
+    for pf in parquet_files:
+        name = pf.stem.replace('_backtest', '')
+        backtest_files.append(pf)
+        processed_names.add(name)
+    
+    # Add JSON files if no Parquet equivalent exists
+    for jf in json_files:
+        name = jf.stem.replace('_backtest', '')
+        if name not in processed_names:
+            backtest_files.append(jf)
+            processed_names.add(name)
+    
+    total_universes = len(backtest_files)
+    
+    for filepath in backtest_files:
         try:
-            with open(filepath, 'r') as f:
-                data = json.load(f)
-            
-            universe_name = data.get('universe_name', filepath.stem)
-            universe_metadata = data.get('universe_metadata', {})
-            
-            # Extract results from this universe
-            for strategy_result in data.get('results', []):
-                # Add universe context to each strategy
-                strategy_result['universe_name'] = universe_name
-                strategy_result['interval'] = universe_metadata.get('interval', 'unknown')
-                strategy_result['lookback'] = universe_metadata.get('lookback', 0)
+            if filepath.suffix == '.parquet':
+                # Load Parquet file
+                results_df = pd.read_parquet(filepath)
                 
-                # Check for detailed trades
-                if 'trades_detailed' in strategy_result:
-                    has_detailed_trades = True
-                    strategy_result['n_detailed_trades'] = len(strategy_result['trades_detailed'])
+                # Load metadata if available
+                metadata_path = filepath.with_suffix('').parent / f"{filepath.stem}_metadata.json"
+                universe_name = filepath.stem.replace('_backtest', '')
+                universe_metadata = {}
                 
-                all_results.append(strategy_result)
+                if metadata_path.exists():
+                    with open(metadata_path, 'r') as f:
+                        metadata = json.load(f)
+                        universe_name = metadata.get('universe_name', universe_name)
+                        universe_metadata = metadata.get('universe_metadata', {})
+                
+                # Convert DataFrame rows to strategy results
+                for _, row in results_df.iterrows():
+                    strategy_result = row.to_dict()
+                    strategy_result['universe_name'] = universe_name
+                    strategy_result['interval'] = universe_metadata.get('interval', 'unknown')
+                    strategy_result['lookback'] = universe_metadata.get('lookback', 0)
+                    
+                    # Check for detailed trades (won't be in Parquet metrics file)
+                    # Detailed trades are in separate files in smart storage
+                    
+                    all_results.append(strategy_result)
+                    
+            else:
+                # Load JSON file (legacy)
+                with open(filepath, 'r') as f:
+                    data = json.load(f)
+                
+                universe_name = data.get('universe_name', filepath.stem)
+                universe_metadata = data.get('universe_metadata', {})
+                
+                # Extract results from this universe
+                for strategy_result in data.get('results', []):
+                    # Add universe context to each strategy
+                    strategy_result['universe_name'] = universe_name
+                    strategy_result['interval'] = universe_metadata.get('interval', 'unknown')
+                    strategy_result['lookback'] = universe_metadata.get('lookback', 0)
+                    
+                    # Check for detailed trades
+                    if 'trades_detailed' in strategy_result:
+                        has_detailed_trades = True
+                        strategy_result['n_detailed_trades'] = len(strategy_result['trades_detailed'])
+                    
+                    all_results.append(strategy_result)
                 
         except Exception as e:
             print(f"Error loading {filepath}: {e}")

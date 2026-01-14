@@ -618,3 +618,45 @@ if __name__ == "__main__":
     for group, enabled in FEATURE_GROUPS.items():
         status = "✅" if enabled else "❌"
         print(f"   {status} {group}")
+
+
+# ═══════════════════════════════════════════════════════════════
+# 💾 STORAGE CONFIGURATION (Parquet Migration)
+# ═══════════════════════════════════════════════════════════════
+
+# Storage format configuration
+STORAGE_CONFIG = {
+    "format": "parquet",           # "parquet" or "json" - default format for new files
+    "compression": "snappy",        # "snappy", "gzip", "brotli" - compression algorithm
+    "partition_by": None,           # Can partition by "pair", "date", etc. (None = no partitioning)
+    "enable_metadata_sidecar": True,  # Save metadata in separate JSON file alongside Parquet
+    "auto_detect_format": True,     # Automatically detect and load from available format (Parquet preferred)
+}
+
+
+# ═══════════════════════════════════════════════════════════════
+# ⚡ MULTI-WORKER CONFIGURATION (Parallel Processing)
+# ═══════════════════════════════════════════════════════════════
+
+# Multi-worker processing configuration
+WORKER_CONFIG = {
+    "default_workers": 1,           # Default number of workers (1 = sequential)
+    "max_workers": 16,              # Maximum allowed workers
+    "cpu_limit": 80,                # Maximum CPU usage percentage (adaptive throttling)
+    "cooldown_seconds": 5,          # Pause between batches (seconds)
+    "nice_priority": False,         # Run with low priority (nice)
+    "adaptive_throttling": True,    # Dynamically adjust workers based on CPU
+    "cpu_check_interval": 5,        # Check CPU every N completed tasks
+}
+
+
+# ═══════════════════════════════════════════════════════════════
+# 📊 MIGRATION CONFIGURATION
+# ═══════════════════════════════════════════════════════════════
+
+# Migration settings for JSON to Parquet conversion
+MIGRATION_CONFIG = {
+    "auto_migrate": False,          # Automatically migrate JSON to Parquet on load
+    "delete_json_after_migration": False,  # Delete JSON files after successful migration
+    "backup_before_delete": True,   # Create backup before deleting JSON files
+}
