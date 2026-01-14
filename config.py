@@ -402,8 +402,13 @@ METRIC_THRESHOLDS = {
 STRATEGY_TEMPLATES = [
     "TrendFollower",
     "MeanReverter",
+    "MeanReverterV2",      # NEW
     "BreakoutTrader",
     "RegimeAdapter",
+    "ScalpingStrategy",    # NEW
+    "SessionBreakout",     # NEW
+    "MomentumBurst",       # NEW
+    "PatternRecognition",  # NEW
 ]
 
 # Parameter ranges for strategy generation

@@ -34,53 +34,60 @@ def extract_features_from_universe(universe_data: Dict) -> pd.DataFrame:
         DataFrame with aggregated features (single row with mean statistics
         across all patterns, to be broadcast to OHLC timestamps)
     """
-    # Extract all features from patterns
-    all_features = []
+    all_features = {}
     
     try:
-        # Navigate the universe structure
         results = universe_data.get("results", {})
         
-        # Handle both list and dict results formats
-        if isinstance(results, list) and len(results) > 0:
-            results = results[0].get("results", {})
-        
-        # Iterate through levels (Pequeno, Médio, Grande, Muito Grande)
         for level_name, level_data in results.items():
             if not isinstance(level_data, dict):
                 continue
                 
-            # Iterate through directions (up, down)
             for direction, direction_data in level_data.items():
                 if not isinstance(direction_data, dict):
                     continue
                 
-                # Get patterns
-                patterns = direction_data.get("patterns", {})
+                # ✅ FIX: Read from feature_stats (not patterns->features)
+                feature_stats = direction_data.get("feature_stats", {})
                 
-                # Extract features from each pattern
-                for pattern_name, pattern_data in patterns.items():
-                    if not isinstance(pattern_data, dict):
-                        continue
-                    
-                    pattern_features = pattern_data.get("features", [])
-                    
-                    if isinstance(pattern_features, list):
-                        all_features.extend(pattern_features)
+                if feature_stats:
+                    for key, value in feature_stats.items():
+                        # Use pd.isna() to handle both int and float safely
+                        if isinstance(value, (int, float)) and not pd.isna(value):
+                            if key not in all_features:
+                                all_features[key] = []
+                            all_features[key].append(value)
     
     except Exception as e:
-        print(f"      ⚠️  Warning: Failed to extract features from universe: {e}", flush=True)
+        print(f"      ⚠️  Warning: Failed to extract features: {e}", flush=True)
         return pd.DataFrame()
     
-    if not all_features:
-        print(f"      ⚠️  Warning: No features found in universe data", flush=True)
-        return pd.DataFrame()
+    # Average features across all levels/directions
+    aggregated = {}
+    for key, values in all_features.items():
+        if values:
+            aggregated[key] = np.mean(values)
     
-    # Calculate aggregated feature statistics
-    feature_stats = _aggregate_features(all_features)
+    # Add common trading features if not present
+    if 'momentum' not in aggregated:
+        if 'ohlc_trend_efficiency_mean' in aggregated:
+            aggregated['momentum'] = aggregated['ohlc_trend_efficiency_mean']
+        else:
+            aggregated['momentum'] = 0.0
     
-    # Return as single-row DataFrame (will be broadcast to match OHLC timestamps)
-    return pd.DataFrame([feature_stats])
+    if 'volatility' not in aggregated:
+        if 'ohlc_body_std_mean' in aggregated:
+            aggregated['volatility'] = aggregated['ohlc_body_std_mean']
+        else:
+            aggregated['volatility'] = 0.0
+    
+    if 'trend_strength' not in aggregated:
+        if 'ohlc_trend_efficiency_mean' in aggregated:
+            aggregated['trend_strength'] = abs(aggregated['ohlc_trend_efficiency_mean'])
+        else:
+            aggregated['trend_strength'] = 0.0
+    
+    return pd.DataFrame([aggregated])
 
 
 def _aggregate_features(feature_list: List[Dict]) -> Dict:
@@ -274,36 +281,48 @@ if __name__ == "__main__":
         "results": {
             "Pequeno": {
                 "up": {
-                    "patterns": {
-                        "pattern_1": {
-                            "count": 10,
-                            "features": [
-                                {
-                                    "ohlc_body_mean": -1.02,
-                                    "ohlc_range_mean": 2.46,
-                                    "ohlc_trend_efficiency": 0.76,
-                                    "ohlc_volume_mean": 81.8,
-                                    "ohlc_volume_trend": 1.05,
-                                    "ohlc_spread_mean": 0.5,
-                                    "ohlc_up_ratio": 0.6,
-                                    "ohlc_down_ratio": 0.4,
-                                },
-                                {
-                                    "ohlc_body_mean": -0.98,
-                                    "ohlc_range_mean": 2.50,
-                                    "ohlc_trend_efficiency": 0.78,
-                                    "ohlc_volume_mean": 85.2,
-                                    "ohlc_volume_trend": 1.02,
-                                    "ohlc_spread_mean": 0.48,
-                                    "ohlc_up_ratio": 0.65,
-                                    "ohlc_down_ratio": 0.35,
-                                }
-                            ]
-                        }
+                    "feature_stats": {
+                        "ohlc_body_mean": -1.00,
+                        "ohlc_range_mean": 2.48,
+                        "ohlc_trend_efficiency_mean": 0.77,
+                        "ohlc_volume_mean": 83.5,
+                        "ohlc_volume_trend": 1.035,
+                        "ohlc_spread_mean": 0.49,
+                        "ohlc_up_ratio": 0.625,
+                        "ohlc_down_ratio": 0.375,
+                        "ohlc_body_std_mean": 0.15,
                     }
                 },
                 "down": {
-                    "patterns": {}
+                    "feature_stats": {
+                        "ohlc_body_mean": 0.95,
+                        "ohlc_range_mean": 2.35,
+                        "ohlc_trend_efficiency_mean": 0.72,
+                        "ohlc_volume_mean": 79.2,
+                        "ohlc_volume_trend": 0.98,
+                        "ohlc_spread_mean": 0.51,
+                        "ohlc_up_ratio": 0.40,
+                        "ohlc_down_ratio": 0.60,
+                        "ohlc_body_std_mean": 0.12,
+                    }
+                }
+            },
+            "Médio": {
+                "up": {
+                    "feature_stats": {
+                        "ohlc_body_mean": -1.15,
+                        "ohlc_range_mean": 3.20,
+                        "ohlc_trend_efficiency_mean": 0.82,
+                        "ohlc_volume_mean": 92.1,
+                        "ohlc_volume_trend": 1.08,
+                        "ohlc_spread_mean": 0.47,
+                        "ohlc_up_ratio": 0.68,
+                        "ohlc_down_ratio": 0.32,
+                        "ohlc_body_std_mean": 0.18,
+                    }
+                },
+                "down": {
+                    "feature_stats": {}
                 }
             }
         }
@@ -345,8 +364,8 @@ if __name__ == "__main__":
               f"L={combined_df['low'].iloc[0]:.5f}, C={combined_df['close'].iloc[0]:.5f}")
         if "momentum" in combined_df.columns:
             print(f"         Features: momentum={combined_df['momentum'].iloc[0]:.4f}, "
-                  f"trend={combined_df['trend'].iloc[0]:.4f}, "
-                  f"volatility={combined_df['volatility'].iloc[0]:.4f}")
+                  f"volatility={combined_df['volatility'].iloc[0]:.4f}, "
+                  f"trend_strength={combined_df['trend_strength'].iloc[0]:.4f}")
     
     # Test validation
     print(f"\n✅ Testing DataFrame validation...")
