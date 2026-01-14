@@ -438,9 +438,24 @@ class UltraNecrozmaAnalyzer:
             lore_system: Optional LoreSystem for notifications
         """
         self.df = df
-        self.output_dirs = get_output_dirs()
-        self.output_dir = output_dir or self.output_dirs["root"]
         self.lore_system = lore_system
+        
+        # ✅ FIX: Use custom output_dir if provided
+        if output_dir:
+            self.output_dir = Path(output_dir)
+            self.output_dirs = {
+                "root": self.output_dir,
+                "universes": self.output_dir / "universes",
+                "crystals": self.output_dir / "crystals",
+                "reports": self.output_dir / "reports",
+                "checkpoints": self.output_dir / "checkpoints",
+            }
+            # Create directories
+            for path in self.output_dirs.values():
+                path.mkdir(parents=True, exist_ok=True)
+        else:
+            self.output_dirs = get_output_dirs()
+            self.output_dir = self.output_dirs["root"]
         
         self.configs = get_all_configs()
         self.results = {}
