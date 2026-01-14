@@ -55,18 +55,31 @@ def extract_features_from_universe(universe_data: Dict) -> pd.DataFrame:
                 if not isinstance(direction_data, dict):
                     continue
                 
-                # Get patterns
+                # ✅ FIX: Handle both 'patterns' dict and 'top_patterns' list
                 patterns = direction_data.get("patterns", {})
+                top_patterns = direction_data.get("top_patterns", [])
                 
-                # Extract features from each pattern
-                for pattern_name, pattern_data in patterns.items():
-                    if not isinstance(pattern_data, dict):
-                        continue
-                    
-                    pattern_features = pattern_data.get("features", [])
-                    
-                    if isinstance(pattern_features, list):
-                        all_features.extend(pattern_features)
+                # Extract features from patterns dict (old format)
+                if isinstance(patterns, dict):
+                    for pattern_name, pattern_data in patterns.items():
+                        if not isinstance(pattern_data, dict):
+                            continue
+                        
+                        pattern_features = pattern_data.get("features", [])
+                        
+                        if isinstance(pattern_features, list):
+                            all_features.extend(pattern_features)
+                
+                # ✅ NEW: Extract features from top_patterns list (new format)
+                if isinstance(top_patterns, list):
+                    for pattern in top_patterns:
+                        if not isinstance(pattern, dict):
+                            continue
+                        
+                        pattern_features = pattern.get("features", [])
+                        
+                        if isinstance(pattern_features, list):
+                            all_features.extend(pattern_features)
     
     except Exception as e:
         print(f"      ⚠️  Warning: Failed to extract features from universe: {e}", flush=True)
