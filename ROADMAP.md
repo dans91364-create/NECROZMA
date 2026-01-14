@@ -2,13 +2,13 @@
 
 ## 📊 Current Status
 
-**Total Strategy Templates:** 9  
-**Last Updated:** January 2026  
+**Total Strategy Templates:** 14  
+**Last Updated:** January 14, 2026  
 **Status:** Active Development
 
 ---
 
-## ✅ Implemented Templates (9)
+## ✅ Implemented Templates (14)
 
 ### Core Templates (4)
 1. **TrendFollower** - Classic trend following with momentum
@@ -31,7 +31,7 @@
    - Uses: Regime detection + hybrid approach
    - Best for: Mixed market conditions
 
-### Enhanced Templates (5) - NEW!
+### Enhanced Templates (5)
 5. **MeanReverterV2** - Enhanced mean reversion
    - Status: ✅ Implemented (Jan 2026)
    - Features: Bollinger Bands + RSI + Volume confirmation
@@ -62,12 +62,82 @@
    - Leverages: 839K+ discovered patterns
    - Best for: Pattern-rich market conditions
 
+### Correlation Templates (5) - NEW!
+10. **CorrelationTrader** - Correlation breakdown trading
+    - Status: ✅ Implemented (Jan 14, 2026)
+    - Features: Detects correlation breaks, bets on convergence
+    - Parameters: correlation_threshold, zscore_entry, zscore_exit
+    - Best for: Mean reversion of pair spreads
+
+11. **PairDivergence** - Divergence between correlated pairs
+    - Status: ✅ Implemented (Jan 14, 2026)
+    - Features: EUR/USD up but GBP/USD not following → buy GBP/USD
+    - Parameters: divergence_std, lookback_period
+    - Best for: Exploiting temporary divergences
+
+12. **LeadLagStrategy** - Leader-follower relationships
+    - Status: ✅ Implemented (Jan 14, 2026)
+    - Features: EUR/USD leads GBP/USD → enter follower after leader
+    - Parameters: lag_periods, min_leader_move
+    - Best for: Pairs with consistent lead/lag patterns
+
+13. **RiskSentiment** - Risk-on/risk-off trading
+    - Status: ✅ Implemented (Jan 14, 2026)
+    - Features: Risk ON (AUD up, JPY down), Risk OFF (AUD down, JPY up)
+    - Parameters: sentiment_threshold, confirmation_periods
+    - Best for: Macro sentiment shifts
+
+14. **USDStrength** - USD strength index trading
+    - Status: ✅ Implemented (Jan 14, 2026)
+    - Features: USD strong → sell EUR/USD, buy USD/JPY
+    - Parameters: strength_threshold
+    - Best for: Broad USD trends
+
+---
+
+## 🔗 Multi-Pair & Correlation (Q1 2026)
+
+### Pares Suportados
+- [x] EUR/USD (Primary)
+- [ ] GBP/USD
+- [ ] USD/JPY
+- [ ] USD/CHF
+- [ ] AUD/USD
+- [ ] USD/CAD
+- [ ] EUR/GBP
+- [ ] GBP/JPY
+- [ ] EUR/JPY
+- [ ] AUD/JPY
+
+### Correlation Templates
+- [x] CorrelationTrader
+- [x] PairDivergence
+- [x] LeadLagStrategy
+- [x] RiskSentiment
+- [x] USDStrength
+
+### Dashboard Pages
+- [ ] Multi-Pair Overview
+- [ ] Pair Detail Pages (×10)
+- [ ] Correlation Matrix
+- [ ] Cross-Pair Scores
+- [ ] Portfolio Builder
+
+### Trade Analysis Components
+- [ ] Equity Curve
+- [ ] Drawdown Chart
+- [ ] Trade Statistics
+- [ ] Performance Heatmap
+- [ ] Session Distribution
+- [ ] Trade Log (Top 10)
+- [ ] Monte Carlo (Top 10)
+
 ---
 
 ## 🔜 Planned Templates (High Priority)
 
 ### Wave 2: Statistical & ML-Based (Timeline: Q1 2026)
-10. **VolatilityBreakout** - Volatility expansion strategy
+15. **VolatilityBreakout** - Volatility expansion strategy
     - Priority: 🔴 High
     - Features: ATR-based breakout, volatility regime detection
     - Target: Q1 2026
