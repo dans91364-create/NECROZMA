@@ -7,14 +7,13 @@ Downloads tick data from Exness and converts to Parquet
 "Capturing light from the markets..."
 """
 
-import os
 import sys
 import argparse
 import zipfile
 import urllib.request
+import socket
 import shutil
 from pathlib import Path
-from datetime import datetime
 
 import pandas as pd
 
@@ -73,7 +72,6 @@ def process_file(pair, year, current, total, force=False):
                 print(f"\r   Progresso: {percent:.1f}% ({size_str}/{total_str})", end='', flush=True)
         
         # Set timeout for download
-        import socket
         old_timeout = socket.getdefaulttimeout()
         socket.setdefaulttimeout(300)  # 5 minutes timeout
         try:

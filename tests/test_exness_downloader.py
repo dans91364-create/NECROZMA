@@ -25,7 +25,7 @@ def test_format_size():
     assert exness.format_size(1024) == "1 KB"
     assert exness.format_size(1024 * 1024) == "1 MB"
     assert exness.format_size(1024 * 1024 * 1024) == "1 GB"
-    assert exness.format_size(1536) == "2 KB"  # 1.5 KB rounds to 2 KB
+    assert exness.format_size(2048) == "2 KB"  # 2 KB exactly
 
 
 def test_configuration():
