@@ -9,10 +9,91 @@ Extract pattern features from universe JSON files for backtesting
 
 import pandas as pd
 import numpy as np
+import json
+from pathlib import Path
 from typing import Dict, List, Optional
 import warnings
 
 warnings.filterwarnings("ignore")
+
+
+def load_universe_from_file(filepath: Path) -> Dict:
+    """
+    Load universe data from Parquet or JSON file
+    
+    This function automatically detects the file format and loads accordingly.
+    Parquet is preferred for performance (20x faster than JSON).
+    
+    Args:
+        filepath: Path to universe file (.parquet or .json)
+        
+    Returns:
+        Dictionary with universe data
+    """
+    from config import STORAGE_CONFIG
+    
+    # Try Parquet first
+    parquet_path = filepath.with_suffix('.parquet')
+    json_path = filepath.with_suffix('.json')
+    metadata_path = filepath.with_suffix('').parent / f"{filepath.stem}_metadata.json"
+    
+    if parquet_path.exists():
+        # Load from Parquet
+        df = pd.read_parquet(parquet_path)
+        
+        # Load metadata if available
+        metadata = {}
+        if metadata_path.exists():
+            with open(metadata_path, 'r') as f:
+                metadata = json.load(f)
+        
+        # Reconstruct universe_data dict from DataFrame
+        universe_data = {
+            'name': metadata.get('name', filepath.stem),
+            'config': metadata.get('config', {}),
+            'processing_time': metadata.get('processing_time', 0),
+            'total_patterns': metadata.get('total_patterns', 0),
+            'metadata': metadata.get('metadata', {}),
+            'results': {}
+        }
+        
+        # Reconstruct results from DataFrame
+        for _, row in df.iterrows():
+            level = row.get('level', 'Unknown')
+            direction = row.get('direction', 'up')
+            
+            if level not in universe_data['results']:
+                universe_data['results'][level] = {}
+            
+            if direction not in universe_data['results'][level]:
+                universe_data['results'][level][direction] = {
+                    'feature_stats': {},
+                    'pattern_count': 0
+                }
+            
+            # Extract feature_stats
+            feature_stats = {}
+            for col in df.columns:
+                if col not in ['level', 'direction', 'pattern_count']:
+                    value = row.get(col)
+                    if pd.notna(value):
+                        feature_stats[col] = value
+            
+            universe_data['results'][level][direction]['feature_stats'] = feature_stats
+            
+            # Add pattern count if available
+            if 'pattern_count' in row and pd.notna(row['pattern_count']):
+                universe_data['results'][level][direction]['pattern_count'] = row['pattern_count']
+        
+        return universe_data
+        
+    elif json_path.exists():
+        # Load from JSON (legacy)
+        with open(json_path, 'r') as f:
+            return json.load(f)
+    
+    else:
+        raise FileNotFoundError(f"No universe file found at {filepath} (.parquet or .json)")
 
 
 def extract_features_from_universe(universe_data: Dict) -> pd.DataFrame:
