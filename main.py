@@ -1068,6 +1068,9 @@ def main():
     use_parallel = (num_workers > 1) and not args.sequential
     analyzer.run_analysis(parallel=use_parallel)
     
+    # ✅ NEW: Save universe results to JSON files
+    save_stats = analyzer.save_results()
+    
     # Strategy discovery (if enabled)
     discovery_results = None
     if args.strategy_discovery:

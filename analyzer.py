@@ -353,6 +353,17 @@ def process_universe(df, interval, lookback, universe_name):
     
     universe_time = time.time() - universe_start
     
+    # Convert OHLC dataframe to list of dicts for JSON serialization
+    ohlc_data = []
+    if len(ohlc) > 0:
+        # Save OHLC data for backtesting
+        ohlc_records = ohlc.to_dict('records')
+        # Convert timestamps to strings for JSON
+        for record in ohlc_records:
+            if 'timestamp' in record and hasattr(record['timestamp'], 'isoformat'):
+                record['timestamp'] = record['timestamp'].isoformat()
+        ohlc_data = ohlc_records
+    
     return {
         "name": universe_name,
         "config": {"interval": interval, "lookback":  lookback},
@@ -361,7 +372,13 @@ def process_universe(df, interval, lookback, universe_name):
         "total_patterns": sum(
             results[l][d]["total_occurrences"]
             for l in results for d in results[l]
-        )
+        ),
+        "ohlc_data": ohlc_data,  # ✅ NEW: Include OHLC data for backtesting
+        "metadata": {
+            "total_candles": len(ohlc),
+            "interval_minutes": interval,
+            "lookback_periods": lookback
+        }
     }
 
 
@@ -828,9 +845,16 @@ class UltraNecrozmaAnalyzer:
                 # Simplify for JSON serialization
                 result_simplified = self._simplify_result(result)
                 
+                # ✅ NEW: Add _filepath field for reference
                 universe_file = self.output_dirs["universes"] / f"{name}.json"
+                result_simplified["_filepath"] = str(universe_file)
+                
                 with open(universe_file, "w") as f:
                     json.dump(result_simplified, f, indent=2, default=str)
+                
+                # ✅ NEW: Log file size
+                file_size_mb = universe_file.stat().st_size / (1024 * 1024)
+                print(f"   💾 Saved universe: {name}.json ({file_size_mb:.2f} MB)")
         
         print(f"   ✅ Saved {len(self.results)} universe files")
         
@@ -844,7 +868,7 @@ class UltraNecrozmaAnalyzer:
         
         # Save summary
         summary = self.get_pattern_summary()
-        summary_file = self.output_dirs["reports"] / "pattern_summary. json"
+        summary_file = self.output_dirs["reports"] / "pattern_summary.json"
         with open(summary_file, "w") as f:
             json.dump(summary, f, indent=2, default=str)
         
@@ -857,13 +881,18 @@ class UltraNecrozmaAnalyzer:
         }
     
     def _simplify_result(self, result):
-        """Simplify result for JSON serialization"""
+        """Simplify result for JSON serialization while preserving critical data for backtesting"""
         simplified = {
             "name": result["name"],
-            "config": result["config"],
+            "interval": result["config"]["interval"],
+            "lookback": result["config"]["lookback"],
             "processing_time": result["processing_time"],
             "total_patterns":  result["total_patterns"],
-            "results": {}
+            "results": {},
+            # ✅ NEW: Include OHLC data for backtesting
+            "ohlc_data": result.get("ohlc_data", []),
+            # ✅ NEW: Include metadata
+            "metadata": result.get("metadata", {})
         }
         
         for level in result["results"]: 
@@ -884,7 +913,7 @@ class UltraNecrozmaAnalyzer:
                     "total_occurrences": level_data["total_occurrences"],
                     "unique_patterns": len(patterns),
                     "top_patterns": [
-                        {"signature": sig, "count": data["count"]}
+                        {"signature": sig, "count": data["count"], "features": data.get("features", [])}
                         for sig, data in top_patterns
                     ],
                     "feature_stats": level_data.get("feature_stats", {})
