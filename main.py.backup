@@ -1067,7 +1067,6 @@ def main():
     # Use parallel only if num_workers > 1 and not in sequential mode
     use_parallel = (num_workers > 1) and not args.sequential
     analyzer.run_analysis(parallel=use_parallel)
-    analyzer.save_results()  # Save universe files
     
     # Strategy discovery (if enabled)
     discovery_results = None

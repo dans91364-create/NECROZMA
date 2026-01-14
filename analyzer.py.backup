@@ -352,13 +352,6 @@ def process_universe(df, interval, lookback, universe_name):
         return None
     
     universe_time = time.time() - universe_start
-
-    # Extract metadata from OHLC
-    ohlc_dict = ohlc.to_dict("records") if len(ohlc) > 0 else []
-    start_date = str(ohlc_dict[0]["timestamp"]) if len(ohlc_dict) > 0 else ""
-    end_date = str(ohlc_dict[-1]["timestamp"]) if len(ohlc_dict) > 0 else ""
-    total_candles = len(ohlc_dict)
-
     
     return {
         "name": universe_name,
@@ -368,15 +361,7 @@ def process_universe(df, interval, lookback, universe_name):
         "total_patterns": sum(
             results[l][d]["total_occurrences"]
             for l in results for d in results[l]
-        ),
-        "ohlc_data":  ohlc_dict,
-        "metadata": {
-            "start_date": start_date,
-            "end_date":   end_date,
-            "total_candles": total_candles,
-            "interval_minutes": interval,
-            "lookback_candles": lookback
-        },
+        )
     }
 
 
@@ -878,9 +863,7 @@ class UltraNecrozmaAnalyzer:
             "config": result["config"],
             "processing_time": result["processing_time"],
             "total_patterns":  result["total_patterns"],
-            "results": {},
-            "ohlc_data":  result.get("ohlc_data", []),
-            "metadata": result.get("metadata", {}),
+            "results": {}
         }
         
         for level in result["results"]: 
