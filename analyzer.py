@@ -899,7 +899,8 @@ class UltraNecrozmaAnalyzer:
         """Simplify result for JSON serialization while preserving critical data for backtesting"""
         simplified = {
             "name": result["name"],
-            "interval": result["config"]["interval"],
+            "config": result["config"],  # ✅ Keep original nested config for backward compatibility
+            "interval": result["config"]["interval"],  # ✅ Also flatten for convenience
             "lookback": result["config"]["lookback"],
             "processing_time": result["processing_time"],
             "total_patterns":  result["total_patterns"],

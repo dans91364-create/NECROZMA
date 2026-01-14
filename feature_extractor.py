@@ -15,6 +15,31 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
+def _extract_features_from_pattern_list(pattern_list):
+    """
+    Helper function to extract features from a list of patterns
+    
+    Args:
+        pattern_list: List of pattern dictionaries or pattern data dicts
+        
+    Returns:
+        List of feature dictionaries
+    """
+    all_features = []
+    
+    for item in pattern_list:
+        if not isinstance(item, dict):
+            continue
+        
+        # Handle both direct pattern data dicts and top_patterns list items
+        pattern_features = item.get("features", [])
+        
+        if isinstance(pattern_features, list):
+            all_features.extend(pattern_features)
+    
+    return all_features
+
+
 def extract_features_from_universe(universe_data: Dict) -> pd.DataFrame:
     """
     Extract features from universe JSON patterns
@@ -55,31 +80,18 @@ def extract_features_from_universe(universe_data: Dict) -> pd.DataFrame:
                 if not isinstance(direction_data, dict):
                     continue
                 
-                # ✅ FIX: Handle both 'patterns' dict and 'top_patterns' list
+                # ✅ Handle both 'patterns' dict and 'top_patterns' list using helper
+                
+                # Extract from patterns dict (old format)
                 patterns = direction_data.get("patterns", {})
-                top_patterns = direction_data.get("top_patterns", [])
-                
-                # Extract features from patterns dict (old format)
                 if isinstance(patterns, dict):
-                    for pattern_name, pattern_data in patterns.items():
-                        if not isinstance(pattern_data, dict):
-                            continue
-                        
-                        pattern_features = pattern_data.get("features", [])
-                        
-                        if isinstance(pattern_features, list):
-                            all_features.extend(pattern_features)
+                    pattern_values = list(patterns.values())
+                    all_features.extend(_extract_features_from_pattern_list(pattern_values))
                 
-                # ✅ NEW: Extract features from top_patterns list (new format)
+                # Extract from top_patterns list (new format)
+                top_patterns = direction_data.get("top_patterns", [])
                 if isinstance(top_patterns, list):
-                    for pattern in top_patterns:
-                        if not isinstance(pattern, dict):
-                            continue
-                        
-                        pattern_features = pattern.get("features", [])
-                        
-                        if isinstance(pattern_features, list):
-                            all_features.extend(pattern_features)
+                    all_features.extend(_extract_features_from_pattern_list(top_patterns))
     
     except Exception as e:
         print(f"      ⚠️  Warning: Failed to extract features from universe: {e}", flush=True)
