@@ -22,6 +22,9 @@ import json
 from pathlib import Path
 from scipy import stats
 
+# Constants
+EPSILON = 1e-8  # Small value to prevent division by zero
+
 # 10 Forex Pairs
 PAIRS = [
     "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD",
@@ -124,23 +127,34 @@ def calculate_lead_lag(
     Returns:
         Tuple of (optimal_lag, correlation_at_lag)
     """
+    # Ensure we have enough data for lag calculation
+    if len(series1) < max_lag * 2 or len(series2) < max_lag * 2:
+        return 0, 0.0
+    
     best_lag = 0
     best_corr = 0.0
     
     for lag in range(-max_lag, max_lag + 1):
-        if lag < 0:
-            # series1 leads
-            corr = series1.iloc[:lag].corr(series2.iloc[-lag:])
-        elif lag > 0:
-            # series2 leads
-            corr = series1.iloc[lag:].corr(series2.iloc[:-lag])
-        else:
-            # No lag
-            corr = series1.corr(series2)
-        
-        if abs(corr) > abs(best_corr):
-            best_corr = corr
-            best_lag = lag
+        try:
+            if lag < 0:
+                # series1 leads
+                if len(series1[:lag]) < 2 or len(series2[-lag:]) < 2:
+                    continue
+                corr = series1.iloc[:lag].corr(series2.iloc[-lag:])
+            elif lag > 0:
+                # series2 leads
+                if len(series1[lag:]) < 2 or len(series2[:-lag]) < 2:
+                    continue
+                corr = series1.iloc[lag:].corr(series2.iloc[:-lag])
+            else:
+                # No lag
+                corr = series1.corr(series2)
+            
+            if pd.notna(corr) and abs(corr) > abs(best_corr):
+                best_corr = corr
+                best_lag = lag
+        except (ValueError, IndexError):
+            continue
     
     return best_lag, best_corr
 
@@ -189,7 +203,7 @@ def calculate_usd_strength(pairs_data: Dict[str, pd.Series]) -> pd.Series:
     rolling_mean = avg_strength.rolling(100).mean()
     rolling_std = avg_strength.rolling(100).std()
     
-    z_score = (avg_strength - rolling_mean) / (rolling_std + 1e-8)
+    z_score = (avg_strength - rolling_mean) / (rolling_std + EPSILON)
     
     # Map z-score to 0-1 using sigmoid
     strength_index = 1 / (1 + np.exp(-z_score))
@@ -244,7 +258,7 @@ def calculate_risk_sentiment(pairs_data: Dict[str, pd.Series]) -> pd.Series:
     rolling_mean = avg_sentiment.rolling(100).mean()
     rolling_std = avg_sentiment.rolling(100).std()
     
-    z_score = (avg_sentiment - rolling_mean) / (rolling_std + 1e-8)
+    z_score = (avg_sentiment - rolling_mean) / (rolling_std + EPSILON)
     
     # Map z-score to 0-1 using sigmoid
     sentiment_score = 1 / (1 + np.exp(-z_score))

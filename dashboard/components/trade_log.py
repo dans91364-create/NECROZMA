@@ -19,7 +19,7 @@ def render_trade_log(
     strategy_name: Optional[str] = None
 ) -> html.Div:
     """
-    Generate trade log table - SÓ PARA TOP 10 ESTRATÉGIAS
+    Generate trade log table - FOR TOP 10 STRATEGIES ONLY
     
     Args:
         trades: List of trade dictionaries

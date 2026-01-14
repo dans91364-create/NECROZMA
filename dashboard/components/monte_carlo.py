@@ -18,7 +18,7 @@ def render_monte_carlo(
     initial_capital: float = 10000.0
 ) -> go.Figure:
     """
-    Generate Monte Carlo simulation chart - SÓ PARA TOP 10 ESTRATÉGIAS
+    Generate Monte Carlo simulation chart - FOR TOP 10 STRATEGIES ONLY
     
     Simulates random trade order to show:
     - Pessimistic scenario (5th percentile)

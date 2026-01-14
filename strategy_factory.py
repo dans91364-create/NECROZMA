@@ -21,6 +21,9 @@ import json
 
 from config import STRATEGY_TEMPLATES, STRATEGY_PARAMS
 
+# Constants
+EPSILON = 1e-8  # Small value to prevent division by zero
+
 
 # ═══════════════════════════════════════════════════════════════
 # 🎯 STRATEGY BASE CLASS
@@ -290,7 +293,7 @@ class MeanReverterV2(Strategy):
             
             # Simple RSI approximation (change / range)
             price_change = price.diff()
-            rolling_std_safe = rolling_std.replace(0, 1e-8)  # Prevent division by zero
+            rolling_std_safe = rolling_std.replace(0, EPSILON)  # Prevent division by zero
             rsi = 50 + (price_change.rolling(self.lookback).mean() / rolling_std_safe * 100)
             rsi = rsi.clip(0, 100)
             
@@ -545,7 +548,7 @@ class PatternRecognition(Strategy):
             range_val = df["high"] - df["low"]
             
             # Avoid division by zero - use small epsilon instead of NaN
-            range_val = range_val.replace(0, 1e-8)
+            range_val = range_val.replace(0, EPSILON)
             
             # Body ratio (bullish/bearish strength)
             body_ratio = body / range_val
@@ -678,7 +681,7 @@ class PairDivergence(Strategy):
             rolling_std = divergence.rolling(self.lookback).std()
             
             # Z-score of divergence
-            zscore = (divergence - rolling_mean) / (rolling_std + 1e-8)
+            zscore = (divergence - rolling_mean) / (rolling_std + EPSILON)
             
             # Buy when extreme negative divergence
             buy_signal = zscore < -self.divergence_std
