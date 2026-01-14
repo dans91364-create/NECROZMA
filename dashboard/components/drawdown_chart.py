@@ -99,7 +99,7 @@ def render_drawdown_chart(
     )
     
     # Reverse y-axis so drawdowns appear as drops
-    fig.update_yaxis(autorange='reversed')
+    fig.update_yaxes(autorange='reversed')
     
     # Add horizontal line at 0
     fig.add_hline(
