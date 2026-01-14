@@ -574,6 +574,286 @@ class PatternRecognition(Strategy):
 
 
 # ═══════════════════════════════════════════════════════════════
+# 🔗 CORRELATION TRADER (Correlation Breakdown)
+# ═══════════════════════════════════════════════════════════════
+
+class CorrelationTrader(Strategy):
+    """
+    Trade correlation breakdowns between pairs
+    - Detect when correlation breaks (divergence)
+    - Bet on convergence (mean reversion of spread)
+    
+    Parameters:
+    - correlation_threshold: 0.7, 0.8, 0.85
+    - zscore_entry: 1.5, 2.0, 2.5
+    - zscore_exit: 0.5, 1.0
+    """
+    
+    def __init__(self, params: Dict):
+        super().__init__("CorrelationTrader", params)
+        self.lookback = params.get("lookback_periods", 50)
+        self.correlation_threshold = params.get("correlation_threshold", 0.7)
+        self.zscore_entry = params.get("zscore_entry", 2.0)
+        self.zscore_exit = params.get("zscore_exit", 1.0)
+        
+        # Add rules
+        self.add_rule({
+            "type": "entry_long",
+            "condition": f"correlation > {self.correlation_threshold} AND zscore < -{self.zscore_entry}"
+        })
+        self.add_rule({
+            "type": "entry_short",
+            "condition": f"correlation > {self.correlation_threshold} AND zscore > {self.zscore_entry}"
+        })
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.Series:
+        """Generate signals based on correlation breakdown"""
+        signals = pd.Series(0, index=df.index)
+        
+        # Look for correlation features in the dataframe
+        corr_cols = [c for c in df.columns if "_corr_" in c and "zscore" not in c]
+        zscore_cols = [c for c in df.columns if "_corr_zscore_" in c]
+        
+        if corr_cols and zscore_cols:
+            # Use first correlation pair found
+            corr = df[corr_cols[0]]
+            zscore = df[zscore_cols[0]]
+            
+            # High correlation + extreme divergence = entry
+            high_corr = corr > self.correlation_threshold
+            
+            # Buy when negative divergence (zscore < -threshold)
+            buy_signal = high_corr & (zscore < -self.zscore_entry)
+            signals[buy_signal] = 1
+            
+            # Sell when positive divergence (zscore > threshold)
+            sell_signal = high_corr & (zscore > self.zscore_entry)
+            signals[sell_signal] = -1
+        
+        return signals
+
+
+# ═══════════════════════════════════════════════════════════════
+# 📊 PAIR DIVERGENCE (Divergence Between Correlated Pairs)
+# ═══════════════════════════════════════════════════════════════
+
+class PairDivergence(Strategy):
+    """
+    Detect divergences between correlated pairs
+    - EUR/USD up, GBP/USD not following → buy GBP/USD
+    - Mean reversion of spread
+    
+    Parameters:
+    - divergence_std: 1.5, 2.0, 2.5
+    - lookback_period: 20, 50, 100
+    """
+    
+    def __init__(self, params: Dict):
+        super().__init__("PairDivergence", params)
+        self.lookback = params.get("lookback_periods", 50)
+        self.divergence_std = params.get("divergence_std", 2.0)
+        
+        # Add rules
+        self.add_rule({
+            "type": "entry_long",
+            "condition": f"divergence < -{self.divergence_std} std"
+        })
+        self.add_rule({
+            "type": "entry_short",
+            "condition": f"divergence > {self.divergence_std} std"
+        })
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.Series:
+        """Generate signals based on pair divergence"""
+        signals = pd.Series(0, index=df.index)
+        
+        # Look for divergence features
+        div_cols = [c for c in df.columns if "_divergence" in c]
+        
+        if div_cols:
+            divergence = df[div_cols[0]]
+            
+            # Calculate rolling stats
+            rolling_mean = divergence.rolling(self.lookback).mean()
+            rolling_std = divergence.rolling(self.lookback).std()
+            
+            # Z-score of divergence
+            zscore = (divergence - rolling_mean) / (rolling_std + 1e-8)
+            
+            # Buy when extreme negative divergence
+            buy_signal = zscore < -self.divergence_std
+            signals[buy_signal] = 1
+            
+            # Sell when extreme positive divergence
+            sell_signal = zscore > self.divergence_std
+            signals[sell_signal] = -1
+        
+        return signals
+
+
+# ═══════════════════════════════════════════════════════════════
+# ⏱️ LEAD-LAG STRATEGY (Leader-Follower Relationship)
+# ═══════════════════════════════════════════════════════════════
+
+class LeadLagStrategy(Strategy):
+    """
+    Exploit lead/lag relationship between pairs
+    - EUR/USD often leads GBP/USD
+    - Enter in follower after leader moves
+    
+    Parameters:
+    - lag_periods: 1, 2, 3, 5
+    - min_leader_move: 0.1%, 0.2%, 0.3%
+    """
+    
+    def __init__(self, params: Dict):
+        super().__init__("LeadLagStrategy", params)
+        self.lookback = params.get("lookback_periods", 20)
+        self.lag_periods = params.get("lag_periods", 2)
+        self.min_leader_move = params.get("min_leader_move", 0.002)  # 0.2%
+        
+        # Add rules
+        self.add_rule({
+            "type": "entry_long",
+            "condition": f"leader moved up > {self.min_leader_move*100}% in last {self.lag_periods} periods"
+        })
+        self.add_rule({
+            "type": "entry_short",
+            "condition": f"leader moved down > {self.min_leader_move*100}% in last {self.lag_periods} periods"
+        })
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.Series:
+        """Generate signals based on lead-lag relationship"""
+        signals = pd.Series(0, index=df.index)
+        
+        # Look for lead-lag features
+        lag_cols = [c for c in df.columns if "_lead_lag" in c and "_corr" not in c]
+        
+        if lag_cols and ("mid_price" in df.columns or "close" in df.columns):
+            price = df.get("mid_price", df.get("close"))
+            
+            # Calculate price movement
+            price_change = price.pct_change(periods=self.lag_periods)
+            
+            # Detect significant leader movement
+            leader_moved_up = price_change > self.min_leader_move
+            leader_moved_down = price_change < -self.min_leader_move
+            
+            # Follow the leader
+            signals[leader_moved_up] = 1
+            signals[leader_moved_down] = -1
+        
+        return signals
+
+
+# ═══════════════════════════════════════════════════════════════
+# 🎭 RISK SENTIMENT (Risk-On / Risk-Off)
+# ═══════════════════════════════════════════════════════════════
+
+class RiskSentiment(Strategy):
+    """
+    Trade based on risk-on/risk-off sentiment
+    - Risk ON: AUD, NZD up / JPY, CHF down
+    - Risk OFF: AUD, NZD down / JPY, CHF up
+    
+    Parameters:
+    - sentiment_threshold: 0.6, 0.7, 0.8
+    - confirmation_periods: 3, 5, 10
+    """
+    
+    def __init__(self, params: Dict):
+        super().__init__("RiskSentiment", params)
+        self.lookback = params.get("lookback_periods", 20)
+        self.sentiment_threshold = params.get("sentiment_threshold", 0.7)
+        self.confirmation_periods = params.get("confirmation_periods", 5)
+        
+        # Add rules
+        self.add_rule({
+            "type": "entry_long",
+            "condition": f"risk_sentiment > {self.sentiment_threshold} for {self.confirmation_periods} periods"
+        })
+        self.add_rule({
+            "type": "entry_short",
+            "condition": f"risk_sentiment < {1-self.sentiment_threshold} for {self.confirmation_periods} periods"
+        })
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.Series:
+        """Generate signals based on risk sentiment"""
+        signals = pd.Series(0, index=df.index)
+        
+        # Look for risk sentiment score
+        if "risk_sentiment_score" in df.columns:
+            sentiment = df["risk_sentiment_score"]
+            
+            # Detect sustained risk-on (high sentiment)
+            risk_on = sentiment.rolling(self.confirmation_periods).mean() > self.sentiment_threshold
+            
+            # Detect sustained risk-off (low sentiment)
+            risk_off = sentiment.rolling(self.confirmation_periods).mean() < (1 - self.sentiment_threshold)
+            
+            # Buy on risk-on sentiment
+            signals[risk_on] = 1
+            
+            # Sell on risk-off sentiment
+            signals[risk_off] = -1
+        
+        return signals
+
+
+# ═══════════════════════════════════════════════════════════════
+# 💵 USD STRENGTH (USD Strength Index)
+# ═══════════════════════════════════════════════════════════════
+
+class USDStrength(Strategy):
+    """
+    Trade based on USD strength index
+    - USD strong: sell EUR/USD, GBP/USD, buy USD/JPY, USD/CHF
+    - USD weak: buy EUR/USD, GBP/USD, sell USD/JPY, USD/CHF
+    
+    Parameters:
+    - strength_threshold: 0.6, 0.7, 0.8
+    - pairs_to_trade: 2, 3, 4
+    """
+    
+    def __init__(self, params: Dict):
+        super().__init__("USDStrength", params)
+        self.lookback = params.get("lookback_periods", 20)
+        self.strength_threshold = params.get("strength_threshold", 0.7)
+        
+        # Add rules
+        self.add_rule({
+            "type": "entry_long",
+            "condition": f"USD_strength < {1-self.strength_threshold} (USD weak)"
+        })
+        self.add_rule({
+            "type": "entry_short",
+            "condition": f"USD_strength > {self.strength_threshold} (USD strong)"
+        })
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.Series:
+        """Generate signals based on USD strength"""
+        signals = pd.Series(0, index=df.index)
+        
+        # Look for USD strength index
+        if "USD_strength_index" in df.columns:
+            usd_strength = df["USD_strength_index"]
+            
+            # Strong USD
+            usd_strong = usd_strength > self.strength_threshold
+            
+            # Weak USD
+            usd_weak = usd_strength < (1 - self.strength_threshold)
+            
+            # Buy when USD is weak (for EUR/USD, GBP/USD, etc.)
+            signals[usd_weak] = 1
+            
+            # Sell when USD is strong
+            signals[usd_strong] = -1
+        
+        return signals
+
+
+# ═══════════════════════════════════════════════════════════════
 # 🏭 STRATEGY FACTORY
 # ═══════════════════════════════════════════════════════════════
 
@@ -608,6 +888,12 @@ class StrategyFactory:
             "SessionBreakout": SessionBreakout,
             "MomentumBurst": MomentumBurst,
             "PatternRecognition": PatternRecognition,
+            # NEW - Correlation Templates
+            "CorrelationTrader": CorrelationTrader,
+            "PairDivergence": PairDivergence,
+            "LeadLagStrategy": LeadLagStrategy,
+            "RiskSentiment": RiskSentiment,
+            "USDStrength": USDStrength,
         }
     
     def generate_parameter_combinations(self) -> List[Dict]:

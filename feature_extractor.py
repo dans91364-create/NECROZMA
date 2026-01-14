@@ -24,6 +24,8 @@ def extract_features_from_universe(universe_data: Dict) -> pd.DataFrame:
     - ohlc_volume_mean, ohlc_volume_trend, ohlc_spread_mean
     - ohlc_up_ratio, ohlc_down_ratio
     
+    Also extracts correlation_features if present (for multi-pair analysis)
+    
     This function aggregates these features across all patterns to create
     a feature DataFrame that can be combined with OHLC data.
     
@@ -67,6 +69,13 @@ def extract_features_from_universe(universe_data: Dict) -> pd.DataFrame:
     for key, values in all_features.items():
         if values:
             aggregated[key] = np.mean(values)
+    
+    # Add correlation features if present
+    correlation_features = universe_data.get("correlation_features", {})
+    if correlation_features:
+        for key, value in correlation_features.items():
+            if isinstance(value, (int, float)) and not pd.isna(value):
+                aggregated[key] = value
     
     # Add common trading features if not present
     if 'momentum' not in aggregated:

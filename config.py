@@ -400,6 +400,7 @@ METRIC_THRESHOLDS = {
 
 # Strategy templates to generate
 STRATEGY_TEMPLATES = [
+    # Existing
     "TrendFollower",
     "MeanReverter",
     "MeanReverterV2",      # NEW
@@ -409,6 +410,12 @@ STRATEGY_TEMPLATES = [
     "SessionBreakout",     # NEW
     "MomentumBurst",       # NEW
     "PatternRecognition",  # NEW
+    # NEW - Correlation
+    "CorrelationTrader",
+    "PairDivergence",
+    "LeadLagStrategy",
+    "RiskSentiment",
+    "USDStrength",
 ]
 
 # Parameter ranges for strategy generation
@@ -417,6 +424,43 @@ STRATEGY_PARAMS = {
     "thresholds": [0.5, 1.0, 1.5, 2.0, 2.5, 3.0],
     "stop_loss_pips": [10, 15, 20, 30],
     "take_profit_pips": [20, 30, 40, 50],
+    # Correlation-specific params
+    "correlation_threshold": [0.7, 0.8, 0.85],
+    "zscore_entry": [1.5, 2.0, 2.5],
+    "divergence_std": [1.5, 2.0, 2.5],
+    "lag_periods": [1, 2, 3, 5],
+    "sentiment_threshold": [0.6, 0.7, 0.8],
+    "strength_threshold": [0.6, 0.7, 0.8],
+}
+
+
+# ═══════════════════════════════════════════════════════════════
+# 🔗 CORRELATION CONFIGURATION (Multi-Pair Analysis)
+# ═══════════════════════════════════════════════════════════════
+
+CORRELATION_CONFIG = {
+    "pairs": [
+        "EURUSD", "GBPUSD", "USDJPY", "USDCHF", "AUDUSD",
+        "USDCAD", "EURGBP", "GBPJPY", "EURJPY", "AUDJPY"
+    ],
+    "rolling_windows": [20, 50, 100],
+    "divergence_threshold": 2.0,
+    "min_correlation": 0.7,
+}
+
+
+# ═══════════════════════════════════════════════════════════════
+# 📊 TRADE ANALYSIS CONFIGURATION
+# ═══════════════════════════════════════════════════════════════
+
+TRADE_ANALYSIS_CONFIG = {
+    "top_n_for_detailed": 10,  # Trade log and Monte Carlo only for top 10
+    "monte_carlo_simulations": 1000,
+    "sessions": {
+        "london": {"start": 8, "end": 16},
+        "new_york": {"start": 13, "end": 21},
+        "tokyo": {"start": 0, "end": 8},
+    }
 }
 
 
