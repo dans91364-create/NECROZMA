@@ -23,45 +23,51 @@ print("""
 ╚══════════════════════════════════════════════════════════════╝
 """)
 
-def test_dataset_size(n_rows, description):
+def test_dataset_size(n_rows, description, create_df=True):
     """Test dynamic calculation with a specific dataset size"""
     print(f"\n{'='*60}")
     print(f"📊 {description}")
     print(f"{'='*60}")
     
-    # Create synthetic dataset
-    print(f"   Creating dataset with {n_rows:,} rows...")
-    np.random.seed(42)
-    df = pd.DataFrame({
-        "volatility": np.random.uniform(0.1, 0.5, n_rows),
-        "trend": np.random.uniform(-0.5, 0.5, n_rows),
-        "momentum": np.random.uniform(-0.3, 0.3, n_rows),
-    })
+    # For very large datasets, only calculate - don't create actual DataFrame
+    if create_df and n_rows <= 100_000:
+        print(f"   Creating dataset with {n_rows:,} rows...")
+        np.random.seed(42)
+        df = pd.DataFrame({
+            "volatility": np.random.uniform(0.1, 0.5, n_rows),
+            "trend": np.random.uniform(-0.5, 0.5, n_rows),
+            "momentum": np.random.uniform(-0.3, 0.3, n_rows),
+        })
+        detector = RegimeDetector()
+        config_min_size = detector.config.get("min_cluster_size", 100)
+    else:
+        print(f"   Calculating for dataset with {n_rows:,} rows (not creating in memory)...")
+        config_min_size = 100
     
     # Calculate what min_cluster_size would be
-    detector = RegimeDetector()
-    config_min_size = detector.config.get("min_cluster_size", 100)
-    calculated_min = max(10000, int(len(df) * 0.01), config_min_size)
+    min_absolute = 10000
+    min_pct = 0.01
+    calculated_min = max(min_absolute, int(n_rows * min_pct), config_min_size)
     
     print(f"   Config base value: {config_min_size:,}")
-    print(f"   1% of dataset: {int(len(df) * 0.01):,}")
-    print(f"   Minimum threshold: 10,000")
+    print(f"   1% of dataset: {int(n_rows * min_pct):,}")
+    print(f"   Minimum threshold: {min_absolute:,}")
     print(f"   ✨ Dynamic min_cluster_size: {calculated_min:,}")
-    print(f"   📈 Percentage of data: {(calculated_min / len(df) * 100):.2f}%")
+    print(f"   📈 Percentage of data: {(calculated_min / n_rows * 100):.2f}%")
     
     return calculated_min
 
 # Test 1: Small dataset
-test_dataset_size(5_000, "Small Dataset (5,000 rows)")
+test_dataset_size(5_000, "Small Dataset (5,000 rows)", create_df=True)
 
 # Test 2: Medium dataset  
-test_dataset_size(100_000, "Medium Dataset (100,000 rows)")
+test_dataset_size(100_000, "Medium Dataset (100,000 rows)", create_df=True)
 
-# Test 3: Large dataset (2M rows)
-test_dataset_size(2_000_000, "Large Dataset (2M rows)")
+# Test 3: Large dataset (2M rows) - calculation only
+test_dataset_size(2_000_000, "Large Dataset (2M rows)", create_df=False)
 
-# Test 4: Very large dataset (14.6M rows - the problem case)
-result = test_dataset_size(14_600_000, "Very Large Dataset (14.6M rows - Problem Case)")
+# Test 4: Very large dataset (14.6M rows - the problem case) - calculation only
+result = test_dataset_size(14_600_000, "Very Large Dataset (14.6M rows - Problem Case)", create_df=False)
 
 print(f"\n{'='*60}")
 print("📊 SUMMARY")

@@ -80,11 +80,7 @@ class TestDynamicMinClusterSize:
     def test_hdbscan_integration(self):
         """Test that the dynamic calculation works in actual HDBSCAN call"""
         # Skip if HDBSCAN not available
-        try:
-            import hdbscan
-        except ImportError:
-            print("   Skipping HDBSCAN test (not installed)")
-            return
+        pytest.importorskip("hdbscan", reason="HDBSCAN not available")
         
         # Create a dataset with 1,500 rows (1% = 15, so should use min 10,000)
         # But we'll use smaller for actual test
@@ -100,14 +96,10 @@ class TestDynamicMinClusterSize:
         # The function should handle this gracefully
         # With 1,500 rows, min_cluster_size would be 10,000
         # HDBSCAN should handle this (may not find clusters, but shouldn't crash)
-        try:
-            result = detector.detect_regimes_hdbscan(df)
-            # Should return a dataframe with regime column
-            assert "regime" in result.columns
-            # May have all noise (-1) which is fine for this test size
-        except Exception as e:
-            # If it fails, it should be due to dataset size, not calculation
-            assert "min_cluster_size" not in str(e).lower()
+        result = detector.detect_regimes_hdbscan(df)
+        # Should return a dataframe with regime column
+        assert "regime" in result.columns
+        # May have all noise (-1) which is fine for this test size
 
 
 if __name__ == "__main__":
@@ -129,7 +121,7 @@ if __name__ == "__main__":
     try:
         test.test_hdbscan_integration()
         print("✅ HDBSCAN integration test passed")
-    except Exception as e:
-        print(f"⚠️  HDBSCAN integration test skipped: {e}")
+    except pytest.skip.Exception:
+        print("⚠️  HDBSCAN integration test skipped (HDBSCAN not installed)")
     
     print("\n✨ All tests passed!")
