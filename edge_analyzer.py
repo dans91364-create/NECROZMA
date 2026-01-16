@@ -269,7 +269,7 @@ def analyze_regime_label_performance(
                 try:
                     labels_df = pd.read_parquet(labels_data)
                 except Exception as e:
-                    print(f"⚠️ Failed to load: {e}")
+                    print(f"⚠️ Failed to load {labels_data}: {e}")
                     continue
             else:
                 labels_df = labels_data
@@ -359,8 +359,11 @@ def analyze_regime_label_performance(
             
             print(f"({regime_results} results)")
             
-            # Free memory
+            # Free memory - explicitly delete and trigger garbage collection
             del merged
+            del labels_df
+            import gc
+            gc.collect()
             
     else:
         # Original non-batch mode (loads all labels in memory)

@@ -302,8 +302,9 @@ class RegimeDetector:
         seen_patterns = set()
         
         for pattern in ["volatility", "atr", "std", "trend", "momentum", "volume", "entropy", "rsi"]:
+            # Find the first column that matches this pattern
             for col in feature_cols:
-                if pattern in col.lower() and pattern not in seen_patterns:
+                if pattern in col.lower() and col not in key_features:
                     key_features.append(col)
                     seen_patterns.add(pattern)
                     break

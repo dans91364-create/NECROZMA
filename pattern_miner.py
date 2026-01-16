@@ -51,6 +51,15 @@ from config import FEATURE_IMPORTANCE_CONFIG, SHAP_CONFIG
 
 
 # ═══════════════════════════════════════════════════════════════
+# 🔧 CONSTANTS
+# ═══════════════════════════════════════════════════════════════
+
+# Maximum number of features to analyze for pattern discovery
+# Adjust based on system memory and computational resources
+MAX_FEATURES_FOR_PATTERN_DISCOVERY = 100
+
+
+# ═══════════════════════════════════════════════════════════════
 # 🎯 FEATURE IMPORTANCE
 # ═══════════════════════════════════════════════════════════════
 
@@ -516,7 +525,7 @@ class PatternMiner:
             }
         
         # Limit to most relevant features to avoid memory issues
-        feature_cols = feature_cols[:100]
+        feature_cols = feature_cols[:MAX_FEATURES_FOR_PATTERN_DISCOVERY]
         
         X = df[feature_cols].fillna(0)
         
@@ -534,8 +543,15 @@ class PatternMiner:
             if 'close' in df.columns:
                 returns = df['close'].pct_change()
                 # Use volatility clustering instead of simple median split
-                volatility = returns.rolling(20).std()
-                y = pd.qcut(volatility.fillna(0), q=3, labels=[0, 1, 2], duplicates='drop')
+                volatility = returns.rolling(20).std().dropna()
+                # Only use non-NaN volatility values for clustering
+                if len(volatility) > 0:
+                    y = pd.qcut(volatility, q=3, labels=[0, 1, 2], duplicates='drop')
+                    # Align with original dataframe
+                    y = y.reindex(df.index, fill_value=1)  # Default to middle cluster
+                else:
+                    # Fallback if volatility calculation fails
+                    y = pd.qcut(X.iloc[:, 0], q=3, labels=[0, 1, 2], duplicates='drop')
             else:
                 # Fallback: use first feature's distribution
                 y = pd.qcut(X.iloc[:, 0], q=3, labels=[0, 1, 2], duplicates='drop')
