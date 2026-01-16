@@ -476,6 +476,118 @@ class PatternMiner:
                   f"(above: {info['above_mean']:.3f}, below: {info['below_mean']:.3f})")
         
         return thresholds
+    
+    def discover_patterns(self, df: pd.DataFrame, labels_dict: Dict = None) -> Dict:
+        """
+        Discover patterns in data using ML-based analysis
+        
+        This is a high-level method that combines feature importance,
+        SHAP analysis, feature interactions, and threshold discovery.
+        
+        Args:
+            df: DataFrame with features
+            labels_dict: Dictionary of label configurations (optional, used for multi-label analysis)
+            
+        Returns:
+            Dictionary with discovered patterns including:
+                - important_features: List of most important features
+                - feature_importance: Full feature importance results
+                - interactions: Feature interaction analysis
+                - thresholds: Optimal thresholds for top features
+                - shap_values: SHAP values if available
+        """
+        print(f"\n🔍 Discovering patterns in {len(df):,} samples...")
+        
+        # Select features for analysis
+        feature_cols = [col for col in df.columns if df[col].dtype in [np.float64, np.float32, np.int64, np.int32]]
+        
+        # Exclude non-feature columns
+        exclude_patterns = ['timestamp', 'regime', 'label', 'outcome', 'target', 'stop']
+        feature_cols = [col for col in feature_cols if not any(pattern in col.lower() for pattern in exclude_patterns)]
+        
+        if len(feature_cols) < 5:
+            print(f"⚠️  Only {len(feature_cols)} features available for analysis")
+            return {
+                'important_features': feature_cols,
+                'feature_importance': {},
+                'interactions': [],
+                'thresholds': {},
+                'shap_values': None
+            }
+        
+        # Limit to most relevant features to avoid memory issues
+        feature_cols = feature_cols[:100]
+        
+        X = df[feature_cols].fillna(0)
+        
+        # Create a target variable for pattern discovery
+        # Use regime if available, otherwise create synthetic target
+        if 'regime' in df.columns:
+            y = df['regime'].fillna(-1).astype(int)
+            # Remove noise points
+            valid_mask = y != -1
+            X = X[valid_mask]
+            y = y[valid_mask]
+        else:
+            # Create synthetic target based on market volatility or price movement
+            if 'close' in df.columns:
+                returns = df['close'].pct_change()
+                y = (returns > returns.median()).astype(int)
+            else:
+                # Fallback: split into terciles based on first feature
+                y = pd.qcut(X.iloc[:, 0], q=3, labels=[0, 1, 2], duplicates='drop')
+        
+        if len(X) < 100:
+            print(f"⚠️  Not enough samples ({len(X)}) for reliable pattern discovery")
+            return {
+                'important_features': feature_cols[:10],
+                'feature_importance': {},
+                'interactions': [],
+                'thresholds': {},
+                'shap_values': None
+            }
+        
+        # Analyze features
+        importance_results = self.analyze_features(X, y)
+        
+        # Get top features
+        if 'aggregate' in importance_results:
+            important_features = importance_results['aggregate']['feature'].head(20).tolist()
+        elif importance_results:
+            first_method = list(importance_results.keys())[0]
+            important_features = importance_results[first_method]['feature'].head(20).tolist()
+        else:
+            important_features = feature_cols[:20]
+        
+        # Find feature interactions
+        interactions = self.find_feature_interactions(X, y, top_n=10)
+        
+        # Find optimal thresholds (only for binary targets)
+        thresholds = {}
+        if len(y.unique()) == 2:
+            thresholds = self.find_optimal_thresholds(X, y, features=important_features[:10])
+        
+        # Calculate SHAP values if enabled and not too many samples
+        shap_values = None
+        if len(X) <= 10000 and SHAP_AVAILABLE:
+            shap_values = self.calculate_shap_values(X, y, max_samples=min(1000, len(X)))
+        
+        patterns = {
+            'important_features': important_features,
+            'feature_importance': importance_results,
+            'interactions': interactions,
+            'thresholds': thresholds,
+            'shap_values': shap_values,
+            'n_features_analyzed': len(feature_cols),
+            'n_samples': len(X),
+        }
+        
+        print(f"\n✅ Pattern discovery complete!")
+        print(f"   Found {len(important_features)} important features")
+        print(f"   Identified {len(interactions)} feature interactions")
+        print(f"   Discovered {len(thresholds)} optimal thresholds")
+        
+        return patterns
 
 
 # ═══════════════════════════════════════════════════════════════
