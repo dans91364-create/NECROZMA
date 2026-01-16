@@ -21,6 +21,8 @@ from typing import Dict, List, Optional
 from datetime import datetime
 
 from backtester import BacktestResults
+from config import FILE_PREFIX
+
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -266,7 +268,7 @@ class LightReportGenerator:
         """
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"LIGHT_REPORT_{timestamp}.json"
+            filename = f"{FILE_PREFIX}LIGHT_REPORT_{timestamp}.json"
         
         filepath = self.output_dir / filename
         

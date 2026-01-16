@@ -27,7 +27,8 @@ from pathlib import Path
 
 warnings.filterwarnings("ignore")
 
-from config import TARGET_PIPS, STOP_PIPS, TIME_HORIZONS, NUM_WORKERS, LABELING_METRICS, CACHE_CONFIG
+from config import TARGET_PIPS, STOP_PIPS, TIME_HORIZONS, NUM_WORKERS, LABELING_METRICS, CACHE_CONFIG, FILE_PREFIX
+
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -373,8 +374,8 @@ def label_dataframe(
     # Generate data hash for cache
     cache_dir = _get_cache_dir()
     data_hash = _generate_data_hash(df)
-    cache_file = cache_dir / f"labels_{data_hash}.pkl"
-    progress_file = cache_dir / f"labels_progress_{data_hash}.json"
+    cache_file = cache_dir / f"{FILE_PREFIX}labels_{data_hash}.pkl"
+    progress_file = cache_dir / f"{FILE_PREFIX}labels_progress_{data_hash}.json"
     
     # Try to load from cache
     if use_cache and cache_file.exists():

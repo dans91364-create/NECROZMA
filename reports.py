@@ -22,7 +22,7 @@ import time
 
 from config import (
     MOVEMENT_LEVELS, DIRECTIONS, CONFIDENCE_THRESHOLDS,
-    TOP_PATTERNS_PER_LEVEL, THEME, get_output_dirs
+    TOP_PATTERNS_PER_LEVEL, THEME, get_output_dirs, FILE_PREFIX
 )
 
 
@@ -460,7 +460,7 @@ def generate_full_report(analyzer, final_judgment):
     print("📄 Generating Rankings Report...")
     
     rankings = analyzer.get_rankings()
-    rankings_file = reports_dir / f"rankings_{timestamp}.json"
+    rankings_file = reports_dir / f"{FILE_PREFIX}rankings_{timestamp}.json"
     
     rankings_report = {
         "generated_at": datetime.now().isoformat(),
