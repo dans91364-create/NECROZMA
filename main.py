@@ -308,7 +308,21 @@ Examples:
     parser.add_argument(
         "--fresh",
         action="store_true",
-        help="Ignore checkpoints and start fresh (cleanup old checkpoints)"
+        help="Ignore cache and checkpoints, recalculate everything from scratch"
+    )
+    
+    parser.add_argument(
+        "--skip-existing",
+        action="store_true",
+        default=True,
+        help="Skip universes that already exist (default: True). Use --no-skip-existing to recalculate all."
+    )
+    
+    parser.add_argument(
+        "--no-skip-existing",
+        action="store_false",
+        dest="skip_existing",
+        help="Recalculate all universes even if they exist"
     )
     
     # Specific processing arguments
@@ -926,10 +940,20 @@ def main():
     print("═" * 80 + "\n")
     
     # Import config (after system check)
-    from config import CSV_FILE, PARQUET_FILE, NUM_WORKERS
+    from config import CSV_FILE, PARQUET_FILE, NUM_WORKERS, CACHE_CONFIG
     from data_loader import crystallize_csv_to_parquet, load_crystal, crystal_info
     from analyzer import UltraNecrozmaAnalyzer
     from reports import light_that_burns_the_sky, generate_full_report, print_final_summary
+    
+    # Handle cache configuration based on command-line flags
+    if args.fresh:
+        print("🔥 FRESH MODE: Disabling all caching and recalculating everything...\n")
+        CACHE_CONFIG["enabled"] = False
+        CACHE_CONFIG["skip_existing_universes"] = False
+        CACHE_CONFIG["cache_labeling"] = False
+    elif not args.skip_existing:
+        print("🔄 Recalculating all universes (skip-existing disabled)...\n")
+        CACHE_CONFIG["skip_existing_universes"] = False
     
     # Config override
     csv_path = Path(args.csv) if args.csv else CSV_FILE

@@ -20,10 +20,102 @@ from typing import Dict, List, Tuple, Optional
 from multiprocessing import Pool, cpu_count
 from functools import partial
 import warnings
+import hashlib
+import pickle
+import json
+from pathlib import Path
 
 warnings.filterwarnings("ignore")
 
-from config import TARGET_PIPS, STOP_PIPS, TIME_HORIZONS, NUM_WORKERS, LABELING_METRICS
+from config import TARGET_PIPS, STOP_PIPS, TIME_HORIZONS, NUM_WORKERS, LABELING_METRICS, CACHE_CONFIG
+
+
+# ═══════════════════════════════════════════════════════════════
+# 💾 CACHE UTILITIES
+# ═══════════════════════════════════════════════════════════════
+
+def _get_cache_dir():
+    """Get or create cache directory"""
+    cache_dir = CACHE_CONFIG.get("cache_dir", Path("ultra_necrozma_results/cache"))
+    cache_dir = Path(cache_dir)
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return cache_dir
+
+
+def _generate_data_hash(df: pd.DataFrame) -> str:
+    """
+    Generate a hash for data fingerprinting
+    
+    Args:
+        df: DataFrame to hash
+        
+    Returns:
+        str: Hash string
+    """
+    # Create hash from data shape and sample values
+    hash_input = f"{len(df)}_{df['mid_price'].iloc[0] if len(df) > 0 else 0}_{df['mid_price'].iloc[-1] if len(df) > 0 else 0}"
+    return hashlib.md5(hash_input.encode()).hexdigest()[:8]
+
+
+def clear_label_cache():
+    """
+    Clear all labeling cache files
+    Utility function for fresh starts
+    """
+    cache_dir = _get_cache_dir()
+    
+    # Remove all cache files
+    for cache_file in cache_dir.glob("labels_*.pkl"):
+        cache_file.unlink()
+        print(f"   🗑️  Removed {cache_file.name}")
+    
+    for progress_file in cache_dir.glob("labels_progress_*.json"):
+        progress_file.unlink()
+        print(f"   🗑️  Removed {progress_file.name}")
+    
+    print("   ✅ Label cache cleared!")
+
+
+def _load_cache(cache_file: Path) -> Optional[Dict]:
+    """Load labels from cache file"""
+    try:
+        with open(cache_file, 'rb') as f:
+            return pickle.load(f)
+    except Exception as e:
+        print(f"   ⚠️ Failed to load cache: {e}")
+        return None
+
+
+def _save_cache(cache_file: Path, data: Dict):
+    """Save labels to cache file"""
+    try:
+        with open(cache_file, 'wb') as f:
+            pickle.dump(data, f)
+    except Exception as e:
+        print(f"   ⚠️ Failed to save cache: {e}")
+
+
+def _load_progress(progress_file: Path) -> set:
+    """Load progress from checkpoint file"""
+    if not progress_file.exists():
+        return set()
+    
+    try:
+        with open(progress_file, 'r') as f:
+            data = json.load(f)
+            return set(data.get('completed', []))
+    except Exception as e:
+        print(f"   ⚠️ Failed to load progress: {e}")
+        return set()
+
+
+def _save_progress(progress_file: Path, completed: set):
+    """Save progress to checkpoint file"""
+    try:
+        with open(progress_file, 'w') as f:
+            json.dump({'completed': list(completed)}, f)
+    except Exception as e:
+        print(f"   ⚠️ Failed to save progress: {e}")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -247,7 +339,8 @@ def label_dataframe(
     horizons: List[int] = None,
     num_workers: int = None,
     pip_value: float = 0.0001,
-    progress_callback = None
+    progress_callback = None,
+    use_cache: bool = None
 ) -> Dict[str, pd.DataFrame]:
     """
     Label entire dataframe with multiple targets/stops/horizons
@@ -260,6 +353,7 @@ def label_dataframe(
         num_workers: Number of parallel workers
         pip_value: Value of 1 pip
         progress_callback: Optional callback(current, total, desc) for progress
+        use_cache: Whether to use cache (default: from CACHE_CONFIG)
         
     Returns:
         Dictionary mapping config -> labeled DataFrame
@@ -273,6 +367,22 @@ def label_dataframe(
         horizons = TIME_HORIZONS
     if num_workers is None:
         num_workers = min(NUM_WORKERS, cpu_count())
+    if use_cache is None:
+        use_cache = CACHE_CONFIG.get("enabled", True) and CACHE_CONFIG.get("cache_labeling", True)
+    
+    # Generate data hash for cache
+    cache_dir = _get_cache_dir()
+    data_hash = _generate_data_hash(df)
+    cache_file = cache_dir / f"labels_{data_hash}.pkl"
+    progress_file = cache_dir / f"labels_progress_{data_hash}.json"
+    
+    # Try to load from cache
+    if use_cache and cache_file.exists():
+        print(f"   ✅ Loading labels from cache ({cache_file.name})...")
+        cached_data = _load_cache(cache_file)
+        if cached_data is not None:
+            print(f"   💾 Loaded {len(cached_data)} labeled datasets from cache!")
+            return cached_data
     
     # Prepare data
     prices = df["mid_price"].values
@@ -292,12 +402,23 @@ def label_dataframe(
     total_configs = len(configs)
     results_dict = {}
     
+    # Load progress if exists (for resume)
+    completed = _load_progress(progress_file) if use_cache else set()
+    
+    if completed:
+        print(f"   📥 Resuming from checkpoint ({len(completed)}/{total_configs} already completed)...")
+    
     print(f"🏷️  Labeling {len(df):,} candles with {total_configs} configurations...")
     print(f"   Targets: {target_pips}")
     print(f"   Stops: {stop_pips}")
     print(f"   Horizons: {horizons}")
     print(f"   Workers: {num_workers}")
+    if use_cache:
+        print(f"   Cache: Enabled (checkpoint every {CACHE_CONFIG.get('checkpoint_interval', 10)} configs)")
     print()
+    
+    # Checkpoint interval
+    checkpoint_interval = CACHE_CONFIG.get("checkpoint_interval", 10)
     
     # Process each configuration
     for config_idx, config in enumerate(configs):
@@ -307,10 +428,15 @@ def label_dataframe(
         
         config_key = f"T{target}_S{stop}_H{horizon}"
         
+        # Skip if already completed
+        if config_key in completed:
+            continue
+        
         if progress_callback:
             progress_callback(config_idx, total_configs, f"Labeling {config_key}")
         else:
-            print(f"   [{config_idx+1}/{total_configs}] Processing {config_key}...")
+            remaining = total_configs - len(completed)
+            print(f"   [{len(completed)+1}/{total_configs}] Processing {config_key} ({remaining-1} remaining)...")
         
         # Split indices into chunks for parallel processing
         indices = list(range(len(df) - 1))
@@ -341,6 +467,23 @@ def label_dataframe(
         if all_results:
             results_df = pd.DataFrame(all_results)
             results_dict[config_key] = results_df
+        
+        # Mark as completed
+        completed.add(config_key)
+        
+        # Save progress checkpoint
+        if use_cache and len(completed) % checkpoint_interval == 0:
+            _save_progress(progress_file, completed)
+            print(f"   💾 Checkpoint saved ({len(completed)}/{total_configs} completed)")
+    
+    # Save final cache
+    if use_cache:
+        print(f"\n   💾 Saving complete cache...")
+        _save_cache(cache_file, results_dict)
+        # Clean up progress file
+        if progress_file.exists():
+            progress_file.unlink()
+        print(f"   ✅ Cache saved to {cache_file.name}")
     
     print(f"\n✅ Labeling complete! Generated {len(results_dict)} labeled datasets.")
     
