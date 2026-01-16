@@ -14,7 +14,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pytest
-from pytest import skip
 import numpy as np
 import pandas as pd
 from regime_detector import RegimeDetector
@@ -22,6 +21,10 @@ from regime_detector import RegimeDetector
 
 class TestDynamicMinClusterSize:
     """Test dynamic min_cluster_size calculation"""
+    
+    # Constants from REGIME_CONFIG (duplicated here for test clarity)
+    MIN_ABSOLUTE = 10000
+    MIN_PCT = 0.01
     
     def test_small_dataset_uses_minimum(self):
         """Test that small datasets (< 1M rows) use at least 10,000"""
@@ -37,10 +40,10 @@ class TestDynamicMinClusterSize:
         
         # Calculate expected min_cluster_size
         config_min_size = detector.config.get("min_cluster_size", 100)
-        expected = max(10000, int(len(df) * 0.01), config_min_size)
+        expected = max(self.MIN_ABSOLUTE, int(len(df) * self.MIN_PCT), config_min_size)
         
         # Expected should be 10,000 for 5,000 rows (1% = 50, but min is 10,000)
-        assert expected == 10000, f"Expected 10,000 for small dataset, got {expected}"
+        assert expected == self.MIN_ABSOLUTE, f"Expected {self.MIN_ABSOLUTE:,} for small dataset, got {expected}"
         
     def test_medium_dataset_uses_one_percent(self):
         """Test that medium datasets use 1% of data size"""
@@ -51,7 +54,7 @@ class TestDynamicMinClusterSize:
         # Use a smaller sample for actual test (to avoid memory issues)
         # but calculate what the min_cluster_size should be
         config_min_size = 100
-        expected = max(10000, int(n_rows * 0.01), config_min_size)
+        expected = max(self.MIN_ABSOLUTE, int(n_rows * self.MIN_PCT), config_min_size)
         
         # Expected should be 20,000 for 2M rows (1% = 20,000)
         assert expected == 20000, f"Expected 20,000 for 2M rows, got {expected}"
@@ -61,7 +64,7 @@ class TestDynamicMinClusterSize:
         # Calculate for 14.6M rows
         n_rows = 14_600_000
         config_min_size = 100
-        expected = max(10000, int(n_rows * 0.01), config_min_size)
+        expected = max(self.MIN_ABSOLUTE, int(n_rows * self.MIN_PCT), config_min_size)
         
         # Expected should be 146,000 for 14.6M rows (1% = 146,000)
         assert expected == 146000, f"Expected 146,000 for 14.6M rows, got {expected}"
@@ -73,7 +76,7 @@ class TestDynamicMinClusterSize:
         
         # Config override with very large value
         config_min_size = 50000
-        expected = max(10000, int(n_rows * 0.01), config_min_size)
+        expected = max(self.MIN_ABSOLUTE, int(n_rows * self.MIN_PCT), config_min_size)
         
         # Expected should be 50,000 (config override is larger than 1% = 1,000)
         assert expected == 50000, f"Expected 50,000 (config override), got {expected}"
@@ -122,7 +125,7 @@ if __name__ == "__main__":
     try:
         test.test_hdbscan_integration()
         print("✅ HDBSCAN integration test passed")
-    except skip.Exception:
+    except pytest.skip.Exception:
         print("⚠️  HDBSCAN integration test skipped (HDBSCAN not installed)")
     
     print("\n✨ All tests passed!")
