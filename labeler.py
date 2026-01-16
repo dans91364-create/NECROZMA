@@ -16,7 +16,7 @@ Features:
 
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Union
 import warnings
 import hashlib
 import pickle
@@ -453,7 +453,12 @@ def _save_progress(progress_file: Path, completed: set):
 
 
 def _get_labels_dir():
-    """Get or create labels directory for individual parquet files"""
+    """
+    Get or create labels directory for individual parquet files
+    
+    Returns:
+        Path: Path to the labels/ directory
+    """
     labels_dir = Path("labels")
     labels_dir.mkdir(exist_ok=True)
     return labels_dir
@@ -672,7 +677,7 @@ def label_dataframe(
     progress_callback = None,
     use_cache: bool = None,
     return_dict: bool = False
-) -> List[str]:
+) -> Union[List[str], Dict[str, pd.DataFrame]]:
     """
     Label entire dataframe with multiple targets/stops/horizons
     
@@ -691,8 +696,8 @@ def label_dataframe(
                      If False (default), returns List[str] of saved file paths (memory-efficient)
         
     Returns:
-        List of saved file paths (if return_dict=False)
-        OR Dict mapping config -> DataFrame (if return_dict=True, backward compatibility mode)
+        List[str]: List of saved file paths (if return_dict=False)
+        Dict[str, pd.DataFrame]: Dict mapping config -> DataFrame (if return_dict=True, backward compatibility mode)
     """
     # Use config defaults if not provided
     if target_pips is None:
@@ -860,7 +865,11 @@ def label_dataframe(
             del outcomes_up, outcomes_down
             del mfe_up, mfe_down, mae_up, mae_down
             del time_target_up, time_target_down, time_stop_up, time_stop_down
-            gc.collect()
+            
+            # Run garbage collection periodically (every 10 configs) to free memory
+            # More frequent than this has diminishing returns and impacts performance
+            if (config_idx + 1) % 10 == 0:
+                gc.collect()
             
             # Update main progress bar
             pbar.update(1)
