@@ -11,14 +11,12 @@ Features:
 - Multi-horizon testing (1m to 1d)
 - Multi-stop analysis (5, 10, 15, 20, 30 pips)
 - Advanced metrics: MFE, MAE, R-Multiple
-- Parallel processing for all 32 threads
+- Numba-optimized sequential processing (faster than parallel due to no data copying overhead)
 """
 
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Tuple, Optional
-from multiprocessing import Pool, cpu_count
-from functools import partial
 import warnings
 import hashlib
 import pickle
@@ -28,7 +26,7 @@ from tqdm import tqdm
 
 warnings.filterwarnings("ignore")
 
-from config import TARGET_PIPS, STOP_PIPS, TIME_HORIZONS, NUM_WORKERS, LABELING_METRICS, CACHE_CONFIG, FILE_PREFIX
+from config import TARGET_PIPS, STOP_PIPS, TIME_HORIZONS, LABELING_METRICS, CACHE_CONFIG, FILE_PREFIX
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -363,43 +361,10 @@ def label_single_candle(
     return result
 
 
-def label_chunk(
-    chunk_indices: List[int],
-    prices: np.ndarray,
-    timestamps: np.ndarray,
-    target_pip: float,
-    stop_pip: float,
-    horizon_minutes: int,
-    pip_value: float = 0.0001
-) -> List[Dict]:
-    """
-    Label a chunk of candles (for parallel processing)
-    
-    Args:
-        chunk_indices: List of candle indices to process
-        prices: Array of mid prices
-        timestamps: Array of timestamps
-        target_pip: Target in pips
-        stop_pip: Stop loss in pips
-        horizon_minutes: Time horizon in minutes
-        pip_value: Value of 1 pip
-        
-    Returns:
-        List of labeling results
-    """
-    results = []
-    for idx in chunk_indices:
-        result = label_single_candle(
-            idx, prices, timestamps,
-            target_pip, stop_pip, horizon_minutes, pip_value
-        )
-        if result:
-            results.append(result)
-    return results
 
 
 # ═══════════════════════════════════════════════════════════════
-# 🚀 PARALLEL LABELING
+# 🚀 SEQUENTIAL LABELING (Optimized with Numba)
 # ═══════════════════════════════════════════════════════════════
 
 def label_dataframe(
@@ -420,7 +385,7 @@ def label_dataframe(
         target_pips: List of target levels in pips
         stop_pips: List of stop levels in pips
         horizons: List of time horizons in minutes
-        num_workers: Number of parallel workers
+        num_workers: Deprecated (kept for backward compatibility, ignored)
         pip_value: Value of 1 pip
         progress_callback: Optional callback(current, total, desc) for progress
         use_cache: Whether to use cache (default: from CACHE_CONFIG)
@@ -435,8 +400,8 @@ def label_dataframe(
         stop_pips = STOP_PIPS
     if horizons is None:
         horizons = TIME_HORIZONS
-    if num_workers is None:
-        num_workers = min(NUM_WORKERS, cpu_count())
+    # num_workers parameter is deprecated - kept for backward compatibility
+    # Sequential processing with Numba is faster than parallel with data copying overhead
     if use_cache is None:
         use_cache = CACHE_CONFIG.get("enabled", True) and CACHE_CONFIG.get("cache_labeling", True)
     
@@ -482,7 +447,7 @@ def label_dataframe(
     print(f"   Targets: {target_pips}")
     print(f"   Stops: {stop_pips}")
     print(f"   Horizons: {horizons}")
-    print(f"   Workers: {num_workers}")
+    print(f"   Processing: Sequential (Numba-optimized)")
     if use_cache:
         print(f"   Cache: Enabled (checkpoint every {CACHE_CONFIG.get('checkpoint_interval', 10)} configs)")
     print()
@@ -518,38 +483,24 @@ def label_dataframe(
             if progress_callback:
                 progress_callback(config_idx, total_configs, f"Labeling {config_key}")
             
-            # Split indices into chunks for parallel processing
-            indices = list(range(len(df) - 1))
-            chunk_size = max(1, len(indices) // (num_workers * 4))
-            chunks = [indices[i:i+chunk_size] for i in range(0, len(indices), chunk_size)]
-            
-            # Create partial function with fixed parameters
-            label_func = partial(
-                label_chunk,
-                prices=prices,
-                timestamps=timestamps,
-                target_pip=target,
-                stop_pip=stop,
-                horizon_minutes=horizon,
-                pip_value=pip_value
-            )
-            
-            # Process in parallel with inner progress bar
-            with Pool(num_workers) as pool:
-                chunk_results = list(tqdm(
-                    pool.imap(label_func, chunks),
-                    total=len(chunks),
-                    desc=f"  └─ Processing chunks",
-                    leave=False,
-                    unit="chunk",
-                    ncols=100,
-                    bar_format="  {desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt}"
-                ))
-            
-            # Flatten results
+            # Process all candles sequentially (Numba is fast enough, no need for multiprocessing overhead)
+            # The multiprocessing Pool was copying 14M+ floats to each worker, causing massive overhead
+            # Numba JIT compilation makes sequential processing faster than parallel with data copying
             all_results = []
-            for chunk_result in chunk_results:
-                all_results.extend(chunk_result)
+            for idx in tqdm(
+                range(len(df) - 1),
+                desc=f"  └─ Processing candles",
+                leave=False,
+                unit="candle",
+                ncols=100,
+                bar_format="  {desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt}"
+            ):
+                result = label_single_candle(
+                    idx, prices, timestamps,
+                    target, stop, horizon, pip_value
+                )
+                if result:
+                    all_results.append(result)
             
             # Convert to DataFrame
             if all_results:
