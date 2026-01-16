@@ -299,14 +299,30 @@ class RegimeDetector:
         
         # Key features for characterization
         key_features = []
-        for pattern in ["volatility", "trend", "volume", "momentum", "entropy"]:
+        seen_patterns = set()
+        
+        for pattern in ["volatility", "atr", "std", "trend", "momentum", "volume", "entropy", "rsi"]:
+            # Find the first column that matches this pattern
             for col in feature_cols:
-                if pattern in col.lower():
+                if pattern in col.lower() and col not in key_features:
                     key_features.append(col)
+                    seen_patterns.add(pattern)
                     break
         
         if not key_features:
             key_features = feature_cols[:5]
+        
+        # Calculate global percentiles for each key feature
+        global_percentiles = {}
+        for feature in key_features:
+            if feature in df.columns:
+                global_percentiles[feature] = {
+                    'p33': df[feature].quantile(0.33),
+                    'p66': df[feature].quantile(0.66),
+                    'median': df[feature].median(),
+                    'mean': df[feature].mean(),
+                    'std': df[feature].std(),
+                }
         
         characteristics = {}
         
@@ -324,10 +340,11 @@ class RegimeDetector:
                         "mean": regime_data[feature].mean(),
                         "std": regime_data[feature].std(),
                         "median": regime_data[feature].median(),
+                        "global_percentiles": global_percentiles.get(feature, {}),
                     }
             
-            # Try to name the regime
-            name = self._name_regime(stats, key_features)
+            # Try to name the regime with global context
+            name = self._name_regime_with_context(stats, key_features, global_percentiles)
             self.regime_names[regime_id] = name
             
             characteristics[regime_id] = {
@@ -339,34 +356,76 @@ class RegimeDetector:
         
         return characteristics
     
-    def _name_regime(self, stats: Dict, features: List[str]) -> str:
-        """Generate a descriptive name for a regime"""
-        # Look for volatility indicators
-        vol_features = [f for f in features if "volatility" in f.lower() or "atr" in f.lower()]
-        trend_features = [f for f in features if "trend" in f.lower() or "momentum" in f.lower()]
+    def _name_regime_with_context(self, stats: Dict, features: List[str], 
+                                   global_percentiles: Dict) -> str:
+        """
+        Generate a descriptive name for a regime using global percentiles
         
-        vol_level = "UNKNOWN"
+        Args:
+            stats: Statistics dictionary for the regime
+            features: List of feature names
+            global_percentiles: Global percentile information for features
+            
+        Returns:
+            Descriptive name like "STRONG_UP_HIGH_VOL" or "RANGING_LOW_VOL"
+        """
+        # Look for volatility indicators
+        vol_features = [f for f in features if "volatility" in f.lower() or "atr" in f.lower() or "std" in f.lower()]
+        trend_features = [f for f in features if "trend" in f.lower() or "momentum" in f.lower() or "macd" in f.lower() or "rsi" in f.lower()]
+        
+        # Default values
+        vol_level = "MEDIUM_VOL"
         trend_level = "RANGING"
         
+        # Determine volatility level using global percentiles
         if vol_features and vol_features[0] in stats:
             vol_mean = stats[vol_features[0]]["mean"]
-            if vol_mean > 0.8:
-                vol_level = "HIGH_VOL"
-            elif vol_mean > 0.4:
-                vol_level = "MEDIUM_VOL"
-            else:
-                vol_level = "LOW_VOL"
+            global_stats = global_percentiles.get(vol_features[0], {})
+            
+            if global_stats:
+                p33 = global_stats.get('p33', 0)
+                p66 = global_stats.get('p66', 1)
+                
+                if vol_mean > p66:
+                    vol_level = "HIGH_VOL"
+                elif vol_mean > p33:
+                    vol_level = "MEDIUM_VOL"
+                else:
+                    vol_level = "LOW_VOL"
         
+        # Determine trend direction and strength using global percentiles
         if trend_features and trend_features[0] in stats:
-            trend_mean = abs(stats[trend_features[0]]["mean"])
-            if trend_mean > 0.6:
-                trend_level = "TRENDING"
-            elif trend_mean > 0.3:
-                trend_level = "WEAK_TREND"
+            trend_mean = stats[trend_features[0]]["mean"]
+            global_stats = global_percentiles.get(trend_features[0], {})
+            
+            if global_stats:
+                median = global_stats.get('median', 0)
+                std = global_stats.get('std', 1)
+                
+                # Check for directional bias relative to global distribution
+                if trend_mean > median + 0.5 * std:
+                    if trend_mean > median + 1.5 * std:
+                        trend_level = "STRONG_UP"
+                    else:
+                        trend_level = "WEAK_UP"
+                elif trend_mean < median - 0.5 * std:
+                    if trend_mean < median - 1.5 * std:
+                        trend_level = "STRONG_DOWN"
+                    else:
+                        trend_level = "WEAK_DOWN"
+                else:
+                    trend_level = "RANGING"
             else:
-                trend_level = "RANGING"
+                # Fallback to absolute thresholds if no global stats
+                if abs(trend_mean) > 0.5:
+                    trend_level = "STRONG_UP" if trend_mean > 0 else "STRONG_DOWN"
+                elif abs(trend_mean) > 0.1:
+                    trend_level = "WEAK_UP" if trend_mean > 0 else "WEAK_DOWN"
+                else:
+                    trend_level = "RANGING"
         
         return f"{trend_level}_{vol_level}"
+    
     
     def calculate_transitions(self, df: pd.DataFrame) -> pd.DataFrame:
         """

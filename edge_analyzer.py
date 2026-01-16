@@ -108,15 +108,16 @@ def calculate_bootstrap_ci(
 # 📁 DATA LOADING
 # ═══════════════════════════════════════════════════════════════
 
-def load_labels(labels_dir: Path = None) -> Dict[str, pd.DataFrame]:
+def load_labels(labels_dir: Path = None, batch_mode: bool = False) -> Dict[str, pd.DataFrame]:
     """
     Load all label parquet files
     
     Args:
         labels_dir: Directory containing label parquets
+        batch_mode: If True, returns file paths instead of loaded DataFrames (memory-efficient)
         
     Returns:
-        Dictionary of config_key -> DataFrame
+        Dictionary of config_key -> DataFrame (or Path if batch_mode=True)
     """
     if labels_dir is None:
         labels_dir = Path("labels")
@@ -133,16 +134,25 @@ def load_labels(labels_dir: Path = None) -> Dict[str, pd.DataFrame]:
     
     print(f"📂 Loading {len(parquet_files)} label files...")
     
-    for f in parquet_files:
-        config_key = f.stem  # e.g., "T10_S5_H30" or "EURUSD_2025_T10_S5_H30"
-        # Remove prefix if present
-        if FILE_PREFIX and config_key.startswith(FILE_PREFIX):
-            config_key = config_key[len(FILE_PREFIX):]
-        
-        try:
-            labels[config_key] = pd.read_parquet(f)
-        except Exception as e:
-            print(f"   ⚠️ Failed to load {f.name}: {e}")
+    if batch_mode:
+        print(f"   🔄 Batch mode: returning file paths (not loading into memory)")
+        for f in parquet_files:
+            config_key = f.stem  # e.g., "T10_S5_H30" or "EURUSD_2025_T10_S5_H30"
+            # Remove prefix if present
+            if FILE_PREFIX and config_key.startswith(FILE_PREFIX):
+                config_key = config_key[len(FILE_PREFIX):]
+            labels[config_key] = f  # Store path instead of DataFrame
+    else:
+        for f in parquet_files:
+            config_key = f.stem  # e.g., "T10_S5_H30" or "EURUSD_2025_T10_S5_H30"
+            # Remove prefix if present
+            if FILE_PREFIX and config_key.startswith(FILE_PREFIX):
+                config_key = config_key[len(FILE_PREFIX):]
+            
+            try:
+                labels[config_key] = pd.read_parquet(f)
+            except Exception as e:
+                print(f"   ⚠️ Failed to load {f.name}: {e}")
     
     print(f"   ✅ Loaded {len(labels)} label configs")
     return labels
@@ -182,20 +192,46 @@ def load_regimes(regimes_path: Path = None) -> pd.DataFrame:
 # 🎯 EDGE ANALYSIS
 # ═══════════════════════════════════════════════════════════════
 
+def parse_config_key(config_key: str) -> Optional[Tuple[float, float, int]]:
+    """
+    Parse configuration key to extract target, stop, and horizon values
+    
+    Args:
+        config_key: Config string like "T10_S5_H30"
+        
+    Returns:
+        Tuple of (target_pips, stop_pips, horizon_min) or None if parsing fails
+    """
+    parts = config_key.split("_")
+    try:
+        target_pips = float(parts[0][1:])  # T10 -> 10
+        stop_pips = float(parts[1][1:])    # S5 -> 5
+        horizon_min = int(parts[2][1:])    # H30 -> 30
+        return (target_pips, stop_pips, horizon_min)
+    except (IndexError, ValueError):
+        return None
+
+
 def analyze_regime_label_performance(
     labels: Dict[str, pd.DataFrame],
     regimes_df: pd.DataFrame,
-    config: Dict = None
+    config: Dict = None,
+    batch_mode: bool = True,
+    sample_size: Optional[int] = None
 ) -> pd.DataFrame:
     """
     Cross Regime × Label to find which configs work in which regimes
     
     This is the CORE function - Phase 4 of the pipeline
     
+    Memory-efficient implementation: processes one label at a time to avoid OOM
+    
     Args:
         labels: Dictionary of config_key -> labeled DataFrame
         regimes_df: DataFrame with 'regime' column
         config: Analysis configuration
+        batch_mode: If True, processes labels one at a time (memory-efficient)
+        sample_size: If provided, randomly sample this many rows from regimes_df
         
     Returns:
         DataFrame with performance metrics per regime×config
@@ -208,95 +244,212 @@ def analyze_regime_label_performance(
     print(f"\n🔬 Analyzing Regime × Label Performance...")
     print(f"   Configs: {len(labels)}")
     print(f"   Regimes: {regimes_df['regime'].nunique()}")
+    print(f"   Rows: {len(regimes_df):,}")
+    
+    # Apply sampling if requested (for very large datasets)
+    if sample_size and len(regimes_df) > sample_size:
+        print(f"   📉 Sampling {sample_size:,} rows from {len(regimes_df):,} (to reduce memory usage)")
+        regimes_df = regimes_df.sample(n=sample_size, random_state=42)
+        print(f"   ✅ Sampled dataset has {len(regimes_df):,} rows")
     
     results = []
     
     # Get unique regimes (exclude noise = -1)
     unique_regimes = sorted([r for r in regimes_df['regime'].unique() if r != -1])
     
-    for config_key, labels_df in labels.items():
-        # Parse config
-        parts = config_key.split("_")
-        try:
-            target_pips = float(parts[0][1:])  # T10 -> 10
-            stop_pips = float(parts[1][1:])    # S5 -> 5
-            horizon_min = int(parts[2][1:])    # H30 -> 30
-        except (IndexError, ValueError):
-            print(f"   ⚠️ Could not parse config: {config_key}")
-            continue
+    # Process each label configuration individually to avoid loading all in memory
+    if batch_mode:
+        print(f"   🔄 Processing in batch mode (one label at a time)...")
         
-        # Merge with regimes (align by index or timestamp)
-        if 'timestamp' in labels_df.columns and 'timestamp' in regimes_df.columns:
-            merged = labels_df.merge(regimes_df[['timestamp', 'regime']], on='timestamp', how='left')
-        else:
-            # Assume same index
-            merged = labels_df.copy()
-            merged['regime'] = regimes_df['regime'].values[:len(labels_df)]
-        
-        # Analyze each regime
-        for regime_id in unique_regimes:
-            regime_data = merged[merged['regime'] == regime_id]
+        for idx, (config_key, labels_data) in enumerate(labels.items(), 1):
+            print(f"   [{idx}/{len(labels)}] Processing {config_key}...", end=' ')
             
-            if len(regime_data) < min_trades:
+            # Load label data if it's a Path
+            if isinstance(labels_data, Path):
+                try:
+                    labels_df = pd.read_parquet(labels_data)
+                except Exception as e:
+                    print(f"⚠️ Failed to load {labels_data}: {e}")
+                    continue
+            else:
+                labels_df = labels_data
+            
+            # Parse config
+            parsed = parse_config_key(config_key)
+            if parsed is None:
+                print(f"⚠️ Could not parse")
                 continue
             
-            # Calculate metrics for UP direction
-            for direction in ['up', 'down']:
-                outcome_col = f'{direction}_outcome'
+            target_pips, stop_pips, horizon_min = parsed
+            
+            # Merge with regimes (align by index or timestamp)
+            if 'timestamp' in labels_df.columns and 'timestamp' in regimes_df.columns:
+                merged = labels_df.merge(regimes_df[['timestamp', 'regime']], on='timestamp', how='left')
+            else:
+                # Assume same index
+                merged = labels_df.copy()
+                merged['regime'] = regimes_df['regime'].values[:len(labels_df)]
+            
+            # Analyze each regime
+            regime_results = 0
+            for regime_id in unique_regimes:
+                regime_data = merged[merged['regime'] == regime_id]
                 
-                if outcome_col not in regime_data.columns:
+                if len(regime_data) < min_trades:
                     continue
                 
-                # Count wins (target hit) and losses (stop hit)
-                outcomes = regime_data[outcome_col]
-                wins = (outcomes == 'target').sum()
-                losses = (outcomes == 'stop').sum()
-                total = wins + losses
+                # Calculate metrics for both directions
+                for direction in ['up', 'down']:
+                    outcome_col = f'{direction}_outcome'
+                    
+                    if outcome_col not in regime_data.columns:
+                        continue
+                    
+                    # Count wins (target hit) and losses (stop hit)
+                    outcomes = regime_data[outcome_col]
+                    wins = (outcomes == 'target').sum()
+                    losses = (outcomes == 'stop').sum()
+                    total = wins + losses
+                    
+                    if total < min_trades:
+                        continue
+                    
+                    win_rate = wins / total if total > 0 else 0
+                    
+                    # Calculate profit factor
+                    # Win gives target_pips, loss gives -stop_pips
+                    gross_profit = wins * target_pips
+                    gross_loss = losses * stop_pips
+                    profit_factor = gross_profit / gross_loss if gross_loss > 0 else 0
+                    
+                    # Calculate p-value
+                    p_value = calculate_p_value(wins, total, null_hypothesis=0.5)
+                    
+                    # Calculate expectancy (in R-multiples)
+                    # R = risk = stop_pips
+                    # Win = target_pips / stop_pips R, Loss = -1 R
+                    r_multiple = target_pips / stop_pips
+                    expectancy_r = (win_rate * r_multiple) - ((1 - win_rate) * 1)
+                    
+                    # Bootstrap confidence interval
+                    outcome_binary = np.where(outcomes == 'target', 1, 0)
+                    outcome_binary = outcome_binary[~pd.isna(outcomes)]
+                    ci_lower, ci_mean, ci_upper = calculate_bootstrap_ci(outcome_binary)
+                    
+                    results.append({
+                        'regime': regime_id,
+                        'config': config_key,
+                        'direction': direction,
+                        'target_pips': target_pips,
+                        'stop_pips': stop_pips,
+                        'horizon_min': horizon_min,
+                        'risk_reward': r_multiple,
+                        'n_trades': total,
+                        'wins': wins,
+                        'losses': losses,
+                        'win_rate': win_rate,
+                        'profit_factor': profit_factor,
+                        'expectancy_r': expectancy_r,
+                        'p_value': p_value,
+                        'ci_lower': ci_lower,
+                        'ci_upper': ci_upper,
+                        'is_significant': p_value < config.get('max_p_value', 0.05),
+                    })
+                    regime_results += 1
+            
+            print(f"({regime_results} results)")
+            
+            # Free memory - explicitly delete and trigger garbage collection
+            del merged
+            del labels_df
+            import gc
+            gc.collect()
+            
+    else:
+        # Original non-batch mode (loads all labels in memory)
+        print(f"   ⚠️ Running in non-batch mode (higher memory usage)...")
+        
+        for config_key, labels_df in labels.items():
+            # Parse config
+            parsed = parse_config_key(config_key)
+            if parsed is None:
+                print(f"   ⚠️ Could not parse config: {config_key}")
+                continue
+            
+            target_pips, stop_pips, horizon_min = parsed
+            
+            # Merge with regimes (align by index or timestamp)
+            if 'timestamp' in labels_df.columns and 'timestamp' in regimes_df.columns:
+                merged = labels_df.merge(regimes_df[['timestamp', 'regime']], on='timestamp', how='left')
+            else:
+                # Assume same index
+                merged = labels_df.copy()
+                merged['regime'] = regimes_df['regime'].values[:len(labels_df)]
+            
+            # Analyze each regime
+            for regime_id in unique_regimes:
+                regime_data = merged[merged['regime'] == regime_id]
                 
-                if total < min_trades:
+                if len(regime_data) < min_trades:
                     continue
                 
-                win_rate = wins / total if total > 0 else 0
-                
-                # Calculate profit factor
-                # Win gives target_pips, loss gives -stop_pips
-                gross_profit = wins * target_pips
-                gross_loss = losses * stop_pips
-                profit_factor = gross_profit / gross_loss if gross_loss > 0 else 0
-                
-                # Calculate p-value
-                p_value = calculate_p_value(wins, total, null_hypothesis=0.5)
-                
-                # Calculate expectancy (in R-multiples)
-                # R = risk = stop_pips
-                # Win = target_pips / stop_pips R, Loss = -1 R
-                r_multiple = target_pips / stop_pips
-                expectancy_r = (win_rate * r_multiple) - ((1 - win_rate) * 1)
-                
-                # Bootstrap confidence interval
-                outcome_binary = np.where(outcomes == 'target', 1, 0)
-                outcome_binary = outcome_binary[~pd.isna(outcomes)]
-                ci_lower, ci_mean, ci_upper = calculate_bootstrap_ci(outcome_binary)
-                
-                results.append({
-                    'regime': regime_id,
-                    'config': config_key,
-                    'direction': direction,
-                    'target_pips': target_pips,
-                    'stop_pips': stop_pips,
-                    'horizon_min': horizon_min,
-                    'risk_reward': r_multiple,
-                    'n_trades': total,
-                    'wins': wins,
-                    'losses': losses,
-                    'win_rate': win_rate,
-                    'profit_factor': profit_factor,
-                    'expectancy_r': expectancy_r,
-                    'p_value': p_value,
-                    'ci_lower': ci_lower,
-                    'ci_upper': ci_upper,
-                    'is_significant': p_value < config.get('max_p_value', 0.05),
-                })
+                # Calculate metrics for UP direction
+                for direction in ['up', 'down']:
+                    outcome_col = f'{direction}_outcome'
+                    
+                    if outcome_col not in regime_data.columns:
+                        continue
+                    
+                    # Count wins (target hit) and losses (stop hit)
+                    outcomes = regime_data[outcome_col]
+                    wins = (outcomes == 'target').sum()
+                    losses = (outcomes == 'stop').sum()
+                    total = wins + losses
+                    
+                    if total < min_trades:
+                        continue
+                    
+                    win_rate = wins / total if total > 0 else 0
+                    
+                    # Calculate profit factor
+                    # Win gives target_pips, loss gives -stop_pips
+                    gross_profit = wins * target_pips
+                    gross_loss = losses * stop_pips
+                    profit_factor = gross_profit / gross_loss if gross_loss > 0 else 0
+                    
+                    # Calculate p-value
+                    p_value = calculate_p_value(wins, total, null_hypothesis=0.5)
+                    
+                    # Calculate expectancy (in R-multiples)
+                    # R = risk = stop_pips
+                    # Win = target_pips / stop_pips R, Loss = -1 R
+                    r_multiple = target_pips / stop_pips
+                    expectancy_r = (win_rate * r_multiple) - ((1 - win_rate) * 1)
+                    
+                    # Bootstrap confidence interval
+                    outcome_binary = np.where(outcomes == 'target', 1, 0)
+                    outcome_binary = outcome_binary[~pd.isna(outcomes)]
+                    ci_lower, ci_mean, ci_upper = calculate_bootstrap_ci(outcome_binary)
+                    
+                    results.append({
+                        'regime': regime_id,
+                        'config': config_key,
+                        'direction': direction,
+                        'target_pips': target_pips,
+                        'stop_pips': stop_pips,
+                        'horizon_min': horizon_min,
+                        'risk_reward': r_multiple,
+                        'n_trades': total,
+                        'wins': wins,
+                        'losses': losses,
+                        'win_rate': win_rate,
+                        'profit_factor': profit_factor,
+                        'expectancy_r': expectancy_r,
+                        'p_value': p_value,
+                        'ci_lower': ci_lower,
+                        'ci_upper': ci_upper,
+                        'is_significant': p_value < config.get('max_p_value', 0.05),
+                    })
     
     results_df = pd.DataFrame(results)
     print(f"   ✅ Analyzed {len(results_df)} regime×config×direction combinations")

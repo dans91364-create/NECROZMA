@@ -697,6 +697,12 @@ def run_strategy_discovery(df, args):
         print(f"\n✅ Regime detection complete in {elapsed:.1f}s")
         print(f"   Regimes detected: {n_regimes}")
         
+        # Save regimes to file
+        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        regimes_path = OUTPUT_DIR / f"{FILE_PREFIX}regimes.parquet"
+        regimes_df.to_parquet(regimes_path, compression='snappy')
+        print(f"   💾 Regimes saved to: {regimes_path}")
+        
         lore.broadcast(EventType.REGIME_CHANGE, 
                       message=f"Detected {n_regimes} distinct market regimes")
         
