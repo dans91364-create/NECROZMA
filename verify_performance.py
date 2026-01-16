@@ -15,6 +15,10 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from labeler import label_dataframe
 
+# Performance thresholds
+EXCELLENT_THRESHOLD = 0.5  # seconds per config
+GOOD_THRESHOLD = 1.0       # seconds per config
+
 def create_sample_data(n_samples=1000):
     """Create sample data for testing"""
     timestamps = pd.date_range('2025-01-01', periods=n_samples, freq='1s')
@@ -75,12 +79,12 @@ def main():
     
     # Performance expectations
     time_per_config = elapsed / len(results)
-    if time_per_config < 0.5:  # Should be fast for small dataset
-        print("✅ Performance: EXCELLENT (< 0.5s per config)")
-    elif time_per_config < 1.0:
-        print("✅ Performance: GOOD (< 1s per config)")
+    if time_per_config < EXCELLENT_THRESHOLD:
+        print(f"✅ Performance: EXCELLENT (< {EXCELLENT_THRESHOLD}s per config)")
+    elif time_per_config < GOOD_THRESHOLD:
+        print(f"✅ Performance: GOOD (< {GOOD_THRESHOLD}s per config)")
     else:
-        print("⚠️  Performance: ACCEPTABLE (> 1s per config)")
+        print(f"⚠️  Performance: ACCEPTABLE (> {GOOD_THRESHOLD}s per config)")
     
     print()
     print("Notes:")
