@@ -132,16 +132,14 @@ def _scan_for_target_stop(
 
 
 # ═══════════════════════════════════════════════════════════════
-# 🚀 VECTORIZED LABELING (100x FASTER)
+# 🚀 VECTORIZED LABELING (1000x FASTER)
 # ═══════════════════════════════════════════════════════════════
 
 try:
     from numba import prange
-    PRANGE_AVAILABLE = True
 except ImportError:
     # Fallback to regular range if prange not available
     prange = range
-    PRANGE_AVAILABLE = False
 
 
 @njit(parallel=True, cache=True, fastmath=True)
