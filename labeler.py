@@ -402,6 +402,14 @@ def label_dataframe(
         horizons = TIME_HORIZONS
     # num_workers parameter is deprecated - kept for backward compatibility
     # Sequential processing with Numba is faster than parallel with data copying overhead
+    if num_workers is not None:
+        import warnings
+        warnings.warn(
+            "The 'num_workers' parameter is deprecated and will be ignored. "
+            "Sequential processing with Numba optimization is now used for better performance.",
+            DeprecationWarning,
+            stacklevel=2
+        )
     if use_cache is None:
         use_cache = CACHE_CONFIG.get("enabled", True) and CACHE_CONFIG.get("cache_labeling", True)
     

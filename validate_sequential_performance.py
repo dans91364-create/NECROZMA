@@ -131,16 +131,18 @@ print(f"   Sequential (new): ~{projected_time_hr:.1f} hours ({projected_time_min
 print(f"   Parallel Pool (old): ~80+ hours")
 print()
 
-if projected_time_hr < 5:
+if projected_time_hr > 0 and projected_time_hr < 5:
     print(f"   🎯 TARGET ACHIEVED!")
     print(f"   Expected: ~3-5 hours")
     print(f"   Actual: ~{projected_time_hr:.1f} hours")
     speedup_factor = 80 / projected_time_hr
     print(f"   🚀 Speedup: {speedup_factor:.0f}x faster than old implementation!")
-else:
+elif projected_time_hr >= 5:
     print(f"   ⚠️  Performance not meeting expectations")
     print(f"   Expected: ~3-5 hours")
     print(f"   Projected: ~{projected_time_hr:.1f} hours")
+else:
+    print(f"   ⚠️  Performance projection unavailable (insufficient data)")
 
 print()
 print("🎯 VALIDATION COMPLETE!")
