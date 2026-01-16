@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from analyzer import UltraNecrozmaAnalyzer
 from labeler import label_dataframe, clear_label_cache
-from config import CACHE_CONFIG, get_output_dirs
+from config import CACHE_CONFIG
 
 
 def create_test_data(n_samples=10000):

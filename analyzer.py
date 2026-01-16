@@ -820,7 +820,7 @@ class UltraNecrozmaAnalyzer:
                         print(f"   ⚠️ [{completed}/{len(configs_to_process)}] {universe_name}: No results")
                     
                 except Exception as e: 
-                    print(f"   ❌ [{completed}/{len(self.configs)}] {universe_name}: Error - {e}")
+                    print(f"   ❌ [{completed}/{len(configs_to_process)}] {universe_name}: Error - {e}")
                 
                 self.evolve()
                 
