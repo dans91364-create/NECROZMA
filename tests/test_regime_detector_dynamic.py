@@ -17,14 +17,15 @@ import pytest
 import numpy as np
 import pandas as pd
 from regime_detector import RegimeDetector
+from config import REGIME_CONFIG
 
 
 class TestDynamicMinClusterSize:
     """Test dynamic min_cluster_size calculation"""
     
-    # Constants from REGIME_CONFIG (duplicated here for test clarity)
-    MIN_ABSOLUTE = 10000
-    MIN_PCT = 0.01
+    # Use constants from REGIME_CONFIG to ensure tests match implementation
+    MIN_ABSOLUTE = REGIME_CONFIG.get("min_cluster_size_absolute", 10000)
+    MIN_PCT = REGIME_CONFIG.get("min_cluster_size_pct", 0.01)
     
     def test_small_dataset_uses_minimum(self):
         """Test that small datasets (< 1M rows) use at least 10,000"""
