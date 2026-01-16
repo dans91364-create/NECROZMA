@@ -21,6 +21,7 @@ import warnings
 import hashlib
 import pickle
 import json
+import gc
 from pathlib import Path
 from tqdm import tqdm
 
@@ -451,6 +452,72 @@ def _save_progress(progress_file: Path, completed: set):
         print(f"   ⚠️ Failed to save progress: {e}")
 
 
+def _get_labels_dir():
+    """Get or create labels directory for individual parquet files"""
+    labels_dir = Path("labels")
+    labels_dir.mkdir(exist_ok=True)
+    return labels_dir
+
+
+def load_label_results(config_key: str) -> pd.DataFrame:
+    """
+    Load a specific labeled dataset from disk
+    
+    Args:
+        config_key: Configuration key (e.g., "T5_S5_H1")
+        
+    Returns:
+        DataFrame with labeled results for that configuration
+        
+    Example:
+        >>> df = load_label_results("T5_S5_H1")
+        >>> print(f"Loaded {len(df):,} rows")
+    """
+    labels_dir = _get_labels_dir()
+    file_path = labels_dir / f"{config_key}.parquet"
+    
+    if not file_path.exists():
+        raise FileNotFoundError(f"Label file not found: {file_path}")
+    
+    return pd.read_parquet(file_path)
+
+
+def load_all_label_results() -> Dict[str, pd.DataFrame]:
+    """
+    Load all labeled datasets from disk
+    
+    ⚠️  WARNING: This loads ALL results into memory at once!
+    Only use this if you have enough RAM, or load specific configs with load_label_results()
+    
+    Returns:
+        Dictionary mapping config_key -> DataFrame
+        
+    Example:
+        >>> results = load_all_label_results()
+        >>> print(f"Loaded {len(results)} configurations")
+        >>> for config_key, df in results.items():
+        ...     print(f"  {config_key}: {len(df):,} rows")
+    """
+    labels_dir = _get_labels_dir()
+    results = {}
+    
+    parquet_files = list(labels_dir.glob("*.parquet"))
+    
+    if not parquet_files:
+        print("   ⚠️  No label files found in labels/ directory")
+        return results
+    
+    print(f"   📥 Loading {len(parquet_files)} label files from {labels_dir}/...")
+    
+    for file_path in parquet_files:
+        config_key = file_path.stem
+        results[config_key] = pd.read_parquet(file_path)
+    
+    print(f"   ✅ Loaded {len(results)} configurations into memory")
+    
+    return results
+
+
 # ═══════════════════════════════════════════════════════════════
 # 🎯 CORE LABELING FUNCTIONS
 # ═══════════════════════════════════════════════════════════════
@@ -603,10 +670,13 @@ def label_dataframe(
     num_workers: int = None,
     pip_value: float = 0.0001,
     progress_callback = None,
-    use_cache: bool = None
-) -> Dict[str, pd.DataFrame]:
+    use_cache: bool = None,
+    return_dict: bool = False
+) -> List[str]:
     """
     Label entire dataframe with multiple targets/stops/horizons
+    
+    MEMORY-EFFICIENT: Saves each config immediately to disk instead of accumulating in RAM!
     
     Args:
         df: DataFrame with at least 'mid_price' and 'timestamp' columns
@@ -617,9 +687,12 @@ def label_dataframe(
         pip_value: Value of 1 pip
         progress_callback: Optional callback(current, total, desc) for progress
         use_cache: Whether to use cache (default: from CACHE_CONFIG)
+        return_dict: If True, returns Dict[str, pd.DataFrame] (backward compatibility, memory-intensive!)
+                     If False (default), returns List[str] of saved file paths (memory-efficient)
         
     Returns:
-        Dictionary mapping config -> labeled DataFrame
+        List of saved file paths (if return_dict=False)
+        OR Dict mapping config -> DataFrame (if return_dict=True, backward compatibility mode)
     """
     # Use config defaults if not provided
     if target_pips is None:
@@ -641,19 +714,8 @@ def label_dataframe(
     if use_cache is None:
         use_cache = CACHE_CONFIG.get("enabled", True) and CACHE_CONFIG.get("cache_labeling", True)
     
-    # Generate data hash for cache
-    cache_dir = _get_cache_dir()
-    data_hash = _generate_data_hash(df)
-    cache_file = cache_dir / f"{FILE_PREFIX}labels_{data_hash}.pkl"
-    progress_file = cache_dir / f"{FILE_PREFIX}labels_progress_{data_hash}.json"
-    
-    # Try to load from cache
-    if use_cache and cache_file.exists():
-        print(f"   ✅ Loading labels from cache ({cache_file.name})...")
-        cached_data = _load_cache(cache_file)
-        if cached_data is not None:
-            print(f"   💾 Loaded {len(cached_data)} labeled datasets from cache!")
-            return cached_data
+    # Create labels directory for individual parquet files
+    labels_dir = _get_labels_dir()
     
     # Prepare data
     prices = df["mid_price"].values
@@ -674,25 +736,7 @@ def label_dataframe(
                 })
     
     total_configs = len(configs)
-    results_dict = {}
-    
-    # Load progress if exists (for resume)
-    completed = _load_progress(progress_file) if use_cache else set()
-    
-    if completed:
-        print(f"   📥 Resuming from checkpoint ({len(completed)}/{total_configs} already completed)...")
-    
-    print(f"🏷️  Labeling {len(df):,} candles with {total_configs} configurations...")
-    print(f"   Targets: {target_pips}")
-    print(f"   Stops: {stop_pips}")
-    print(f"   Horizons: {horizons}")
-    print(f"   Processing: Vectorized Numba (1000x faster - parallel execution)")
-    if use_cache:
-        print(f"   Cache: Enabled (checkpoint every {CACHE_CONFIG.get('checkpoint_interval', 10)} configs)")
-    print()
-    
-    # Checkpoint interval
-    checkpoint_interval = CACHE_CONFIG.get("checkpoint_interval", 10)
+    saved_files = []
     
     # Helper function to format config key consistently
     def format_config_key(target, stop, horizon):
@@ -701,18 +745,38 @@ def label_dataframe(
         horizon_str = str(int(horizon)) if horizon == int(horizon) else str(horizon)
         return f"T{target_str}_S{stop_str}_H{horizon_str}"
     
-    # Filter configs to process (skip already completed)
+    # Check which configs are already saved (resume support!)
+    existing_files = set()
+    for config in configs:
+        config_key = format_config_key(config['target'], config['stop'], config['horizon'])
+        cache_file = labels_dir / f"{config_key}.parquet"
+        if cache_file.exists():
+            existing_files.add(config_key)
+            saved_files.append(str(cache_file))
+    
+    if existing_files:
+        print(f"   ⏭️  Found {len(existing_files)}/{total_configs} already saved - resuming...")
+    
+    # Filter configs to process (skip already saved)
     configs_to_process = [
         (idx, config) for idx, config in enumerate(configs)
-        if format_config_key(config['target'], config['stop'], config['horizon']) not in completed
+        if format_config_key(config['target'], config['stop'], config['horizon']) not in existing_files
     ]
+    
+    print(f"🏷️  Labeling {len(df):,} candles with {total_configs} configurations...")
+    print(f"   Targets: {target_pips}")
+    print(f"   Stops: {stop_pips}")
+    print(f"   Horizons: {horizons}")
+    print(f"   Processing: Vectorized Numba (1000x faster - parallel execution)")
+    print(f"   Storage: Memory-efficient (save each config immediately to labels/)")
+    print()
     
     # Process each configuration with progress bar
     with tqdm(
         total=total_configs,
         desc="🏷️  Labeling Progress",
-        initial=len(completed),
-        unit="label",
+        initial=len(existing_files),
+        unit="config",
         ncols=100,
         bar_format="{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]"
     ) as pbar:
@@ -785,31 +849,33 @@ def label_dataframe(
                                            np.where(outcomes_down[:n_candles] == -1, -1.0, None)),
             })
             
-            results_dict[config_key] = results_df
+            # 💾 SAVE IMMEDIATELY to disk (memory-efficient!)
+            cache_file = labels_dir / f"{config_key}.parquet"
+            results_df.to_parquet(cache_file, index=False)
+            saved_files.append(str(cache_file))
+            pbar.write(f"  💾 Saved {config_key} ({len(results_df):,} rows) to {cache_file.name}")
             
-            # Mark as completed
-            completed.add(config_key)
+            # 🗑️ CLEAR MEMORY immediately after saving!
+            del results_df
+            del outcomes_up, outcomes_down
+            del mfe_up, mfe_down, mae_up, mae_down
+            del time_target_up, time_target_down, time_stop_up, time_stop_down
+            gc.collect()
             
             # Update main progress bar
             pbar.update(1)
-            
-            # Save progress checkpoint
-            if use_cache and len(completed) % checkpoint_interval == 0:
-                _save_progress(progress_file, completed)
-                pbar.write(f"   💾 Checkpoint saved ({len(completed)}/{total_configs} completed)")
     
-    # Save final cache
-    if use_cache:
-        print(f"\n   💾 Saving complete cache...")
-        _save_cache(cache_file, results_dict)
-        # Clean up progress file
-        if progress_file.exists():
-            progress_file.unlink()
-        print(f"   ✅ Cache saved to {cache_file.name}")
+    print(f"\n✅ All {total_configs} configs saved to {labels_dir}/")
+    print(f"   📊 Total files: {len(saved_files)}")
+    print(f"   💾 Use load_label_results(config_key) to load specific configs")
+    print(f"   ⚠️  Use load_all_label_results() to load all (memory-intensive!)")
     
-    print(f"\n✅ Labeling complete! Generated {len(results_dict)} labeled datasets.")
-    
-    return results_dict
+    # Return based on mode
+    if return_dict:
+        print(f"\n   ⚠️  return_dict=True: Loading all results into memory (backward compatibility mode)")
+        return load_all_label_results()
+    else:
+        return saved_files
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -945,7 +1011,8 @@ if __name__ == "__main__":
         target_pips=[10, 20],
         stop_pips=[10, 15],
         horizons=[60, 240],
-        num_workers=4
+        num_workers=4,
+        return_dict=True  # For backward compatibility in tests
     )
     
     print(f"\n📊 Results:")

@@ -195,7 +195,8 @@ class TestVectorizedLabeling:
             target_pips=[10],
             stop_pips=[5],
             horizons=[60],
-            use_cache=False
+            use_cache=False,
+            return_dict=True  # For backward compatibility in tests
         )
         
         # Verify results exist
@@ -227,7 +228,8 @@ class TestVectorizedLabeling:
             target_pips=[5, 10],
             stop_pips=[5],
             horizons=[30, 60],
-            use_cache=False
+            use_cache=False,
+            return_dict=True  # For backward compatibility in tests
         )
         
         # Should have 2 * 1 * 2 = 4 configurations
@@ -247,7 +249,8 @@ class TestVectorizedLabeling:
             target_pips=[10],
             stop_pips=[5],
             horizons=[60],
-            use_cache=False
+            use_cache=False,
+            return_dict=True  # For backward compatibility in tests
         )
         
         result_df = results['T10_S5_H60']
@@ -274,7 +277,8 @@ class TestVectorizedLabeling:
             target_pips=[target_pip],
             stop_pips=[stop_pip],
             horizons=[60],
-            use_cache=False
+            use_cache=False,
+            return_dict=True  # For backward compatibility in tests
         )
         
         result_df = results['T20_S10_H60']

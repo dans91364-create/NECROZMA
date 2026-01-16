@@ -48,6 +48,9 @@ htmlcov/
 *.csv
 data/
 
+# Labels directory (individual label parquet files)
+labels/
+
 # Output
 ultra_necrozma_results/
 *.png
