@@ -24,6 +24,7 @@ import hashlib
 import pickle
 import json
 from pathlib import Path
+from tqdm import tqdm
 
 warnings.filterwarnings("ignore")
 
@@ -425,61 +426,82 @@ def label_dataframe(
     # Checkpoint interval
     checkpoint_interval = CACHE_CONFIG.get("checkpoint_interval", 10)
     
-    # Process each configuration
-    for config_idx, config in enumerate(configs):
-        target = config["target"]
-        stop = config["stop"]
-        horizon = config["horizon"]
-        
-        config_key = f"T{target}_S{stop}_H{horizon}"
-        
-        # Skip if already completed
-        if config_key in completed:
-            continue
-        
-        if progress_callback:
-            progress_callback(config_idx, total_configs, f"Labeling {config_key}")
-        else:
-            remaining = total_configs - len(completed)
-            print(f"   [{len(completed)+1}/{total_configs}] Processing {config_key} ({remaining-1} remaining)...")
-        
-        # Split indices into chunks for parallel processing
-        indices = list(range(len(df) - 1))
-        chunk_size = max(1, len(indices) // (num_workers * 4))
-        chunks = [indices[i:i+chunk_size] for i in range(0, len(indices), chunk_size)]
-        
-        # Create partial function with fixed parameters
-        label_func = partial(
-            label_chunk,
-            prices=prices,
-            timestamps=timestamps,
-            target_pip=target,
-            stop_pip=stop,
-            horizon_minutes=horizon,
-            pip_value=pip_value
-        )
-        
-        # Process in parallel
-        with Pool(num_workers) as pool:
-            chunk_results = pool.map(label_func, chunks)
-        
-        # Flatten results
-        all_results = []
-        for chunk_result in chunk_results:
-            all_results.extend(chunk_result)
-        
-        # Convert to DataFrame
-        if all_results:
-            results_df = pd.DataFrame(all_results)
-            results_dict[config_key] = results_df
-        
-        # Mark as completed
-        completed.add(config_key)
-        
-        # Save progress checkpoint
-        if use_cache and len(completed) % checkpoint_interval == 0:
-            _save_progress(progress_file, completed)
-            print(f"   💾 Checkpoint saved ({len(completed)}/{total_configs} completed)")
+    # Filter configs to process (skip already completed)
+    configs_to_process = [
+        (idx, config) for idx, config in enumerate(configs)
+        if f"T{config['target']}_S{config['stop']}_H{config['horizon']}" not in completed
+    ]
+    
+    # Process each configuration with progress bar
+    with tqdm(
+        total=total_configs,
+        desc="🏷️  Labeling Progress",
+        initial=len(completed),
+        unit="label",
+        ncols=100,
+        bar_format="{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]"
+    ) as pbar:
+        for config_idx, config in configs_to_process:
+            target = config["target"]
+            stop = config["stop"]
+            horizon = config["horizon"]
+            
+            config_key = f"T{target}_S{stop}_H{horizon}"
+            
+            # Update progress bar description with current label
+            pbar.set_description(f"🏷️  Label: {config_key}")
+            
+            if progress_callback:
+                progress_callback(config_idx, total_configs, f"Labeling {config_key}")
+            
+            # Split indices into chunks for parallel processing
+            indices = list(range(len(df) - 1))
+            chunk_size = max(1, len(indices) // (num_workers * 4))
+            chunks = [indices[i:i+chunk_size] for i in range(0, len(indices), chunk_size)]
+            
+            # Create partial function with fixed parameters
+            label_func = partial(
+                label_chunk,
+                prices=prices,
+                timestamps=timestamps,
+                target_pip=target,
+                stop_pip=stop,
+                horizon_minutes=horizon,
+                pip_value=pip_value
+            )
+            
+            # Process in parallel with inner progress bar
+            with Pool(num_workers) as pool:
+                chunk_results = list(tqdm(
+                    pool.imap(label_func, chunks),
+                    total=len(chunks),
+                    desc=f"  └─ Processing chunks",
+                    leave=False,
+                    unit="chunk",
+                    ncols=100,
+                    bar_format="  {desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt}"
+                ))
+            
+            # Flatten results
+            all_results = []
+            for chunk_result in chunk_results:
+                all_results.extend(chunk_result)
+            
+            # Convert to DataFrame
+            if all_results:
+                results_df = pd.DataFrame(all_results)
+                results_dict[config_key] = results_df
+            
+            # Mark as completed
+            completed.add(config_key)
+            
+            # Update main progress bar
+            pbar.update(1)
+            
+            # Save progress checkpoint
+            if use_cache and len(completed) % checkpoint_interval == 0:
+                _save_progress(progress_file, completed)
+                pbar.write(f"   💾 Checkpoint saved ({len(completed)}/{total_configs} completed)")
     
     # Save final cache
     if use_cache:
