@@ -9,7 +9,8 @@ Tests for file prefix functionality to support multiple currency pairs
 import sys
 from pathlib import Path
 
-# Add parent directory to path
+# Add parent directory to path for testing
+# This is a common pattern for pytest tests outside the package
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 

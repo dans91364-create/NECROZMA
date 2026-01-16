@@ -9,7 +9,8 @@ Demonstrates file naming with prefix for multiple currency pairs
 import sys
 from pathlib import Path
 
-# Add parent directory to path
+# Add parent directory to path for standalone script execution
+# This allows running the validation script directly
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config import FILE_PREFIX, PAIR_NAME, DATA_YEAR, PARQUET_FILE

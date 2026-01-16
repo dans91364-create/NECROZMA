@@ -13,6 +13,7 @@ Enhanced with YAML support for PR #2
 from pathlib import Path
 import yaml
 import os
+from datetime import datetime
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -86,7 +87,7 @@ def get_pair_info():
     
     # Extract pair (first part) and year (second part if exists)
     pair = parts[0] if parts else "UNKNOWN"
-    year = parts[1] if len(parts) > 1 else "2025"
+    year = parts[1] if len(parts) > 1 else str(datetime.now().year)
     
     return pair, year
 
