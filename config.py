@@ -13,6 +13,7 @@ Enhanced with YAML support for PR #2
 from pathlib import Path
 import yaml
 import os
+from datetime import datetime
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -61,6 +62,43 @@ CSV_FILE = Path(_paths.get("csv_file", "/home/usuario/EURUSD_2025_COMPLETO.csv")
 
 # Parquet:  Crystallized data / Dados cristalizados
 PARQUET_FILE = Path(_paths.get("parquet_file", "data/EURUSD_2025.parquet"))
+
+
+# ═══════════════════════════════════════════════════════════════
+# 🎯 PAIR PREFIX CONFIGURATION (File Identification)
+# ═══════════════════════════════════════════════════════════════
+
+def get_pair_info():
+    """
+    Extract pair name and year from PARQUET_FILE path
+    
+    Technical: Automatically derives pair and year from the parquet filename
+    to prefix all output files and prevent overwriting when running multiple pairs.
+    
+    Returns:
+        tuple: (pair_name, data_year)
+        
+    Example:
+        PARQUET_FILE = "data/EURUSD_2025.parquet"
+        Returns: ("EURUSD", "2025")
+    """
+    filename = PARQUET_FILE.stem  # e.g., "EURUSD_2025"
+    parts = filename.split("_")
+    
+    # Extract pair (first part) and year (second part if exists)
+    pair = parts[0] if parts else "UNKNOWN"
+    year = parts[1] if len(parts) > 1 else str(datetime.now().year)
+    
+    return pair, year
+
+
+# Extract pair name and year from PARQUET_FILE
+PAIR_NAME, DATA_YEAR = get_pair_info()
+
+# File prefix for all outputs: "EURUSD_2025_"
+# This prevents overwriting when running multiple pairs
+FILE_PREFIX = f"{PAIR_NAME}_{DATA_YEAR}_"
+
 
 # Output: Analysis results / Resultados das análises
 OUTPUT_DIR = Path(_paths.get("output_dir", "ultra_necrozma_results"))

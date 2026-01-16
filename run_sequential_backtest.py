@@ -36,7 +36,7 @@ from strategy_factory import StrategyFactory
 from light_finder import LightFinder
 from light_report import LightReportGenerator
 from lore import LoreSystem, EventType
-from config import RANDOM_SEED, PARQUET_FILE, STORAGE_CONFIG, WORKER_CONFIG
+from config import RANDOM_SEED, PARQUET_FILE, STORAGE_CONFIG, WORKER_CONFIG, FILE_PREFIX
 from ohlc_generator import generate_ohlc_bars, validate_ohlc_data
 from feature_extractor import (
     extract_features_from_universe,
@@ -642,7 +642,7 @@ def save_universe_backtest_results(universe_data: Dict, results: List[BacktestRe
     if storage_format == "parquet":
         # Save as Parquet
         results_df = pd.DataFrame([r.to_dict() for r in results])
-        parquet_file = output_dir / f"{universe_name}_backtest.parquet"
+        parquet_file = output_dir / f"{FILE_PREFIX}{universe_name}_backtest.parquet"
         compression = STORAGE_CONFIG.get("compression", "snappy")
         results_df.to_parquet(parquet_file, compression=compression, index=False)
         
@@ -654,14 +654,14 @@ def save_universe_backtest_results(universe_data: Dict, results: List[BacktestRe
                 "backtest_timestamp": output["backtest_timestamp"],
                 "statistics": stats
             }
-            metadata_file = output_dir / f"{universe_name}_backtest_metadata.json"
+            metadata_file = output_dir / f"{FILE_PREFIX}{universe_name}_backtest_metadata.json"
             with open(metadata_file, 'w') as f:
                 json.dump(metadata, f, indent=2)
         
         output_file = parquet_file
     else:
         # Save as JSON (legacy)
-        output_file = output_dir / f"{universe_name}_backtest.json"
+        output_file = output_dir / f"{FILE_PREFIX}{universe_name}_backtest.json"
         with open(output_file, 'w') as f:
             json.dump(output, f, indent=2)
     
@@ -693,7 +693,7 @@ def save_consolidated_results(all_universe_results: List[Dict], output_dir: Path
         "universes": all_universe_results,
     }
     
-    output_file = output_dir / "consolidated_backtest_results.json"
+    output_file = output_dir / f"{FILE_PREFIX}consolidated_backtest_results.json"
     with open(output_file, 'w') as f:
         json.dump(consolidated, f, indent=2)
     
@@ -927,7 +927,7 @@ def main():
         ranked_strategies = finder.rank_strategies(all_backtest_results_list, top_n=20)
         
         # Save ranked strategies
-        ranked_file = output_dir / "top_strategies_ranked.json"
+        ranked_file = output_dir / f"{FILE_PREFIX}top_strategies_ranked.json"
         ranked_data = {
             "timestamp": datetime.now().isoformat(),
             "total_strategies": len(all_backtest_results_list),

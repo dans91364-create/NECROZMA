@@ -27,7 +27,8 @@ from pathlib import Path
 
 warnings.filterwarnings("ignore")
 
-from config import TARGET_PIPS, STOP_PIPS, TIME_HORIZONS, NUM_WORKERS, LABELING_METRICS, CACHE_CONFIG
+from config import TARGET_PIPS, STOP_PIPS, TIME_HORIZONS, NUM_WORKERS, LABELING_METRICS, CACHE_CONFIG, FILE_PREFIX
+
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -61,15 +62,19 @@ def clear_label_cache():
     """
     Clear all labeling cache files
     Utility function for fresh starts
+    
+    Note: Glob patterns work for both prefixed and non-prefixed files:
+    - 'labels_*.pkl' matches both 'labels_abc.pkl' and 'EURUSD_2025_labels_abc.pkl'
+    - This ensures backward compatibility
     """
     cache_dir = _get_cache_dir()
     
-    # Remove all cache files
-    for cache_file in cache_dir.glob("labels_*.pkl"):
+    # Remove all cache files (glob matches both prefixed and non-prefixed)
+    for cache_file in cache_dir.glob("*labels_*.pkl"):
         cache_file.unlink()
         print(f"   🗑️  Removed {cache_file.name}")
     
-    for progress_file in cache_dir.glob("labels_progress_*.json"):
+    for progress_file in cache_dir.glob("*labels_progress_*.json"):
         progress_file.unlink()
         print(f"   🗑️  Removed {progress_file.name}")
     
@@ -373,8 +378,8 @@ def label_dataframe(
     # Generate data hash for cache
     cache_dir = _get_cache_dir()
     data_hash = _generate_data_hash(df)
-    cache_file = cache_dir / f"labels_{data_hash}.pkl"
-    progress_file = cache_dir / f"labels_progress_{data_hash}.json"
+    cache_file = cache_dir / f"{FILE_PREFIX}labels_{data_hash}.pkl"
+    progress_file = cache_dir / f"{FILE_PREFIX}labels_progress_{data_hash}.json"
     
     # Try to load from cache
     if use_cache and cache_file.exists():
