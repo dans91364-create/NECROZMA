@@ -38,8 +38,10 @@ from config import TARGET_PIPS, STOP_PIPS, TIME_HORIZONS, NUM_WORKERS, LABELING_
 try:
     from numba import njit
     NUMBA_AVAILABLE = True
+    print("⚡ Numba JIT: ENABLED (Light Speed Mode - 50-100x faster labeling)")
 except ImportError:
     NUMBA_AVAILABLE = False
+    print("⚠️  Numba not available - using pure Python (install numba for 50-100x speedup)")
     # Dummy decorator if Numba not available
     def njit(*args, **kwargs):
         def decorator(func):
