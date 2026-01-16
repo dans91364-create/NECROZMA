@@ -28,6 +28,7 @@ Sistema completo de descoberta automática de estratégias de trading Forex com 
 ### 🚀 Strategy Discovery Pipeline (NOVO)
 - **Multi-Dimensional Labeling**: Rotula outcomes com múltiplos targets, stops e horizontes temporais
 - **Regime Detection**: Detecta automaticamente regimes de mercado usando clustering (K-Means, HDBSCAN)
+- **Edge Analyzer**: Cruza Regime × Label para identificar configurações que funcionam em regimes específicos (Phase 4)
 - **Pattern Mining**: Descobre padrões com ML (XGBoost, LightGBM, SHAP values)
 - **Strategy Factory**: Gera automaticamente centenas de estratégias candidatas
 - **Backtesting**: Motor robusto com walk-forward validation, métricas completas (Sharpe, Sortino, Calmar, etc.)
@@ -91,6 +92,7 @@ NECROZMA/
 ├── telegram_notifier.py     # 📱 Notificações Telegram
 ├── labeler.py               # 🏷️  Multi-dimensional labeling
 ├── regime_detector.py       # 🔮 Detecção de regimes
+├── edge_analyzer.py         # 🎯 Regime × Label crossover (Phase 4)
 ├── pattern_miner.py         # ⛏️  Pattern mining com ML
 ├── strategy_factory.py      # 🏭 Geração de estratégias
 ├── backtester.py            # 📊 Motor de backtesting
@@ -210,12 +212,13 @@ Este comando executa o **pipeline completo**:
 1. ✅ Feature extraction (500+ features)
 2. 🏷️  Multi-dimensional labeling
 3. 🔮 Regime detection
-4. ⛏️  Pattern mining & feature importance
-5. 🏭 Strategy generation (50+ strategies)
-6. 📊 Backtesting com walk-forward validation
-7. 🌟 Strategy ranking
-8. 📝 Relatório "Where The Light Is"
-9. 📱 Notificações Telegram (opcional)
+4. 🎯 Edge analysis (Regime × Label crossover)
+5. ⛏️  Pattern mining & feature importance
+6. 🏭 Strategy generation (50+ strategies)
+7. 📊 Backtesting com walk-forward validation
+8. 🌟 Strategy ranking
+9. 📝 Relatório "Where The Light Is"
+10. 📱 Notificações Telegram (opcional)
 
 ### 🎨 DASHBOARD VISUALIZATION (NOVO)
 
@@ -239,6 +242,32 @@ The dashboard provides:
 - 📱 Responsive design for all devices
 
 Dashboard is saved to: `ultra_necrozma_results/dashboard_YYYYMMDD_HHMMSS.html`
+
+### 🎯 EDGE ANALYZER (NOVO)
+
+Find which label configs work best in which market regimes:
+
+```bash
+# Run edge analyzer (after labeling and regime detection)
+python edge_analyzer.py
+
+# Custom thresholds
+python edge_analyzer.py --min-trades 500 --min-win-rate 0.55 --max-p-value 0.01
+
+# Specify data locations
+python edge_analyzer.py --labels-dir labels --regimes regimes.parquet
+```
+
+The Edge Analyzer:
+- 📊 Crosses Regime × Label to find statistical edges
+- 🔬 Calculates p-values using binomial test
+- 📈 Bootstrap confidence intervals (95%)
+- 🎯 Out-of-sample validation (80/20 split)
+- 💾 Saves results to CSV and JSON
+
+Output:
+- `ultra_necrozma_results/edge_analysis/edge_candidates_*.csv`
+- `ultra_necrozma_results/edge_analysis/edge_report_*.json`
 
 ### 💎 CHUNKED PROCESSING (NOVO)
 
