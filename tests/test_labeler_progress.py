@@ -74,7 +74,8 @@ class TestProgressIndicators:
             stop_pips=stop_pips,
             horizons=horizons,
             num_workers=2,  # Use minimal workers for testing
-            use_cache=False
+            use_cache=False,
+            return_dict=True  # For backward compatibility in tests
         )
         
         # Verify results are returned
@@ -113,7 +114,8 @@ class TestProgressIndicators:
             stop_pips=stop_pips,
             horizons=horizons,
             num_workers=1,
-            use_cache=False
+            use_cache=False,
+            return_dict=True  # For backward compatibility in tests
         )
         
         # Verify labeling completed
@@ -141,7 +143,8 @@ class TestProgressIndicators:
             stop_pips=stop_pips,
             horizons=horizons,
             num_workers=2,
-            use_cache=True
+            use_cache=True,
+            return_dict=True  # For backward compatibility in tests
         )
         
         # Verify results
@@ -154,7 +157,8 @@ class TestProgressIndicators:
             stop_pips=stop_pips,
             horizons=horizons,
             num_workers=2,
-            use_cache=True
+            use_cache=True,
+            return_dict=True  # For backward compatibility in tests
         )
         
         # Should load from cache
