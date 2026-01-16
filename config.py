@@ -660,3 +660,18 @@ MIGRATION_CONFIG = {
     "delete_json_after_migration": False,  # Delete JSON files after successful migration
     "backup_before_delete": True,   # Create backup before deleting JSON files
 }
+
+
+# ═══════════════════════════════════════════════════════════════
+# 💾 CACHE CONFIGURATION (Performance Optimization)
+# ═══════════════════════════════════════════════════════════════
+
+# Cache and resume configuration
+CACHE_CONFIG = {
+    "enabled": True,                    # Master switch for caching
+    "skip_existing_universes": True,    # Skip universes that already exist
+    "cache_labeling": True,             # Cache labeling results
+    "cache_regimes": True,              # Cache regime detection (future)
+    "checkpoint_interval": 10,          # Save progress every N items
+    "cache_dir": OUTPUT_DIR / "cache",  # Cache directory path
+}

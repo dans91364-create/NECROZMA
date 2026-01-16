@@ -490,6 +490,70 @@ class UltraNecrozmaAnalyzer:
             self.prismatic_cores.append(color)
             print(f"   💎 Prismatic Core collected: {color} ({len(self.prismatic_cores)}/7)")
     
+    def _universe_exists(self, universe_name):
+        """
+        Check if a universe already exists (Cache Detection)
+        Technical: Check for parquet or json file existence
+        
+        Args:
+            universe_name: Name of the universe to check
+            
+        Returns:
+            bool: True if universe exists
+        """
+        from config import CACHE_CONFIG
+        
+        # Don't skip if cache is disabled
+        if not CACHE_CONFIG.get("enabled", True):
+            return False
+        if not CACHE_CONFIG.get("skip_existing_universes", True):
+            return False
+        
+        parquet_path = self.output_dirs["universes"] / f"{universe_name}.parquet"
+        json_path = self.output_dirs["universes"] / f"{universe_name}.json"
+        
+        return parquet_path.exists() or json_path.exists()
+    
+    def _load_universe_metadata(self, universe_name):
+        """
+        Load metadata from existing universe (Cache Retrieval)
+        Technical: Load universe metadata for progress tracking
+        
+        Args:
+            universe_name: Name of the universe
+            
+        Returns:
+            dict: Universe metadata or None
+        """
+        metadata_path = self.output_dirs["universes"] / f"{universe_name}_metadata.json"
+        
+        if metadata_path.exists():
+            try:
+                with open(metadata_path, 'r') as f:
+                    return json.load(f)
+            except Exception as e:
+                print(f"   ⚠️ Failed to load metadata for {universe_name}: {e}")
+                return None
+        
+        # Try to extract from json file if no metadata sidecar
+        json_path = self.output_dirs["universes"] / f"{universe_name}.json"
+        if json_path.exists():
+            try:
+                with open(json_path, 'r') as f:
+                    data = json.load(f)
+                    return {
+                        "name": data.get("name", universe_name),
+                        "total_patterns": data.get("total_patterns", 0),
+                        "processing_time": data.get("processing_time", 0),
+                        "config": data.get("config", {}),
+                        "metadata": data.get("metadata", {})
+                    }
+            except Exception as e:
+                print(f"   ⚠️ Failed to load JSON for {universe_name}: {e}")
+                return None
+        
+        return None
+    
     def run_analysis(self, parallel=False):
         """
         Run the complete analysis (Light That Burns The Sky)
@@ -583,13 +647,43 @@ class UltraNecrozmaAnalyzer:
             print("⚠️  psutil not available - CPU/RAM monitoring disabled")
         
         for i, config in enumerate(self.configs, 1):
-            print(f"\n🌌 [{i}/{len(self.configs)}] Creating {config['name']}...", flush=True)
+            universe_name = config['name']
+            print(f"\n🌌 [{i}/{len(self.configs)}] Processing {universe_name}...", flush=True)
             
+            # Check if universe already exists
+            if self._universe_exists(universe_name):
+                print(f"   ✅ {universe_name} already exists, loading from cache...", flush=True)
+                
+                # Load metadata for tracking
+                metadata = self._load_universe_metadata(universe_name)
+                if metadata:
+                    # Track the cached universe
+                    self.universes_processed += 1
+                    total_patterns = metadata.get("total_patterns", 0)
+                    self.total_patterns += total_patterns
+                    
+                    print(f"   💾 Loaded from cache: {total_patterns:,} patterns "
+                          f"(saved {metadata.get('processing_time', 0):.1f}s)", flush=True)
+                    
+                    # Store minimal result reference for later use
+                    self.results[universe_name] = {
+                        "cached": True,
+                        "name": universe_name,
+                        "total_patterns": total_patterns,
+                        "config": metadata.get("config", {}),
+                        "metadata": metadata.get("metadata", {})
+                    }
+                else:
+                    print(f"   ⚠️ Cache exists but metadata unavailable, continuing...", flush=True)
+                
+                continue
+            
+            # Universe doesn't exist, process it
             result = process_universe(
                 self.df,
                 config["interval"],
                 config["lookback"],
-                config["name"]
+                universe_name
             )
             
             if result:
@@ -651,10 +745,50 @@ class UltraNecrozmaAnalyzer:
         print(f"⚡ Running parallel analysis ({len(self.configs)} universes, {NUM_WORKERS} workers)...")
         print("─" * 60)
         
-        # Prepare arguments
+        # First, check for existing universes
+        configs_to_process = []
+        skipped_count = 0
+        
+        for config in self.configs:
+            universe_name = config["name"]
+            
+            if self._universe_exists(universe_name):
+                print(f"   ✅ {universe_name} already exists, loading from cache...")
+                
+                # Load metadata for tracking
+                metadata = self._load_universe_metadata(universe_name)
+                if metadata:
+                    self.universes_processed += 1
+                    total_patterns = metadata.get("total_patterns", 0)
+                    self.total_patterns += total_patterns
+                    
+                    print(f"   💾 Loaded from cache: {total_patterns:,} patterns "
+                          f"(saved {metadata.get('processing_time', 0):.1f}s)")
+                    
+                    # Store minimal result reference
+                    self.results[universe_name] = {
+                        "cached": True,
+                        "name": universe_name,
+                        "total_patterns": total_patterns,
+                        "config": metadata.get("config", {}),
+                        "metadata": metadata.get("metadata", {})
+                    }
+                    skipped_count += 1
+            else:
+                configs_to_process.append(config)
+        
+        if skipped_count > 0:
+            print(f"\n   💾 Skipped {skipped_count} existing universes from cache")
+            print(f"   🔄 Processing {len(configs_to_process)} new universes\n")
+        
+        if not configs_to_process:
+            print("\n   ✅ All universes already exist in cache!")
+            return
+        
+        # Prepare arguments for universes that need processing
         args_list = [
             (self.df, config["interval"], config["lookback"], config["name"])
-            for config in self.configs
+            for config in configs_to_process
         ]
         
         completed = 0
@@ -680,10 +814,10 @@ class UltraNecrozmaAnalyzer:
                         self.universes_processed += 1
                         self.total_patterns += result["total_patterns"]
                         
-                        print(f"   ✅ [{completed}/{len(self.configs)}] {universe_name}:  "
+                        print(f"   ✅ [{completed}/{len(configs_to_process)}] {universe_name}:  "
                               f"{result['total_patterns']} patterns ({result['processing_time']:.1f}s)")
                     else:
-                        print(f"   ⚠️ [{completed}/{len(self.configs)}] {universe_name}: No results")
+                        print(f"   ⚠️ [{completed}/{len(configs_to_process)}] {universe_name}: No results")
                     
                 except Exception as e: 
                     print(f"   ❌ [{completed}/{len(self.configs)}] {universe_name}: Error - {e}")
