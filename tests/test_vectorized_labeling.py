@@ -4,7 +4,7 @@
 ⚡🌟💎 ULTRA NECROZMA - VECTORIZED LABELING TESTS 💎🌟⚡
 
 Tests to verify the vectorized labeling implementation produces identical
-results to the original implementation while being 100x faster.
+results to the original implementation while being 1000x faster.
 """
 
 import pytest

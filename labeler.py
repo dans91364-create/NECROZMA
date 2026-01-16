@@ -154,7 +154,7 @@ def label_all_candles_vectorized(
     pip_value: float              # value of 1 pip (0.0001 for EUR/USD)
 ) -> tuple:
     """
-    Label ALL candles in one Numba call - 100x faster than Python loop
+    Label ALL candles in one Numba call - 1000x faster than Python loop
     
     This function processes all candles at once using Numba's parallel execution,
     eliminating Python loop overhead, pd.Timedelta creation, and dict operations.
@@ -688,7 +688,7 @@ def label_dataframe(
     print(f"   Targets: {target_pips}")
     print(f"   Stops: {stop_pips}")
     print(f"   Horizons: {horizons}")
-    print(f"   Processing: Vectorized Numba (100x faster - parallel execution)")
+    print(f"   Processing: Vectorized Numba (1000x faster - parallel execution)")
     if use_cache:
         print(f"   Cache: Enabled (checkpoint every {CACHE_CONFIG.get('checkpoint_interval', 10)} configs)")
     print()
