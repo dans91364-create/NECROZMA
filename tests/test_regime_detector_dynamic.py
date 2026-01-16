@@ -14,6 +14,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pytest
+from pytest import skip
 import numpy as np
 import pandas as pd
 from regime_detector import RegimeDetector
@@ -121,7 +122,7 @@ if __name__ == "__main__":
     try:
         test.test_hdbscan_integration()
         print("✅ HDBSCAN integration test passed")
-    except pytest.skip.Exception:
+    except skip.Exception:
         print("⚠️  HDBSCAN integration test skipped (HDBSCAN not installed)")
     
     print("\n✨ All tests passed!")
