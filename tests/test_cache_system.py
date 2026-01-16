@@ -250,20 +250,27 @@ class TestUniverseCache:
         # Create analyzer
         analyzer = UltraNecrozmaAnalyzer(df)
         
+        # Ensure universe file doesn't exist from previous runs
+        universe_dir = analyzer.output_dirs["universes"]
+        universe_file = universe_dir / "universe_test_cache.parquet"
+        universe_json = universe_dir / "universe_test_cache.json"
+        
+        # Clean up any existing files
+        if universe_file.exists():
+            universe_file.unlink()
+        if universe_json.exists():
+            universe_json.unlink()
+        
         # Check non-existent universe
-        exists = analyzer._universe_exists("universe_1m_5lb")
+        exists = analyzer._universe_exists("universe_test_cache")
         assert exists == False, "Non-existent universe should return False"
         
         # Create universe file
-        universe_dir = analyzer.output_dirs["universes"]
-        universe_file = universe_dir / "universe_1m_5lb.parquet"
-        
-        # Create empty parquet file (mock)
         test_df = pd.DataFrame({'a': [1, 2, 3]})
         test_df.to_parquet(universe_file)
         
         # Check again
-        exists = analyzer._universe_exists("universe_1m_5lb")
+        exists = analyzer._universe_exists("universe_test_cache")
         assert exists == True, "Existing universe should return True"
         
         # Clean up
