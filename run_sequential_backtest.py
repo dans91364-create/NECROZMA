@@ -927,7 +927,7 @@ def main():
         ranked_strategies = finder.rank_strategies(all_backtest_results_list, top_n=20)
         
         # Save ranked strategies
-        ranked_file = output_dir / "top_strategies_ranked.json"
+        ranked_file = output_dir / f"{FILE_PREFIX}top_strategies_ranked.json"
         ranked_data = {
             "timestamp": datetime.now().isoformat(),
             "total_strategies": len(all_backtest_results_list),

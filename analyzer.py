@@ -854,7 +854,7 @@ class UltraNecrozmaAnalyzer:
     
     def _save_checkpoint(self, step):
         """Save checkpoint (Dimensional Anchor)"""
-        checkpoint_file = self.output_dirs["checkpoints"] / f"checkpoint_{step}.json"
+        checkpoint_file = self.output_dirs["checkpoints"] / f"{FILE_PREFIX}checkpoint_{step}.json"
         
         checkpoint_data = {
             "step": step,
