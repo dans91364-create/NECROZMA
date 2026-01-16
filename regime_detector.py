@@ -223,8 +223,16 @@ class RegimeDetector:
         # Scale features
         X_scaled = self.scaler.fit_transform(X)
         
-        # Fit HDBSCAN
-        min_cluster_size = self.config.get("min_cluster_size", 100)
+        # Fit HDBSCAN with dynamic min_cluster_size
+        config_min_size = self.config.get("min_cluster_size", 100)
+        min_absolute = self.config.get("min_cluster_size_absolute", 10000)
+        min_pct = self.config.get("min_cluster_size_pct", 0.01)
+        
+        # Dynamic: at least min_pct of data or min_absolute points, whichever is larger
+        min_cluster_size = max(min_absolute, int(len(df) * min_pct), config_min_size)
+        print(f"   Using min_cluster_size={min_cluster_size:,} ({min_pct*100:.0f}% of {len(df):,} rows)")
+        
+        print(f"   🔄 Processing HDBSCAN clustering on {len(df):,} samples...")
         clusterer = hdbscan.HDBSCAN(
             min_cluster_size=min_cluster_size,
             min_samples=10,
@@ -232,6 +240,7 @@ class RegimeDetector:
         )
         
         labels = clusterer.fit_predict(X_scaled)
+        print(f"   ✅ HDBSCAN clustering complete")
         
         # Count clusters (excluding noise label -1)
         n_clusters = len(set(labels)) - (1 if -1 in labels else 0)

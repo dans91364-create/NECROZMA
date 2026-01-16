@@ -377,7 +377,9 @@ LABELING_METRICS = {
 REGIME_CONFIG = {
     "methods": ["kmeans", "hdbscan"],  # Clustering methods to try
     "n_clusters_range": [2, 3, 4, 5, 6],  # Range for k-means
-    "min_cluster_size": 100,  # Minimum cluster size for HDBSCAN
+    "min_cluster_size": 100,  # Base minimum cluster size for HDBSCAN (auto-scaled dynamically based on dataset size)
+    "min_cluster_size_absolute": 10000,  # Absolute minimum cluster size threshold (prevents over-segmentation)
+    "min_cluster_size_pct": 0.01,  # Minimum cluster size as percentage of dataset (1%)
 }
 
 # Feature importance
