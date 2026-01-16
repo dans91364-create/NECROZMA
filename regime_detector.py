@@ -299,10 +299,13 @@ class RegimeDetector:
         
         # Key features for characterization
         key_features = []
+        seen_patterns = set()
+        
         for pattern in ["volatility", "atr", "std", "trend", "momentum", "volume", "entropy", "rsi"]:
             for col in feature_cols:
-                if pattern in col.lower() and col not in key_features:
+                if pattern in col.lower() and pattern not in seen_patterns:
                     key_features.append(col)
+                    seen_patterns.add(pattern)
                     break
         
         if not key_features:
@@ -363,7 +366,7 @@ class RegimeDetector:
             global_percentiles: Global percentile information for features
             
         Returns:
-            Descriptive name like "TRENDING_UP_HIGH_VOL" or "RANGING_LOW_VOL"
+            Descriptive name like "STRONG_UP_HIGH_VOL" or "RANGING_LOW_VOL"
         """
         # Look for volatility indicators
         vol_features = [f for f in features if "volatility" in f.lower() or "atr" in f.lower() or "std" in f.lower()]

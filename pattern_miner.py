@@ -529,12 +529,15 @@ class PatternMiner:
             X = X[valid_mask]
             y = y[valid_mask]
         else:
-            # Create synthetic target based on market volatility or price movement
+            # Create synthetic target based on volatility or price movement
+            # This creates clusters for pattern discovery when regimes aren't available
             if 'close' in df.columns:
                 returns = df['close'].pct_change()
-                y = (returns > returns.median()).astype(int)
+                # Use volatility clustering instead of simple median split
+                volatility = returns.rolling(20).std()
+                y = pd.qcut(volatility.fillna(0), q=3, labels=[0, 1, 2], duplicates='drop')
             else:
-                # Fallback: split into terciles based on first feature
+                # Fallback: use first feature's distribution
                 y = pd.qcut(X.iloc[:, 0], q=3, labels=[0, 1, 2], duplicates='drop')
         
         if len(X) < 100:

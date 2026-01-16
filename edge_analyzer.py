@@ -192,6 +192,26 @@ def load_regimes(regimes_path: Path = None) -> pd.DataFrame:
 # 🎯 EDGE ANALYSIS
 # ═══════════════════════════════════════════════════════════════
 
+def parse_config_key(config_key: str) -> Optional[Tuple[float, float, int]]:
+    """
+    Parse configuration key to extract target, stop, and horizon values
+    
+    Args:
+        config_key: Config string like "T10_S5_H30"
+        
+    Returns:
+        Tuple of (target_pips, stop_pips, horizon_min) or None if parsing fails
+    """
+    parts = config_key.split("_")
+    try:
+        target_pips = float(parts[0][1:])  # T10 -> 10
+        stop_pips = float(parts[1][1:])    # S5 -> 5
+        horizon_min = int(parts[2][1:])    # H30 -> 30
+        return (target_pips, stop_pips, horizon_min)
+    except (IndexError, ValueError):
+        return None
+
+
 def analyze_regime_label_performance(
     labels: Dict[str, pd.DataFrame],
     regimes_df: pd.DataFrame,
@@ -255,14 +275,12 @@ def analyze_regime_label_performance(
                 labels_df = labels_data
             
             # Parse config
-            parts = config_key.split("_")
-            try:
-                target_pips = float(parts[0][1:])  # T10 -> 10
-                stop_pips = float(parts[1][1:])    # S5 -> 5
-                horizon_min = int(parts[2][1:])    # H30 -> 30
-            except (IndexError, ValueError):
+            parsed = parse_config_key(config_key)
+            if parsed is None:
                 print(f"⚠️ Could not parse")
                 continue
+            
+            target_pips, stop_pips, horizon_min = parsed
             
             # Merge with regimes (align by index or timestamp)
             if 'timestamp' in labels_df.columns and 'timestamp' in regimes_df.columns:
@@ -350,14 +368,12 @@ def analyze_regime_label_performance(
         
         for config_key, labels_df in labels.items():
             # Parse config
-            parts = config_key.split("_")
-            try:
-                target_pips = float(parts[0][1:])  # T10 -> 10
-                stop_pips = float(parts[1][1:])    # S5 -> 5
-                horizon_min = int(parts[2][1:])    # H30 -> 30
-            except (IndexError, ValueError):
+            parsed = parse_config_key(config_key)
+            if parsed is None:
                 print(f"   ⚠️ Could not parse config: {config_key}")
                 continue
+            
+            target_pips, stop_pips, horizon_min = parsed
             
             # Merge with regimes (align by index or timestamp)
             if 'timestamp' in labels_df.columns and 'timestamp' in regimes_df.columns:
