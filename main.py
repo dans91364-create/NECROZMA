@@ -764,7 +764,7 @@ def run_strategy_discovery(df, args):
         
         start_time = time.time()
         factory = StrategyFactory()
-        strategies = factory.generate_strategies(patterns, regimes_df)
+        strategies = factory.generate_strategies()
         elapsed = time.time() - start_time
         
         n_strategies = len(strategies)
