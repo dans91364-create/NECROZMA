@@ -28,8 +28,91 @@ def get_data_directory() -> Path:
     return results_dir
 
 
+def detect_data_format() -> str:
+    """
+    Detect whether we have parquet (batch processing) or JSON (legacy) data
+    
+    Returns:
+        'parquet' if merged parquet file exists, 'json' otherwise
+    """
+    base_dir = Path(__file__).parent.parent.parent
+    parquet_path = base_dir / "ultra_necrozma_results" / "EURUSD_2025_backtest_results_merged.parquet"
+    
+    if parquet_path.exists():
+        return 'parquet'
+    return 'json'
+
+
 # ═══════════════════════════════════════════════════════════════
-# 🗄️ SMART STORAGE FUNCTIONS (NEW)
+# 🗄️ PARQUET DATA LOADING (BATCH PROCESSING FORMAT)
+# ═══════════════════════════════════════════════════════════════
+
+@st.cache_data(ttl=300)
+def load_merged_results() -> pd.DataFrame:
+    """
+    Load the merged parquet results from batch processing
+    
+    Returns:
+        DataFrame with columns:
+        - strategy_name, lot_size, sharpe_ratio, sortino_ratio, calmar_ratio
+        - total_return, max_drawdown, win_rate, n_trades, profit_factor
+        - avg_win, avg_loss, expectancy, gross_pnl, net_pnl, total_commission
+    """
+    base_dir = Path(__file__).parent.parent.parent
+    parquet_path = base_dir / "ultra_necrozma_results" / "EURUSD_2025_backtest_results_merged.parquet"
+    
+    if parquet_path.exists():
+        try:
+            df = pd.read_parquet(parquet_path)
+            
+            # Ensure numeric columns are properly typed
+            numeric_cols = [
+                'lot_size', 'sharpe_ratio', 'sortino_ratio', 'calmar_ratio',
+                'total_return', 'max_drawdown', 'win_rate', 'n_trades', 'profit_factor',
+                'avg_win', 'avg_loss', 'expectancy', 'gross_pnl', 'net_pnl', 'total_commission'
+            ]
+            
+            for col in numeric_cols:
+                if col in df.columns:
+                    df[col] = pd.to_numeric(df[col], errors='coerce')
+            
+            return df
+        except Exception as e:
+            print(f"Error loading parquet file: {e}")
+            return pd.DataFrame()
+    
+    return pd.DataFrame()
+
+
+@st.cache_data(ttl=300)
+def load_legacy_json_results() -> pd.DataFrame:
+    """
+    Load results from legacy JSON format (all_strategies_metrics.json)
+    
+    Returns:
+        DataFrame compatible with parquet format
+    """
+    df = load_all_strategies_metrics()
+    
+    if df.empty:
+        return df
+    
+    # Ensure compatibility with parquet format - add missing columns
+    expected_cols = [
+        'strategy_name', 'lot_size', 'sharpe_ratio', 'sortino_ratio', 'calmar_ratio',
+        'total_return', 'max_drawdown', 'win_rate', 'n_trades', 'profit_factor',
+        'avg_win', 'avg_loss', 'expectancy', 'gross_pnl', 'net_pnl', 'total_commission'
+    ]
+    
+    for col in expected_cols:
+        if col not in df.columns:
+            df[col] = 0.0 if col != 'strategy_name' else ''
+    
+    return df
+
+
+# ═══════════════════════════════════════════════════════════════
+# 🗄️ SMART STORAGE FUNCTIONS (LEGACY)
 # ═══════════════════════════════════════════════════════════════
 
 @st.cache_data(ttl=300)
@@ -175,6 +258,32 @@ def extract_sl_tp_from_name(strategy_name: str) -> Tuple[Optional[int], Optional
     return None, None
 
 
+def extract_strategy_template(strategy_name: str) -> str:
+    """
+    Extract strategy template type from strategy name
+    
+    Expected formats:
+    - TrendFollower_params -> TrendFollower
+    - MeanReverter_L5_T0.5 -> MeanReverter
+    - BreakoutTrader_SL10_TP50 -> BreakoutTrader
+    
+    Args:
+        strategy_name: Strategy name string
+        
+    Returns:
+        Template name or 'Unknown'
+    """
+    if not strategy_name:
+        return 'Unknown'
+    
+    # Split by underscore and take first part
+    parts = strategy_name.split('_')
+    if parts:
+        return parts[0]
+    
+    return 'Unknown'
+
+
 def get_universe_list() -> List[str]:
     """
     Extract unique universe names from universe_*_backtest.json files.
@@ -251,10 +360,12 @@ def get_strategy_data(strategy_name: str, universe: Optional[str] = None) -> Opt
 @st.cache_data(ttl=300)
 def load_all_results(results_dir: Optional[str] = None) -> Dict[str, Any]:
     """
-    Load all backtest results from smart storage or legacy format.
+    Load all backtest results with automatic format detection.
     
-    This function now prioritizes smart storage (all_strategies_metrics.json)
-    but falls back to legacy universe_*_backtest.json files for backward compatibility.
+    Priority order:
+    1. Merged parquet file from batch processing (EURUSD_2025_backtest_results_merged.parquet)
+    2. Smart storage (all_strategies_metrics.json)
+    3. Legacy universe_*_backtest.json files
     
     Args:
         results_dir: Optional custom results directory path
@@ -273,7 +384,29 @@ def load_all_results(results_dir: Optional[str] = None) -> Dict[str, Any]:
             'strategies_df': pd.DataFrame  # Complete DataFrame with all metrics
         }
     """
-    # Try loading from smart storage first
+    # Try loading merged parquet first (batch processing format)
+    merged_df = load_merged_results()
+    
+    if not merged_df.empty:
+        # Parquet format found!
+        all_results = merged_df.to_dict('records')
+        
+        metadata = {
+            'total_strategies': len(merged_df),
+            'total_universes': merged_df['lot_size'].nunique() if 'lot_size' in merged_df.columns else 1,
+            'data_source': 'parquet_batch_processing',
+            'last_updated': pd.Timestamp.now().isoformat()
+        }
+        
+        return {
+            'metadata': metadata,
+            'has_detailed_trades': False,  # Parquet format doesn't include detailed trades
+            'all_results': all_results,
+            'strategies_df': merged_df,
+            'total_strategies': len(merged_df)
+        }
+    
+    # Try loading from smart storage next
     metrics_df = load_all_strategies_metrics(results_dir)
     
     if not metrics_df.empty:
