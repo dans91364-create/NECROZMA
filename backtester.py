@@ -743,7 +743,8 @@ class Backtester:
         return pd.DataFrame(trades)
     
     def backtest(self, strategy, df: pd.DataFrame,
-                initial_capital: float = None) -> Dict[float, BacktestResults]:
+                initial_capital: float = None,
+                multi_lot: bool = True) -> Dict[float, BacktestResults]:
         """
         Backtest a strategy with multiple lot sizes
         
@@ -751,10 +752,11 @@ class Backtester:
             strategy: Strategy object with generate_signals method
             df: DataFrame with price and feature data (tick or OHLC)
             initial_capital: Starting capital (uses config default if None)
+            multi_lot: If True, tests multiple lot sizes; if False, single lot (default: True)
             
         Returns:
-            Dict mapping lot_size -> BacktestResults object
-            Example: {0.01: BacktestResults(...), 0.1: BacktestResults(...), ...}
+            If multi_lot=True: Dict mapping lot_size -> BacktestResults object
+            If multi_lot=False: Single BacktestResults object (for backward compatibility)
         """
         # Store DataFrame for context retrieval
         self.df = df
@@ -800,10 +802,13 @@ class Backtester:
         stop_loss = strategy.params.get("stop_loss_pips", 20)
         take_profit = strategy.params.get("take_profit_pips", 40)
         
-        # Test multiple lot sizes in parallel
+        # Determine lot sizes to test
+        lot_sizes_to_test = self.lot_sizes if multi_lot else [self.lot_size]
+        
+        # Test lot sizes
         results_dict = {}
         
-        for lot_size in self.lot_sizes:
+        for lot_size in lot_sizes_to_test:
             # Reset detailed trades for each lot size
             self.trades_detailed = []
             
@@ -852,7 +857,11 @@ class Backtester:
             # Restore original lot size
             self.lot_size = original_lot_size
         
-        return results_dict
+        # Return dict for multi-lot, single result for backward compatibility
+        if multi_lot:
+            return results_dict
+        else:
+            return results_dict[lot_sizes_to_test[0]]
     
     def test_strategies(self, strategies: List['Strategy'], df: pd.DataFrame, 
                         verbose: bool = True) -> List[BacktestResults]:
