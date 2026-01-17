@@ -24,6 +24,7 @@ from data_loader import load_crystal
 from strategy_factory import StrategyFactory
 from backtester import Backtester
 from config import PARQUET_FILE, STRATEGY_TEMPLATES, STRATEGY_PARAMS
+from batch_utils import prepare_features
 
 
 def parse_arguments():
@@ -92,21 +93,7 @@ def main():
         
         # Step 2: Add required features if missing
         print(f"\n🔧 Preparing features...")
-        EPSILON = 1e-10
-        PIPS_MULTIPLIER = 10000
-        
-        if 'momentum' not in df.columns:
-            df['momentum'] = df['pips_change'].rolling(window=100, min_periods=1).sum()
-        
-        if 'volatility' not in df.columns:
-            df['volatility'] = df['pips_change'].rolling(window=100, min_periods=1).std().fillna(0)
-        
-        if 'trend_strength' not in df.columns:
-            df['trend_strength'] = df['momentum'].abs() / (df['volatility'] + EPSILON)
-        
-        if 'close' not in df.columns:
-            df['close'] = df['mid_price']
-        
+        df = prepare_features(df)
         print(f"   ✅ Features ready")
         
         # Step 3: Generate all strategies

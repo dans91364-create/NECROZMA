@@ -21,6 +21,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from batch_runner import BatchRunner
 from config import OUTPUT_DIR
+from batch_utils import prepare_features
 
 
 def create_test_data():
@@ -46,12 +47,8 @@ def create_test_data():
     
     df.set_index('timestamp', inplace=True)
     
-    # Add required features
-    EPSILON = 1e-10
-    df['momentum'] = df['pips_change'].rolling(window=100, min_periods=1).sum()
-    df['volatility'] = df['pips_change'].rolling(window=100, min_periods=1).std().fillna(0)
-    df['trend_strength'] = df['momentum'].abs() / (df['volatility'] + EPSILON)
-    df['close'] = df['mid_price']
+    # Add required features using shared utility
+    df = prepare_features(df)
     
     # Save to parquet
     test_data_path = OUTPUT_DIR / "test_batch_data.parquet"

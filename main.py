@@ -836,9 +836,11 @@ def run_strategy_discovery(df, args):
             
             from batch_runner import run_batch_processing
             from config import PARQUET_FILE
+            import os
             
             # Save current dataframe to ensure batch workers use same data
-            temp_parquet = OUTPUT_DIR / "temp_batch_data.parquet"
+            # Use process-specific filename to avoid conflicts
+            temp_parquet = OUTPUT_DIR / f"temp_batch_data_{os.getpid()}_{int(time.time())}.parquet"
             print(f"   💾 Saving data for batch processing: {temp_parquet}")
             df.to_parquet(temp_parquet, compression='snappy')
             
