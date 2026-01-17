@@ -157,7 +157,9 @@ def load_all_strategies_metrics(results_dir: Optional[str] = None) -> pd.DataFra
         return df
         
     except Exception as e:
-        print(f"Error loading metrics file: {e}")
+        import streamlit as st
+        if hasattr(st, 'session_state'):  # Only show error in Streamlit context
+            st.warning(f"⚠️ Error loading metrics file: {e}")
         return pd.DataFrame()
 
 

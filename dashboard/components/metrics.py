@@ -291,8 +291,14 @@ def calculate_composite_score(df: pd.DataFrame,
     
     for metric, weight in weights.items():
         if metric in df.columns:
+            metric_range = df[metric].max() - df[metric].min()
+            
+            # Handle case where all values are the same
+            if metric_range == 0:
+                continue
+            
             # Normalize metric to 0-1 range
-            normalized = (df[metric] - df[metric].min()) / (df[metric].max() - df[metric].min())
+            normalized = (df[metric] - df[metric].min()) / metric_range
             score += normalized * weight
     
     return score

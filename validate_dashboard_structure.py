@@ -58,6 +58,12 @@ def check_dashboard_structure():
     ]
     
     pages_dir = dashboard_dir / "pages"
+    
+    # Check if pages directory exists
+    if not pages_dir.exists():
+        print(f"❌ Pages directory not found: {pages_dir}")
+        return
+    
     for page in expected_pages:
         path = pages_dir / page
         status = "✅" if path.exists() else "❌"

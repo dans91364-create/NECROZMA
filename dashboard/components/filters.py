@@ -295,6 +295,10 @@ def create_parquet_filters(df: pd.DataFrame) -> dict:
     
     # Reset button
     if st.sidebar.button("🔄 Reset All Filters"):
+        # Clear session state if it exists
+        if hasattr(st, 'session_state'):
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
         st.rerun()
     
     return filters
