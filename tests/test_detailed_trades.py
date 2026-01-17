@@ -87,7 +87,7 @@ def test_detailed_trades_basic():
     strategy = SimpleStrategy()
     backtester = Backtester()
     
-    results = backtester.backtest(strategy, df)
+    results = backtester.backtest(strategy, df, multi_lot=False)
     
     # Verify detailed trades are recorded
     assert hasattr(results, 'trades_detailed'), "BacktestResults should have trades_detailed"
@@ -103,7 +103,7 @@ def test_detailed_trades_with_datetime():
     strategy = SimpleStrategy()
     backtester = Backtester()
     
-    results = backtester.backtest(strategy, df)
+    results = backtester.backtest(strategy, df, multi_lot=False)
     
     assert len(results.trades_detailed) > 0, "Should have recorded detailed trades"
     
@@ -136,7 +136,7 @@ def test_market_context():
     strategy = SimpleStrategy()
     backtester = Backtester()
     
-    results = backtester.backtest(strategy, df)
+    results = backtester.backtest(strategy, df, multi_lot=False)
     
     assert len(results.trades_detailed) > 0, "Should have recorded detailed trades"
     
@@ -172,7 +172,7 @@ def test_price_history():
     strategy = SimpleStrategy()
     backtester = Backtester()
     
-    results = backtester.backtest(strategy, df)
+    results = backtester.backtest(strategy, df, multi_lot=False)
     
     assert len(results.trades_detailed) > 0, "Should have recorded detailed trades"
     
@@ -206,7 +206,7 @@ def test_to_dict_includes_detailed_trades():
     strategy = SimpleStrategy()
     backtester = Backtester()
     
-    results = backtester.backtest(strategy, df)
+    results = backtester.backtest(strategy, df, multi_lot=False)
     result_dict = results.to_dict()
     
     # Verify trades_detailed is in dict
@@ -230,7 +230,7 @@ def test_exit_reasons():
     strategy = SimpleStrategy(stop_loss=10, take_profit=20)
     backtester = Backtester()
     
-    results = backtester.backtest(strategy, df)
+    results = backtester.backtest(strategy, df, multi_lot=False)
     
     assert len(results.trades_detailed) > 0, "Should have recorded detailed trades"
     
@@ -251,12 +251,12 @@ def test_multiple_strategies():
     
     # Run first backtest
     strategy1 = SimpleStrategy(name="Strategy1")
-    results1 = backtester.backtest(strategy1, df)
+    results1 = backtester.backtest(strategy1, df, multi_lot=False)
     n_trades1 = len(results1.trades_detailed)
     
     # Run second backtest
     strategy2 = SimpleStrategy(name="Strategy2")
-    results2 = backtester.backtest(strategy2, df)
+    results2 = backtester.backtest(strategy2, df, multi_lot=False)
     n_trades2 = len(results2.trades_detailed)
     
     # Verify trades are independent
