@@ -292,57 +292,6 @@ if 'max_drawdown' in filtered_df.columns and 'total_return' in filtered_df.colum
 # Footer
 st.markdown("---")
 st.markdown("💡 **Insight**: Focus on strategies with high risk-adjusted returns (Sharpe > 1.5) and manageable drawdowns (< 20%)")
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
-        
-        st.markdown("""
-        **Interpretation**:
-        - Top-left quadrant: High return, low drawdown (ideal)
-        - Bottom-right: Low return, high drawdown (avoid)
-        - Point size = number of trades
-        - Color = Sharpe ratio (green = better)
-        """)
-    
-    with col2:
-        st.subheader("Risk Categories")
-        
-        # Categorize strategies by risk
-        def categorize_risk(dd):
-            if dd < 0.05:
-                return 'Low Risk (<5%)'
-            elif dd < 0.15:
-                return 'Medium Risk (5-15%)'
-            else:
-                return 'High Risk (>15%)'
-        
-        plot_df['risk_category'] = plot_df['max_drawdown'].apply(categorize_risk)
-        
-        risk_counts = plot_df['risk_category'].value_counts()
-        
-        for category, count in risk_counts.items():
-            pct = (count / len(plot_df)) * 100
-            st.metric(category, f"{count} ({pct:.1f}%)")
-        
-        st.markdown("---")
-        
-        # Best risk-adjusted
-        if 'sharpe_ratio' in plot_df.columns:
-            best_idx = plot_df['sharpe_ratio'].idxmax()
-            best = plot_df.loc[best_idx]
-            
-            st.success(f"""
-            **Best Risk-Adjusted**:
-            
-            {best.get('strategy_name', 'N/A')[:30]}...
-            
-            - Sharpe: {best.get('sharpe_ratio', 0):.2f}
-            - Return: {best.get('total_return_pct', 0):.1f}%
-            - DD: {best.get('max_drawdown_pct', 0):.1f}%
-            """)
-
-else:
-    st.warning("Return and drawdown data not available")
 
 st.markdown("---")
 

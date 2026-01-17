@@ -56,7 +56,8 @@ def light_that_burns_the_sky(analyzer):
     results = analyzer.results
     
     if not results:
-        print("   ⚠️ No results to judge")
+        print("   ⚠️ No universe results to analyze")
+        print("   ℹ️  Strategy Discovery mode uses LightFinder for ranking")
         return None
     
     # ═══ PHASE 1: COLLECT DATA ═══
@@ -72,6 +73,10 @@ def light_that_burns_the_sky(analyzer):
     
     for name, result in results.items():
         if not result:
+            continue
+        
+        # Check if result has the expected structure (old format)
+        if not isinstance(result, dict) or "results" not in result:
             continue
         
         for level in result["results"]: 

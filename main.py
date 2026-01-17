@@ -1309,7 +1309,20 @@ def main():
     
     # Z-Move: Light That Burns The Sky
     print("\n")
-    final_judgment = light_that_burns_the_sky(analyzer)
+    # Only call light_that_burns_the_sky if we have analyzer results
+    # Strategy discovery has its own flow and doesn't populate analyzer.results
+    if analyzer.results and not args.strategy_discovery:
+        final_judgment = light_that_burns_the_sky(analyzer)
+    elif args.strategy_discovery and analyzer.results:
+        # Run regime analysis even after strategy discovery if we have universe results
+        final_judgment = light_that_burns_the_sky(analyzer)
+    else:
+        # No results to analyze (strategy discovery mode without universe analysis)
+        if args.strategy_discovery:
+            print("⚡💎🌟 Z-MOVE: LIGHT THAT BURNS THE SKY 🌟💎⚡")
+            print("   ⚠️ No universe results - using Strategy Discovery results")
+            print("   ✅ Regime analysis skipped (run without --strategy-discovery for full analysis)")
+        final_judgment = None
     
     # Generate reports
     print("\n📝 Generating comprehensive reports...\n")

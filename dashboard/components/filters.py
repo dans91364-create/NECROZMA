@@ -251,14 +251,17 @@ def create_parquet_filters(df: pd.DataFrame) -> dict:
     # Sharpe Ratio filter
     if 'sharpe_ratio' in df.columns:
         st.sidebar.subheader("Performance Metrics")
+        sharpe_min = float(df['sharpe_ratio'].min())
+        sharpe_max = float(df['sharpe_ratio'].max())
+        sharpe_max = max(sharpe_max, sharpe_min + 0.1)  # Ensure max > min
         sharpe_range = st.sidebar.slider(
             "Min Sharpe Ratio",
-            min_value=float(df['sharpe_ratio'].min()),
-            max_value=float(df['sharpe_ratio'].max()),
-            value=float(df['sharpe_ratio'].min()),
+            min_value=sharpe_min,
+            max_value=sharpe_max,
+            value=sharpe_min,
             step=0.1
         )
-        filters['sharpe_ratio'] = (sharpe_range, float(df['sharpe_ratio'].max()))
+        filters['sharpe_ratio'] = (sharpe_range, sharpe_max)
     
     # Win Rate filter
     if 'win_rate' in df.columns:
@@ -273,25 +276,31 @@ def create_parquet_filters(df: pd.DataFrame) -> dict:
     
     # Max Drawdown filter
     if 'max_drawdown' in df.columns:
+        dd_min = 0.0
+        dd_max = float(abs(df['max_drawdown'].min()) * 100)
+        dd_max = max(dd_max, dd_min + 1.0)  # Ensure max > min
         max_dd = st.sidebar.slider(
             "Max Drawdown (%)",
-            min_value=0.0,
-            max_value=float(abs(df['max_drawdown'].min()) * 100),
-            value=float(abs(df['max_drawdown'].min()) * 100),
+            min_value=dd_min,
+            max_value=dd_max,
+            value=dd_max,
             step=5.0
         )
         filters['max_drawdown'] = (float(df['max_drawdown'].min()), -max_dd / 100.0)
     
     # Min Trades filter
     if 'n_trades' in df.columns:
+        trades_min = 0
+        trades_max = int(df['n_trades'].max())
+        trades_max = max(trades_max, trades_min + 10)  # Ensure max > min
         min_trades = st.sidebar.slider(
             "Min Number of Trades",
-            min_value=0,
-            max_value=int(df['n_trades'].max()),
-            value=0,
+            min_value=trades_min,
+            max_value=trades_max,
+            value=trades_min,
             step=10
         )
-        filters['n_trades'] = (min_trades, int(df['n_trades'].max()))
+        filters['n_trades'] = (min_trades, trades_max)
     
     # Reset button
     if st.sidebar.button("🔄 Reset All Filters"):

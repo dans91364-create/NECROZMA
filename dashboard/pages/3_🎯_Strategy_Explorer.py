@@ -143,6 +143,9 @@ if selected_strategies and len(selected_strategies) > 0:
             if detail_df[col].abs().max() <= 1:
                 detail_df[col] = (detail_df[col] * 100).round(2)
     
+    # Remove duplicate columns before transpose
+    detail_df = detail_df.loc[:, ~detail_df.columns.duplicated()]
+    
     # Transpose for easier comparison
     detail_df_T = detail_df.set_index('strategy_name').T
     st.dataframe(detail_df_T, use_container_width=True)
