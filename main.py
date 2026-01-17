@@ -122,6 +122,9 @@ Examples:
   python main.py --strategy-discovery --batch-mode
   python main.py --strategy-discovery --batch-mode --batch-size 200
   
+  # Force rerun backtesting (ignore cache)
+  python main.py --strategy-discovery --batch-mode --force-rerun
+  
   # Chunked processing examples
   python main.py --chunk-size monthly --strategy auto
   python main.py --chunk-size weekly --strategy universe
