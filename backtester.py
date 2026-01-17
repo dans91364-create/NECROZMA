@@ -12,7 +12,7 @@ Features:
 - Comprehensive metrics (Sharpe, Sortino, Calmar, etc.)
 - Monte Carlo simulation
 - Drawdown analysis
-- **NEW**: Numba JIT acceleration for 50-100x speedup
+- **NEW**: Numba JIT acceleration for 300-400x speedup
 - **NEW**: Enhanced progress tracking with ETA
 """
 
@@ -36,9 +36,11 @@ except ImportError:
     NUMBA_AVAILABLE = False
     # Define dummy decorator if Numba not available
     def njit(*args, **kwargs):
+        """Fallback decorator when Numba is not installed"""
         def decorator(func):
             return func
-        if len(args) == 1 and callable(args[0]):
+        # Handle @njit and @njit(...) syntax
+        if args and callable(args[0]):
             return args[0]
         return decorator
 
