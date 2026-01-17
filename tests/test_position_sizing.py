@@ -186,7 +186,7 @@ def test_single_trade_return_calculation():
     
     # Use module-level strategy
     strategy = SimpleStrategy()
-    results = backtester.backtest(strategy, df)
+    results = backtester.backtest(strategy, df, multi_lot=False)
     
     # Should have 1 trade
     assert results.n_trades >= 1, f"Expected at least 1 trade, got {results.n_trades}"
@@ -233,7 +233,7 @@ def test_stop_loss_pnl_calculation():
     
     # Use module-level strategy with 15 pip stop loss
     strategy = StopLossStrategy(stop_loss_pips=15)
-    results = backtester.backtest(strategy, df)
+    results = backtester.backtest(strategy, df, multi_lot=False)
     
     # Should have at least 1 trade that hit stop loss
     if results.n_trades > 0:
@@ -278,7 +278,7 @@ def test_take_profit_pnl_calculation():
     
     # Use module-level strategy with 30 pip take profit
     strategy = TakeProfitStrategy(take_profit_pips=30)
-    results = backtester.backtest(strategy, df)
+    results = backtester.backtest(strategy, df, multi_lot=False)
     
     # Should have at least 1 trade that hit take profit
     if results.n_trades > 0:
@@ -324,7 +324,7 @@ def test_equity_curve_realistic_values():
     
     # Use module-level trend strategy
     strategy = TrendStrategy()
-    results = backtester.backtest(strategy, df)
+    results = backtester.backtest(strategy, df, multi_lot=False)
     
     # Check equity curve
     if len(results.equity_curve) > 1:
@@ -373,7 +373,7 @@ def test_max_drawdown_realistic():
     
     # Use module-level volatile strategy
     strategy = VolatileStrategy()
-    results = backtester.backtest(strategy, df)
+    results = backtester.backtest(strategy, df, multi_lot=False)
     
     # Max drawdown should be a realistic percentage (0-50%)
     # Not microscopic like 0.0001%
