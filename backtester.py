@@ -19,10 +19,26 @@ import pandas as pd
 from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass, field
 import warnings
+import time
+from datetime import datetime, timedelta
 
 warnings.filterwarnings("ignore")
 
 from config import BACKTEST_CONFIG, MONTE_CARLO_CONFIG, METRIC_THRESHOLDS
+
+# Try to import Numba for JIT acceleration
+try:
+    from numba import njit
+    NUMBA_AVAILABLE = True
+except ImportError:
+    NUMBA_AVAILABLE = False
+    # Define dummy decorator if Numba not available
+    def njit(*args, **kwargs):
+        def decorator(func):
+            return func
+        if len(args) == 1 and callable(args[0]):
+            return args[0]
+        return decorator
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -44,6 +60,185 @@ DEFAULT_PIP_DECIMAL_PLACES = 4
 # Commission and multi-lot testing
 DEFAULT_LOT_SIZES = [0.01, 0.1, 1.0]  # micro, mini, standard
 DEFAULT_COMMISSION_PER_LOT = 0.05  # $0.05 per side per standard lot
+
+
+# ═══════════════════════════════════════════════════════════════
+# ⚡ NUMBA JIT TRADE SIMULATION
+# ═══════════════════════════════════════════════════════════════
+
+@njit(cache=True)
+def _simulate_trades_numba(
+    signals: np.ndarray,      # int8: 1=buy, -1=sell, 0=neutral
+    bid_prices: np.ndarray,   # float64
+    ask_prices: np.ndarray,   # float64
+    stop_loss_pips: float,
+    take_profit_pips: float,
+    pip_value: float,         # 0.0001 for EUR/USD
+    pip_value_per_lot: float, # $10 per pip per standard lot
+    lot_size: float,
+    commission_per_lot: float
+) -> tuple:
+    """
+    Ultra-fast trade simulation using Numba JIT.
+    
+    Returns:
+        tuple: (entry_indices, exit_indices, entry_prices, exit_prices, 
+                pnls, gross_pnls, commissions, trade_types, exit_reasons)
+    """
+    n = len(signals)
+    
+    # Pre-allocate arrays (max possible trades = n/2)
+    max_trades = n // 2
+    entry_indices = np.zeros(max_trades, dtype=np.int64)
+    exit_indices = np.zeros(max_trades, dtype=np.int64)
+    entry_prices = np.zeros(max_trades, dtype=np.float64)
+    exit_prices = np.zeros(max_trades, dtype=np.float64)
+    pnls = np.zeros(max_trades, dtype=np.float64)
+    gross_pnls = np.zeros(max_trades, dtype=np.float64)
+    commissions = np.zeros(max_trades, dtype=np.float64)
+    trade_types = np.zeros(max_trades, dtype=np.int8)  # 1=long, -1=short
+    exit_reasons = np.zeros(max_trades, dtype=np.int8)  # 0=stop, 1=tp, 2=signal
+    
+    trade_count = 0
+    in_position = False
+    entry_price = 0.0
+    entry_idx = 0
+    position_type = 0
+    
+    pip_value_usd = pip_value_per_lot * lot_size
+    commission = 2 * commission_per_lot * lot_size  # Entry + exit
+    
+    for i in range(n):
+        if in_position:
+            # Determine exit price based on position type
+            if position_type == 1:  # Long
+                exit_price = bid_prices[i]
+                pips = (exit_price - entry_price) / pip_value
+            else:  # Short
+                exit_price = ask_prices[i]
+                pips = (entry_price - exit_price) / pip_value
+            
+            should_exit = False
+            exit_reason = 0
+            final_pips = pips
+            
+            # Check stop loss
+            if pips <= -stop_loss_pips:
+                should_exit = True
+                exit_reason = 0  # stop_loss
+                final_pips = -stop_loss_pips
+            # Check take profit
+            elif pips >= take_profit_pips:
+                should_exit = True
+                exit_reason = 1  # take_profit
+                final_pips = take_profit_pips
+            # Check exit signal
+            elif (position_type == 1 and signals[i] == -1) or \
+                 (position_type == -1 and signals[i] == 1):
+                should_exit = True
+                exit_reason = 2  # signal
+                final_pips = pips
+            
+            if should_exit:
+                gross_pnl = final_pips * pip_value_usd
+                net_pnl = gross_pnl - commission
+                
+                entry_indices[trade_count] = entry_idx
+                exit_indices[trade_count] = i
+                entry_prices[trade_count] = entry_price
+                exit_prices[trade_count] = exit_price
+                pnls[trade_count] = net_pnl
+                gross_pnls[trade_count] = gross_pnl
+                commissions[trade_count] = commission
+                trade_types[trade_count] = position_type
+                exit_reasons[trade_count] = exit_reason
+                
+                trade_count += 1
+                in_position = False
+        
+        # Check entry signals
+        if not in_position and signals[i] != 0:
+            in_position = True
+            position_type = signals[i]
+            entry_idx = i
+            
+            # Long enters at ask, short enters at bid
+            if position_type == 1:
+                entry_price = ask_prices[i]
+            else:
+                entry_price = bid_prices[i]
+    
+    # Trim arrays to actual size
+    return (
+        entry_indices[:trade_count],
+        exit_indices[:trade_count],
+        entry_prices[:trade_count],
+        exit_prices[:trade_count],
+        pnls[:trade_count],
+        gross_pnls[:trade_count],
+        commissions[:trade_count],
+        trade_types[:trade_count],
+        exit_reasons[:trade_count]
+    )
+
+
+# ═══════════════════════════════════════════════════════════════
+# 📊 PROGRESS TRACKING
+# ═══════════════════════════════════════════════════════════════
+
+class BacktestProgress:
+    """Progress tracker with ETA calculation."""
+    
+    def __init__(self, total_strategies: int, lot_sizes: list):
+        self.total_strategies = total_strategies
+        self.lot_sizes = lot_sizes
+        self.total_backtests = total_strategies * len(lot_sizes)
+        self.completed = 0
+        self.start_time = time.time()
+        self.strategy_times = []
+    
+    def update(self, strategy_idx: int, strategy_name: str, lot_size: float):
+        """Update progress and print status."""
+        self.completed += 1
+        elapsed = time.time() - self.start_time
+        
+        # Calculate ETA
+        if self.completed > 0:
+            avg_time = elapsed / self.completed
+            remaining = self.total_backtests - self.completed
+            eta_seconds = remaining * avg_time
+            eta_time = datetime.now() + timedelta(seconds=eta_seconds)
+            eta_str = eta_time.strftime("%H:%M:%S")
+        else:
+            eta_str = "calculating..."
+            eta_seconds = 0
+        
+        # Format elapsed time
+        elapsed_str = str(timedelta(seconds=int(elapsed)))
+        remaining_str = str(timedelta(seconds=int(eta_seconds)))
+        
+        # Progress percentage
+        pct = 100 * self.completed / self.total_backtests
+        
+        # Progress bar
+        bar_width = 30
+        filled = int(bar_width * pct / 100)
+        bar = "█" * filled + "░" * (bar_width - filled)
+        
+        # Print progress
+        print(f"\r   [{bar}] {pct:5.1f}% | "
+              f"Strategy {strategy_idx + 1}/{self.total_strategies} ({strategy_name}) | "
+              f"Lot {lot_size} | "
+              f"Elapsed: {elapsed_str} | "
+              f"Remaining: {remaining_str} | "
+              f"ETA: {eta_str}    ", end="", flush=True)
+    
+    def finish(self):
+        """Print final summary."""
+        elapsed = time.time() - self.start_time
+        elapsed_str = str(timedelta(seconds=int(elapsed)))
+        print(f"\n\n   ✅ Completed {self.total_backtests:,} backtests in {elapsed_str}")
+        print(f"   ⚡ Average: {elapsed/self.total_backtests:.2f}s per backtest")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -545,7 +740,7 @@ class Backtester:
                        bid_prices: pd.Series = None,
                        ask_prices: pd.Series = None) -> pd.DataFrame:
         """
-        Simulate trades from signals with realistic bid/ask execution
+        Simulate trades using Numba-accelerated backend.
         
         Uses bid/ask for realistic execution:
         - Long: buy at ask, sell at bid
@@ -568,190 +763,58 @@ class Backtester:
         Returns:
             DataFrame with trade results (pnl in USD including commission)
         """
-        trades = []
-        in_position = False
-        entry_price = 0.0
-        entry_idx = 0
-        position_type = 0  # 1=long, -1=short
+        # Convert to numpy arrays for Numba
+        signals_arr = signals.values.astype(np.int8)
         
-        # Use bid/ask if available, otherwise fallback to prices
-        use_bid_ask = bid_prices is not None and ask_prices is not None
+        if bid_prices is not None and ask_prices is not None:
+            bid_arr = bid_prices.values.astype(np.float64)
+            ask_arr = ask_prices.values.astype(np.float64)
+        else:
+            bid_arr = prices.values.astype(np.float64)
+            ask_arr = prices.values.astype(np.float64)
         
-        # Progress tracking
-        total_signals = len(signals)
+        # Call Numba-accelerated function
+        (entry_indices, exit_indices, entry_prices, exit_prices,
+         pnls, gross_pnls, commissions, trade_types, exit_reasons) = _simulate_trades_numba(
+            signals_arr, bid_arr, ask_arr,
+            stop_loss_pips, take_profit_pips, pip_value,
+            self.pip_value_per_lot, self.lot_size, self.commission_per_lot
+        )
         
-        for i in range(total_signals):
-            # Progress indicator every 1M ticks
-            if i > 0 and i % 1_000_000 == 0:
-                print(f"   ⏳ Processed {i:,}/{total_signals:,} ticks ({100*i/total_signals:.1f}%)...")
-            
-            if in_position:
-                # Determine current exit price based on position type
-                if use_bid_ask:
-                    # Long exits at bid, short exits at ask
-                    exit_price = bid_prices.iloc[i] if position_type == 1 else ask_prices.iloc[i]
-                else:
-                    exit_price = prices.iloc[i]
-                
-                if position_type == 1:  # Long position
-                    # Calculate pips
-                    pips = (exit_price - entry_price) / pip_value
-                    
-                    # Check stop/target
-                    if pips <= -stop_loss_pips:
-                        # Stop loss hit
-                        gross_pnl = self._pips_to_usd(-stop_loss_pips)
-                        commission = 2 * self.commission_per_lot * self.lot_size  # Entry + exit
-                        net_pnl = gross_pnl - commission
-                        
-                        trades.append({
-                            "entry_idx": entry_idx,
-                            "exit_idx": i,
-                            "entry_price": entry_price,
-                            "exit_price": exit_price,
-                            "pnl": net_pnl,
-                            "gross_pnl": gross_pnl,
-                            "commission": commission,
-                            "type": "long",
-                            "exit_reason": "stop_loss",
-                        })
-                        self._record_detailed_trade(
-                            entry_idx, i, entry_price, exit_price,
-                            "long", -stop_loss_pips, net_pnl, "stop_loss"
-                        )
-                        in_position = False
-                    elif pips >= take_profit_pips:
-                        # Take profit hit
-                        gross_pnl = self._pips_to_usd(take_profit_pips)
-                        commission = 2 * self.commission_per_lot * self.lot_size
-                        net_pnl = gross_pnl - commission
-                        
-                        trades.append({
-                            "entry_idx": entry_idx,
-                            "exit_idx": i,
-                            "entry_price": entry_price,
-                            "exit_price": exit_price,
-                            "pnl": net_pnl,
-                            "gross_pnl": gross_pnl,
-                            "commission": commission,
-                            "type": "long",
-                            "exit_reason": "take_profit",
-                        })
-                        self._record_detailed_trade(
-                            entry_idx, i, entry_price, exit_price,
-                            "long", take_profit_pips, net_pnl, "take_profit"
-                        )
-                        in_position = False
-                    elif signals.iloc[i] == -1:
-                        # Exit signal
-                        gross_pnl = self._pips_to_usd(pips)
-                        commission = 2 * self.commission_per_lot * self.lot_size
-                        net_pnl = gross_pnl - commission
-                        
-                        trades.append({
-                            "entry_idx": entry_idx,
-                            "exit_idx": i,
-                            "entry_price": entry_price,
-                            "exit_price": exit_price,
-                            "pnl": net_pnl,
-                            "gross_pnl": gross_pnl,
-                            "commission": commission,
-                            "type": "long",
-                            "exit_reason": "signal",
-                        })
-                        self._record_detailed_trade(
-                            entry_idx, i, entry_price, exit_price,
-                            "long", pips, net_pnl, "signal"
-                        )
-                        in_position = False
-                        
-                else:  # Short position
-                    # Calculate pips (for short: entry - exit)
-                    pips = (entry_price - exit_price) / pip_value
-                    
-                    # Check stop/target
-                    if pips <= -stop_loss_pips:
-                        # Stop loss hit
-                        gross_pnl = self._pips_to_usd(-stop_loss_pips)
-                        commission = 2 * self.commission_per_lot * self.lot_size
-                        net_pnl = gross_pnl - commission
-                        
-                        trades.append({
-                            "entry_idx": entry_idx,
-                            "exit_idx": i,
-                            "entry_price": entry_price,
-                            "exit_price": exit_price,
-                            "pnl": net_pnl,
-                            "gross_pnl": gross_pnl,
-                            "commission": commission,
-                            "type": "short",
-                            "exit_reason": "stop_loss",
-                        })
-                        self._record_detailed_trade(
-                            entry_idx, i, entry_price, exit_price,
-                            "short", -stop_loss_pips, net_pnl, "stop_loss"
-                        )
-                        in_position = False
-                    elif pips >= take_profit_pips:
-                        # Take profit hit
-                        gross_pnl = self._pips_to_usd(take_profit_pips)
-                        commission = 2 * self.commission_per_lot * self.lot_size
-                        net_pnl = gross_pnl - commission
-                        
-                        trades.append({
-                            "entry_idx": entry_idx,
-                            "exit_idx": i,
-                            "entry_price": entry_price,
-                            "exit_price": exit_price,
-                            "pnl": net_pnl,
-                            "gross_pnl": gross_pnl,
-                            "commission": commission,
-                            "type": "short",
-                            "exit_reason": "take_profit",
-                        })
-                        self._record_detailed_trade(
-                            entry_idx, i, entry_price, exit_price,
-                            "short", take_profit_pips, net_pnl, "take_profit"
-                        )
-                        in_position = False
-                    elif signals.iloc[i] == 1:
-                        # Exit signal
-                        gross_pnl = self._pips_to_usd(pips)
-                        commission = 2 * self.commission_per_lot * self.lot_size
-                        net_pnl = gross_pnl - commission
-                        
-                        trades.append({
-                            "entry_idx": entry_idx,
-                            "exit_idx": i,
-                            "entry_price": entry_price,
-                            "exit_price": exit_price,
-                            "pnl": net_pnl,
-                            "gross_pnl": gross_pnl,
-                            "commission": commission,
-                            "type": "short",
-                            "exit_reason": "signal",
-                        })
-                        self._record_detailed_trade(
-                            entry_idx, i, entry_price, exit_price,
-                            "short", pips, net_pnl, "signal"
-                        )
-                        in_position = False
-            
-            # Check entry signals
-            if not in_position and signals.iloc[i] != 0:
-                in_position = True
-                position_type = signals.iloc[i]
-                
-                # Determine entry price based on position type
-                if use_bid_ask:
-                    # Long enters at ask, short enters at bid
-                    entry_price = ask_prices.iloc[i] if position_type == 1 else bid_prices.iloc[i]
-                else:
-                    entry_price = prices.iloc[i]
-                
-                entry_idx = i
+        # Convert exit_reasons to strings
+        exit_reason_map = {0: 'stop_loss', 1: 'take_profit', 2: 'signal'}
+        exit_reasons_str = [exit_reason_map[r] for r in exit_reasons]
         
-        return pd.DataFrame(trades)
+        # Convert trade_types to strings
+        trade_type_map = {1: 'long', -1: 'short'}
+        trade_types_str = [trade_type_map[t] for t in trade_types]
+        
+        # Build DataFrame
+        trades = pd.DataFrame({
+            'entry_idx': entry_indices,
+            'exit_idx': exit_indices,
+            'entry_price': entry_prices,
+            'exit_price': exit_prices,
+            'pnl': pnls,
+            'gross_pnl': gross_pnls,
+            'commission': commissions,
+            'type': trade_types_str,
+            'exit_reason': exit_reasons_str,
+        })
+        
+        # Record detailed trades if enabled
+        if self.save_detailed_trades:
+            for i in range(len(trades)):
+                self._record_detailed_trade(
+                    int(entry_indices[i]), int(exit_indices[i]),
+                    entry_prices[i], exit_prices[i],
+                    trade_types_str[i], 
+                    (exit_prices[i] - entry_prices[i]) / pip_value if trade_types[i] == 1 
+                    else (entry_prices[i] - exit_prices[i]) / pip_value,
+                    pnls[i], exit_reasons_str[i]
+                )
+        
+        return trades
     
     def backtest(self, strategy, df: pd.DataFrame,
                 initial_capital: float = None,
@@ -880,31 +943,56 @@ class Backtester:
             return results_dict[lot_sizes_to_test[0]]
     
     def test_strategies(self, strategies: List['Strategy'], df: pd.DataFrame, 
-                        verbose: bool = True) -> List[BacktestResults]:
+                        verbose: bool = True, 
+                        show_progress_bar: bool = True) -> Dict[str, Dict[float, 'BacktestResults']]:
         """
-        Backtest multiple strategies
+        Backtest multiple strategies with enhanced progress tracking
         
         Args:
             strategies: List of Strategy objects
             df: DataFrame with price/feature data
             verbose: Show progress (default: True)
+            show_progress_bar: Use enhanced progress bar with ETA (default: True)
             
         Returns:
-            List of BacktestResults
+            Dict mapping strategy name -> lot_size -> BacktestResults
         """
-        results = []
+        results = {}
         total = len(strategies)
         
-        for i, strategy in enumerate(strategies, 1):
-            if verbose and i % 100 == 0:
-                print(f"   📊 Backtesting {i}/{total} ({100*i/total:.1f}%)...")
+        # Initialize progress tracker if enabled
+        if verbose and show_progress_bar:
+            print(f"\n{'='*80}")
+            print(f"🚀 BACKTESTING {total:,} STRATEGIES")
+            print(f"   Lot sizes: {self.lot_sizes}")
+            print(f"   Total backtests: {total * len(self.lot_sizes):,}")
+            print(f"   Data points: {len(df):,}")
+            print(f"{'='*80}\n")
             
+            progress = BacktestProgress(total, self.lot_sizes)
+        
+        for i, strategy in enumerate(strategies):
             try:
-                result = self.backtest(strategy, df)
-                results.append(result)
+                # Backtest returns dict of {lot_size: BacktestResults}
+                strategy_results = self.backtest(strategy, df)
+                
+                # Update progress for each lot size
+                if verbose and show_progress_bar:
+                    for lot_size in self.lot_sizes:
+                        progress.update(i, strategy.name, lot_size)
+                elif verbose and i % 100 == 0:
+                    print(f"   📊 Backtesting {i+1}/{total} ({100*(i+1)/total:.1f}%)...")
+                
+                # Store results
+                results[strategy.name] = strategy_results
+                
             except Exception as e:
                 if verbose:
-                    print(f"   ⚠️  Strategy '{strategy.name}' failed: {e}")
+                    print(f"\n   ⚠️  Strategy '{strategy.name}' failed: {e}")
+        
+        # Finish progress tracking
+        if verbose and show_progress_bar:
+            progress.finish()
         
         return results
     
