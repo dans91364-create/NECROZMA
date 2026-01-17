@@ -738,6 +738,35 @@ class Backtester:
         
         return results
     
+    def test_strategies(self, strategies: List, df: pd.DataFrame, 
+                        verbose: bool = True) -> List[BacktestResults]:
+        """
+        Backtest multiple strategies
+        
+        Args:
+            strategies: List of Strategy objects
+            df: DataFrame with price/feature data
+            verbose: Show progress (default: True)
+            
+        Returns:
+            List of BacktestResults
+        """
+        results = []
+        total = len(strategies)
+        
+        for i, strategy in enumerate(strategies, 1):
+            if verbose and i % 100 == 0:
+                print(f"   📊 Backtesting {i}/{total} ({100*i/total:.1f}%)...")
+            
+            try:
+                result = self.backtest(strategy, df)
+                results.append(result)
+            except Exception as e:
+                if verbose:
+                    print(f"   ⚠️  Strategy '{strategy.name}' failed: {e}")
+        
+        return results
+    
     def walk_forward_test(self, strategy, df: pd.DataFrame,
                          n_splits: int = None) -> List[BacktestResults]:
         """
