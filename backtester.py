@@ -159,7 +159,7 @@ class Backtester:
         # Track detailed trade information
         self.trades_detailed = []
         self.df = None  # Store DataFrame for context retrieval
-        self.save_detailed_trades = False  # Default False for performance
+        self.save_detailed_trades = False  # Default False for performance (skips price_history and market_context collection)
     
     def _pips_to_usd(self, pips: float) -> float:
         """
@@ -774,7 +774,7 @@ class Backtester:
         # Store DataFrame for context retrieval
         self.df = df
         
-        # Set flag for detailed trade tracking
+        # Set flag for detailed trade tracking (set per backtest call to control behavior)
         self.save_detailed_trades = save_detailed_trades
         
         # Use config default if not specified
