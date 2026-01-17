@@ -26,6 +26,9 @@ VERSION_ATTRIBUTES = ['__version__', 'version', 'VERSION', '_version']
 # Pip conversion factor (for EURUSD and most major pairs)
 PIPS_MULTIPLIER = 10000
 
+# Epsilon for numerical stability (avoid division by zero)
+EPSILON = 1e-10
+
 
 # ═══════════════════════════════════════════════════════════════
 # 🌟 ULTRA NECROZMA ASCII BANNER
@@ -773,6 +776,26 @@ def run_strategy_discovery(df, args):
         
         lore.broadcast(EventType.MILESTONE, 
                       message=f"Generated {n_strategies} strategy candidates")
+        
+        # ─────────────────────────────────────────────────────────
+        # STEP 4.5: Add Tick-Level Features (if missing)
+        # ─────────────────────────────────────────────────────────
+        if 'momentum' not in df.columns:
+            print("\n📊 Adding tick-level features...")
+            
+            # Momentum: sum of pips_change over last N ticks
+            df['momentum'] = df['pips_change'].rolling(window=100, min_periods=1).sum()
+            
+            # Volatility: standard deviation of pips_change over last N ticks
+            df['volatility'] = df['pips_change'].rolling(window=100, min_periods=1).std().fillna(0)
+            
+            # Trend strength: absolute normalized momentum
+            df['trend_strength'] = df['momentum'].abs() / (df['volatility'] + EPSILON)
+            
+            # Close (alias for mid_price, needed by some strategies)
+            df['close'] = df['mid_price']
+            
+            print(f"   ✅ Features added: momentum, volatility, trend_strength, close")
         
         # ─────────────────────────────────────────────────────────
         # STEP 5: BACKTESTING
