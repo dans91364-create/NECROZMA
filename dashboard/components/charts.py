@@ -330,3 +330,192 @@ def create_line_chart(df: pd.DataFrame,
     )
     
     return fig
+
+
+def create_performance_matrix(df: pd.DataFrame,
+                              index_col: str,
+                              columns_col: str,
+                              values_col: str,
+                              title: str = "",
+                              colorscale: str = 'RdYlGn') -> go.Figure:
+    """
+    Create performance matrix heatmap (e.g., Strategy Templates vs Lot Sizes)
+    
+    Args:
+        df: DataFrame with data
+        index_col: Column for y-axis (rows)
+        columns_col: Column for x-axis (columns)
+        values_col: Column for values to display
+        title: Chart title
+        colorscale: Color scale
+        
+    Returns:
+        Plotly figure
+    """
+    # Create pivot table
+    pivot = df.pivot_table(
+        values=values_col,
+        index=index_col,
+        columns=columns_col,
+        aggfunc='mean'
+    )
+    
+    fig = go.Figure(data=go.Heatmap(
+        z=pivot.values,
+        x=pivot.columns,
+        y=pivot.index,
+        colorscale=colorscale,
+        hoverongaps=False,
+        text=pivot.values.round(2),
+        texttemplate='%{text}',
+        textfont={"size": 10}
+    ))
+    
+    fig.update_layout(
+        title=title,
+        xaxis_title=columns_col.replace('_', ' ').title(),
+        yaxis_title=index_col.replace('_', ' ').title(),
+        template='plotly_white'
+    )
+    
+    return fig
+
+
+def create_distribution_chart(data: pd.Series,
+                             title: str = "",
+                             x_label: str = "",
+                             bins: int = 30,
+                             show_stats: bool = True) -> go.Figure:
+    """
+    Create distribution histogram with optional statistics overlay
+    
+    Args:
+        data: Series with data
+        title: Chart title
+        x_label: X-axis label
+        bins: Number of bins
+        show_stats: Whether to show mean/median lines
+        
+    Returns:
+        Plotly figure
+    """
+    fig = go.Figure(data=[go.Histogram(
+        x=data,
+        nbinsx=bins,
+        marker_color='#667eea',
+        name='Distribution'
+    )])
+    
+    if show_stats and len(data) > 0:
+        mean_val = data.mean()
+        median_val = data.median()
+        
+        # Add mean line
+        fig.add_vline(
+            x=mean_val,
+            line_dash="dash",
+            line_color="red",
+            annotation_text=f"Mean: {mean_val:.2f}",
+            annotation_position="top"
+        )
+        
+        # Add median line
+        fig.add_vline(
+            x=median_val,
+            line_dash="dot",
+            line_color="green",
+            annotation_text=f"Median: {median_val:.2f}",
+            annotation_position="bottom"
+        )
+    
+    fig.update_layout(
+        title=title,
+        xaxis_title=x_label,
+        yaxis_title='Frequency',
+        template='plotly_white',
+        showlegend=False
+    )
+    
+    return fig
+
+
+def create_comparison_chart(df: pd.DataFrame,
+                           strategies: List[str],
+                           metrics: List[str],
+                           title: str = "Strategy Comparison") -> go.Figure:
+    """
+    Create grouped bar chart comparing strategies across metrics
+    
+    Args:
+        df: DataFrame with strategy data
+        strategies: List of strategy names to compare
+        metrics: List of metric columns to show
+        title: Chart title
+        
+    Returns:
+        Plotly figure
+    """
+    # Filter to selected strategies
+    comparison_df = df[df['strategy_name'].isin(strategies)][['strategy_name'] + metrics]
+    
+    # Melt for grouped bar chart
+    melted = comparison_df.melt(
+        id_vars=['strategy_name'],
+        value_vars=metrics,
+        var_name='Metric',
+        value_name='Value'
+    )
+    
+    fig = px.bar(
+        melted,
+        x='Metric',
+        y='Value',
+        color='strategy_name',
+        barmode='group',
+        title=title
+    )
+    
+    fig.update_layout(
+        template='plotly_white',
+        xaxis_title='Metric',
+        yaxis_title='Value',
+        legend_title='Strategy'
+    )
+    
+    return fig
+
+
+def create_pareto_chart(df: pd.DataFrame,
+                       x: str,
+                       y: str,
+                       title: str = "Pareto Frontier") -> go.Figure:
+    """
+    Create Pareto frontier scatter plot
+    
+    Args:
+        df: DataFrame with data
+        x: Column for x-axis (typically risk metric)
+        y: Column for y-axis (typically return metric)
+        title: Chart title
+        
+    Returns:
+        Plotly figure
+    """
+    fig = px.scatter(
+        df,
+        x=x,
+        y=y,
+        title=title,
+        hover_name='strategy_name' if 'strategy_name' in df.columns else None,
+        color=y,
+        size=y,
+        color_continuous_scale='Viridis'
+    )
+    
+    fig.update_layout(
+        template='plotly_white',
+        xaxis_title=x.replace('_', ' ').title(),
+        yaxis_title=y.replace('_', ' ').title()
+    )
+    
+    return fig
