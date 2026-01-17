@@ -645,6 +645,7 @@ def run_strategy_discovery(df, args):
     
     from lore import LoreSystem, EventType
     from config import OUTPUT_DIR, FILE_PREFIX
+    import pandas as pd
     
     # Initialize Lore System
     lore = LoreSystem(enable_telegram=not args.skip_telegram)
@@ -687,7 +688,6 @@ def run_strategy_discovery(df, args):
                       message="Step 2/7: Detecting market regimes...")
         
         from regime_detector import RegimeDetector
-        import pandas as pd
         
         # Ensure output directory exists
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
