@@ -7,8 +7,6 @@ Test script for batch progress display
 import sys
 import time
 from pathlib import Path
-import pandas as pd
-import numpy as np
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent))

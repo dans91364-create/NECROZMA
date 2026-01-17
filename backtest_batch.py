@@ -73,15 +73,12 @@ class BatchProgressTracker:
         pct = 100 * self.current_strategy / self.total_strategies
         elapsed = time.time() - self.start_time
         
-        # Estimate time remaining
-        if self.current_strategy > 0:
-            avg_time = elapsed / self.current_strategy
-            remaining = (self.total_strategies - self.current_strategy) * avg_time
-            eta_mins = int(remaining / 60)
-            eta_secs = int(remaining % 60)
-            eta_str = f"{eta_mins}m{eta_secs:02d}s" if eta_mins > 0 else f"{eta_secs}s"
-        else:
-            eta_str = "calculating..."
+        # Estimate time remaining (current_strategy is always >= 1 here)
+        avg_time = elapsed / self.current_strategy
+        remaining = (self.total_strategies - self.current_strategy) * avg_time
+        eta_mins = int(remaining / 60)
+        eta_secs = int(remaining % 60)
+        eta_str = f"{eta_mins}m{eta_secs:02d}s" if eta_mins > 0 else f"{eta_secs}s"
         
         # Batch prefix
         if self.batch_number and self.total_batches:

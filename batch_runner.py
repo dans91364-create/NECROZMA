@@ -108,10 +108,9 @@ class BatchRunner:
             "--total-batches", str(self.num_batches)
         ]
         
-        # Run subprocess (stream output for real-time progress display)
-        # Note: capture_output=False means errors are printed directly to terminal
-        # but not captured for programmatic handling. This is intentional to allow
-        # real-time progress visibility. stderr is redirected to a log file for debugging.
+        # Run subprocess (stream stdout for real-time progress display)
+        # Note: stdout streams directly to terminal for real-time progress visibility
+        # stderr is captured to error log file for debugging while still visible in terminal
         start_time = time.time()
         try:
             with open(error_log_file, 'w') as error_log:
