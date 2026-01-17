@@ -124,7 +124,7 @@ class MeanReverter(Strategy):
     def __init__(self, params: Dict):
         super().__init__("MeanReverter", params)
         self.lookback = params.get("lookback_periods", 20)
-        self.threshold = params.get("threshold", 2.0)
+        self.threshold = params.get("threshold", 1.5)  # Changed from 2.0 to 1.5
         
         # Add rules
         self.add_rule({
@@ -263,9 +263,9 @@ class MeanReverterV2(Strategy):
         super().__init__("MeanReverterV2", params)
         self.lookback = params.get("lookback_periods", 20)
         self.threshold = params.get("threshold", 2.0)
-        self.rsi_oversold = 30
-        self.rsi_overbought = 70
-        self.volume_multiplier = 1.5
+        self.rsi_oversold = params.get("rsi_oversold", 25)  # Changed from 30
+        self.rsi_overbought = params.get("rsi_overbought", 75)  # Changed from 70
+        self.volume_multiplier = params.get("volume_multiplier", 1.3)  # Changed from 1.5
         
         # Add rules
         self.add_rule({
@@ -466,6 +466,7 @@ class MomentumBurst(Strategy):
         self.lookback = params.get("lookback_periods", 20)
         self.threshold = params.get("threshold", 2.0)  # Std dev threshold
         self.volume_multiplier = 1.5
+        self.cooldown = params.get("cooldown", 60)  # NEW: cooldown candles
         
         # Add rules
         self.add_rule({
@@ -499,13 +500,19 @@ class MomentumBurst(Strategy):
             else:
                 volume_surge = True  # No volume filter if not available
             
-            # Buy on upward momentum burst with volume
-            buy_signal = momentum_burst_up & volume_surge
-            signals[buy_signal] = 1
+            # RAW signals before cooldown
+            raw_buy = momentum_burst_up & volume_surge
+            raw_sell = momentum_burst_down & volume_surge
             
-            # Sell on downward momentum burst with volume
-            sell_signal = momentum_burst_down & volume_surge
-            signals[sell_signal] = -1
+            # Apply cooldown - only allow signal if no signal in last N candles
+            last_signal_idx = -self.cooldown - 1
+            for i in range(len(signals)):
+                if raw_buy.iloc[i] and (i - last_signal_idx) > self.cooldown:
+                    signals.iloc[i] = 1
+                    last_signal_idx = i
+                elif raw_sell.iloc[i] and (i - last_signal_idx) > self.cooldown:
+                    signals.iloc[i] = -1
+                    last_signal_idx = i
         
         return signals
 
@@ -525,7 +532,7 @@ class PatternRecognition(Strategy):
     def __init__(self, params: Dict):
         super().__init__("PatternRecognition", params)
         self.lookback = params.get("lookback_periods", 5)
-        self.threshold = params.get("threshold", 0.6)  # Pattern confidence threshold
+        self.threshold = params.get("threshold", 0.3)  # Changed from 0.6
         
         # Add rules
         self.add_rule({
@@ -911,6 +918,10 @@ class StrategyFactory:
         thresholds = self.params.get("thresholds", [1.0, 2.0, 3.0])
         stop_losses = self.params.get("stop_loss_pips", [10, 20, 30])
         take_profits = self.params.get("take_profit_pips", [20, 30, 40])
+        cooldowns = self.params.get("cooldown", [30, 60, 120, 240])
+        rsi_oversolds = self.params.get("rsi_oversold", [20, 25, 30, 35])
+        rsi_overboughts = self.params.get("rsi_overbought", [65, 70, 75, 80])
+        pattern_thresholds = self.params.get("pattern_threshold", [0.2, 0.3, 0.4, 0.5])
         
         # Generate combinations
         combinations = []
@@ -919,12 +930,35 @@ class StrategyFactory:
         ):
             # Only keep reasonable risk/reward
             if profit >= stop * 1.5:
-                combinations.append({
+                # Base combination
+                base_params = {
                     "lookback_periods": lookback,
                     "threshold": threshold,
                     "stop_loss_pips": stop,
                     "take_profit_pips": profit,
-                })
+                }
+                
+                # Add base combination
+                combinations.append(base_params.copy())
+                
+                # Add cooldown variations for MomentumBurst
+                for cooldown in cooldowns:
+                    params = base_params.copy()
+                    params["cooldown"] = cooldown
+                    combinations.append(params)
+                
+                # Add RSI variations for MeanReverterV2
+                for rsi_os, rsi_ob in zip(rsi_oversolds, rsi_overboughts):
+                    params = base_params.copy()
+                    params["rsi_oversold"] = rsi_os
+                    params["rsi_overbought"] = rsi_ob
+                    combinations.append(params)
+                
+                # Add pattern threshold variations
+                for pt in pattern_thresholds:
+                    params = base_params.copy()
+                    params["pattern_threshold"] = pt
+                    combinations.append(params)
         
         return combinations
     
@@ -957,13 +991,16 @@ class StrategyFactory:
             
             for params in param_combinations:
                 # Create unique name including all key parameters
-                strategy_name = (
-                    f"{template_name}_"
-                    f"L{params['lookback_periods']}_"
-                    f"T{params['threshold']}_"
-                    f"SL{params['stop_loss_pips']}_"
-                    f"TP{params['take_profit_pips']}"
-                )
+                # Strategy-specific parameter additions
+                strategy_name = f"{template_name}_L{params['lookback_periods']}_T{params['threshold']}_SL{params['stop_loss_pips']}_TP{params['take_profit_pips']}"
+                
+                # Add strategy-specific parameters to name
+                if template_name == "MomentumBurst" and "cooldown" in params:
+                    strategy_name += f"_CD{params['cooldown']}"
+                elif template_name == "MeanReverterV2" and "rsi_oversold" in params and "rsi_overbought" in params:
+                    strategy_name += f"_RSI{params['rsi_oversold']}-{params['rsi_overbought']}"
+                elif template_name == "PatternRecognition" and "pattern_threshold" in params:
+                    strategy_name += f"_PT{params['pattern_threshold']}"
                 
                 # Check for duplicates
                 if strategy_name in strategy_names:
