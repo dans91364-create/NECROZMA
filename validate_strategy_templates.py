@@ -132,7 +132,6 @@ def test_all_templates():
         (TrendFollower, "TrendFollower"),
         (MeanReverter, "MeanReverter"),
         (BreakoutTrader, "BreakoutTrader"),
-        (RegimeAdapter, "RegimeAdapter"),
         (MeanReverterV2, "MeanReverterV2"),
         (ScalpingStrategy, "ScalpingStrategy"),
         (SessionBreakout, "SessionBreakout"),

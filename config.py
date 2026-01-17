@@ -440,37 +440,30 @@ METRIC_THRESHOLDS = {
 
 # Strategy templates to generate
 STRATEGY_TEMPLATES = [
-    # Existing
     "TrendFollower",
     "MeanReverter",
-    "MeanReverterV2",      # NEW
     "BreakoutTrader",
-    "RegimeAdapter",
-    "ScalpingStrategy",    # NEW
-    "SessionBreakout",     # NEW
-    "MomentumBurst",       # NEW
-    "PatternRecognition",  # NEW
-    # NEW - Correlation
-    "CorrelationTrader",
-    "PairDivergence",
-    "LeadLagStrategy",
-    "RiskSentiment",
-    "USDStrength",
+    "MeanReverterV2",
+    "ScalpingStrategy",
+    "SessionBreakout",
+    "MomentumBurst",
+    "PatternRecognition",
+    # REMOVED: CorrelationTrader, PairDivergence, LeadLagStrategy, RiskSentiment, USDStrength, RegimeAdapter
 ]
 
 # Parameter ranges for strategy generation
 STRATEGY_PARAMS = {
-    "lookback_periods": [5, 10, 15, 20, 30],
-    "thresholds": [0.5, 1.0, 1.5, 2.0, 2.5, 3.0],
+    "lookback_periods": [5, 10, 15, 20, 30, 50],  # More variations
+    "thresholds": [0.5, 0.8, 1.0, 1.2, 1.5, 1.8, 2.0, 2.5],  # More variations for MeanReverter
     "stop_loss_pips": [10, 15, 20, 30],
     "take_profit_pips": [20, 30, 40, 50],
-    # Correlation-specific params
-    "correlation_threshold": [0.7, 0.8, 0.85],
-    "zscore_entry": [1.5, 2.0, 2.5],
-    "divergence_std": [1.5, 2.0, 2.5],
-    "lag_periods": [1, 2, 3, 5],
-    "sentiment_threshold": [0.6, 0.7, 0.8],
-    "strength_threshold": [0.6, 0.7, 0.8],
+    # NEW - MomentumBurst cooldown variations
+    "cooldown": [30, 60, 120, 240],
+    # NEW - RSI variations for MeanReverterV2
+    "rsi_oversold": [20, 25, 30, 35],
+    "rsi_overbought": [65, 70, 75, 80],
+    # NEW - PatternRecognition threshold variations
+    "pattern_threshold": [0.2, 0.3, 0.4, 0.5],
 }
 
 
