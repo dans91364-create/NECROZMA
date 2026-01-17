@@ -149,19 +149,19 @@ def create_ranking_table(df, metric_col, metric_name, top_n=20):
 
 # Tab 1: Total Return
 with tabs[0]:
-    st.header("📈 Top 20 by Total Return")
+    st.header("📈 Top Strategies by Total Return")
     st.markdown("Strategies with the highest absolute return percentage")
     
-    create_ranking_table(strategies_df, 'total_return', 'Total Return')
+    create_ranking_table(strategies_df, 'total_return', 'Total Return', top_n=300)
 
 
 # Tab 2: Largest Single Win
 with tabs[1]:
-    st.header("🚀 Top 20 by Largest Single Win")
+    st.header("🚀 Top Strategies by Largest Single Win")
     st.markdown("Strategies with the biggest individual winning trade (in pips)")
     
     if 'largest_win' in strategies_df.columns:
-        create_ranking_table(strategies_df, 'largest_win', 'Largest Win (pips)')
+        create_ranking_table(strategies_df, 'largest_win', 'Largest Win (pips)', top_n=300)
     else:
         st.warning("⚠️ 'largest_win' data not available. This requires detailed trade tracking.")
         st.info("""
@@ -173,13 +173,13 @@ with tabs[1]:
 
 # Tab 3: Average Win Size
 with tabs[2]:
-    st.header("⭐ Top 20 by Average Win Size")
+    st.header("⭐ Top Strategies by Average Win Size")
     st.markdown("Strategies with the most consistent winning trades")
     
     if 'avg_win_size' in strategies_df.columns:
-        create_ranking_table(strategies_df, 'avg_win_size', 'Average Win Size (pips)')
+        create_ranking_table(strategies_df, 'avg_win_size', 'Average Win Size (pips)', top_n=300)
     elif 'avg_win' in strategies_df.columns:
-        create_ranking_table(strategies_df, 'avg_win', 'Average Win (pips)')
+        create_ranking_table(strategies_df, 'avg_win', 'Average Win (pips)', top_n=300)
     else:
         st.warning("⚠️ 'avg_win_size' or 'avg_win' data not available.")
         st.info("""
@@ -191,26 +191,26 @@ with tabs[2]:
 
 # Tab 4: Profit Factor
 with tabs[3]:
-    st.header("💎 Top 20 by Profit Factor")
+    st.header("💎 Top Strategies by Profit Factor")
     st.markdown("Ratio of total winning trades to total losing trades (higher = better)")
     
     st.info("📌 Profit Factor = Total Win $ / Total Loss $ (values > 100 filtered as unrealistic)")
     
     if 'profit_factor' in strategies_df.columns:
-        create_ranking_table(strategies_df, 'profit_factor', 'Profit Factor')
+        create_ranking_table(strategies_df, 'profit_factor', 'Profit Factor', top_n=300)
     else:
         st.warning("⚠️ 'profit_factor' data not available.")
 
 
 # Tab 5: Expectancy
 with tabs[4]:
-    st.header("🎯 Top 20 by Expectancy")
+    st.header("🎯 Top Strategies by Expectancy")
     st.markdown("Expected profit per trade - the statistical edge")
     
     st.info("📌 Expectancy = (Win Rate × Avg Win) - (Loss Rate × Avg Loss)")
     
     if 'expectancy' in strategies_df.columns:
-        create_ranking_table(strategies_df, 'expectancy', 'Expectancy (pips per trade)')
+        create_ranking_table(strategies_df, 'expectancy', 'Expectancy (pips per trade)', top_n=300)
     else:
         st.warning("⚠️ 'expectancy' data not available.")
         st.info("""

@@ -184,7 +184,7 @@ if selected_template:
     st.subheader(f"Top Strategies for {selected_template}")
     st.info(f"📊 Total strategies in this template: {len(template_data)}")
     
-    # Get top 20 by Sharpe
+    # Get top strategies by Sharpe
     if 'sharpe_ratio' in template_data.columns:
         top_in_template = template_data.nlargest(20, 'sharpe_ratio')
         

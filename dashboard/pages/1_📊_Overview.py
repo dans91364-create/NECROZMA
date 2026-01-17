@@ -140,10 +140,10 @@ with col4:
 st.markdown("---")
 
 # Top strategies
-st.header("🏆 Top 20 Strategies by Sharpe Ratio")
+st.header("🏆 Top Strategies by Sharpe Ratio")
 
 if filtered_df is not None and not filtered_df.empty:
-    top_20 = get_top_strategies(filtered_df, by='sharpe_ratio', n=20)
+    top_20 = get_top_strategies(filtered_df, by='sharpe_ratio', n=300)
     
     if not top_20.empty:
         # Display table
@@ -182,9 +182,9 @@ if filtered_df is not None and not filtered_df.empty:
         # Download button
         csv = display_df.to_csv(index=False)
         st.download_button(
-            label="📥 Download Top 20 as CSV",
+            label="📥 Download Top Strategies as CSV",
             data=csv,
-            file_name="top_20_strategies.csv",
+            file_name="top_strategies.csv",
             mime="text/csv"
         )
         
@@ -196,7 +196,7 @@ if filtered_df is not None and not filtered_df.empty:
         col1, col2 = st.columns(2)
         
         with col1:
-            st.subheader("Top 20 by Sharpe Ratio")
+            st.subheader("Top Strategies by Sharpe Ratio")
             chart_data = top_20.head(20).copy()
             chart_data['display_name'] = chart_data['strategy_name'].str[:30] + '...'
             
