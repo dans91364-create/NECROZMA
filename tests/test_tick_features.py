@@ -15,6 +15,9 @@ import numpy as np
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Epsilon for numerical stability (must match main.py)
+EPSILON = 1e-10
+
 
 @pytest.fixture
 def sample_tick_data():
@@ -51,7 +54,7 @@ def test_tick_features_calculation(sample_tick_data):
         df['volatility'] = df['pips_change'].rolling(window=100, min_periods=1).std().fillna(0)
         
         # Trend strength: absolute normalized momentum
-        df['trend_strength'] = df['momentum'].abs() / (df['volatility'] + 1e-10)
+        df['trend_strength'] = df['momentum'].abs() / (df['volatility'] + EPSILON)
         
         # Close (alias for mid_price, needed by some strategies)
         df['close'] = df['mid_price']
@@ -122,11 +125,11 @@ def test_trend_strength_calculation(sample_tick_data):
     window = 100
     df['momentum'] = df['pips_change'].rolling(window=window, min_periods=1).sum()
     df['volatility'] = df['pips_change'].rolling(window=window, min_periods=1).std().fillna(0)
-    df['trend_strength'] = df['momentum'].abs() / (df['volatility'] + 1e-10)
+    df['trend_strength'] = df['momentum'].abs() / (df['volatility'] + EPSILON)
     
     # Check formula: trend_strength = |momentum| / (volatility + epsilon)
     for idx in [50, 100, 200, 300]:
-        expected = abs(df['momentum'].iloc[idx]) / (df['volatility'].iloc[idx] + 1e-10)
+        expected = abs(df['momentum'].iloc[idx]) / (df['volatility'].iloc[idx] + EPSILON)
         actual = df['trend_strength'].iloc[idx]
         assert np.isclose(expected, actual, rtol=1e-5), \
             f"Trend strength at row {idx} should be {expected}, got {actual}"
@@ -155,7 +158,7 @@ def test_features_not_duplicated(sample_tick_data):
     if 'momentum' not in df.columns:
         df['momentum'] = df['pips_change'].rolling(window=100, min_periods=1).sum()
         df['volatility'] = df['pips_change'].rolling(window=100, min_periods=1).std().fillna(0)
-        df['trend_strength'] = df['momentum'].abs() / (df['volatility'] + 1e-10)
+        df['trend_strength'] = df['momentum'].abs() / (df['volatility'] + EPSILON)
         df['close'] = df['mid_price']
     
     final_columns = set(df.columns)
@@ -164,7 +167,3 @@ def test_features_not_duplicated(sample_tick_data):
     
     print("✅ No duplication test passed!")
 
-
-if __name__ == "__main__":
-    # Run tests
-    pytest.main([__file__, "-v"])

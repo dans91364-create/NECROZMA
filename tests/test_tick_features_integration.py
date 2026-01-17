@@ -13,7 +13,10 @@ import pandas as pd
 import numpy as np
 
 # Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# Epsilon for numerical stability (must match main.py)
+EPSILON = 1e-10
 
 
 def create_sample_tick_dataframe(n_rows=1000):
@@ -68,7 +71,7 @@ def test_strategy_discovery_features():
         df['volatility'] = df['pips_change'].rolling(window=100, min_periods=1).std().fillna(0)
         
         # Trend strength: absolute normalized momentum
-        df['trend_strength'] = df['momentum'].abs() / (df['volatility'] + 1e-10)
+        df['trend_strength'] = df['momentum'].abs() / (df['volatility'] + EPSILON)
         
         # Close (alias for mid_price, needed by some strategies)
         df['close'] = df['mid_price']
