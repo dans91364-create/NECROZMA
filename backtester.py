@@ -41,6 +41,10 @@ DEFAULT_LOT_SIZE = 0.1
 DEFAULT_PIP_VALUE_PER_LOT = 10
 DEFAULT_PIP_DECIMAL_PLACES = 4
 
+# Commission and multi-lot testing
+DEFAULT_LOT_SIZES = [0.01, 0.1, 1.0]  # micro, mini, standard
+DEFAULT_COMMISSION_PER_LOT = 0.05  # $0.05 per side per standard lot
+
 
 # ═══════════════════════════════════════════════════════════════
 # 📊 PERFORMANCE METRICS
@@ -67,7 +71,11 @@ class BacktestResults:
     ulcer_index: float
     trades: pd.DataFrame
     equity_curve: pd.Series
-    trades_detailed: List[Dict] = field(default_factory=list)  
+    trades_detailed: List[Dict] = field(default_factory=list)
+    lot_size: float = 0.1
+    gross_pnl: float = 0.0
+    total_commission: float = 0.0
+    net_pnl: float = 0.0  
     """
     Detailed trade information including:
     - entry_time, exit_time: Timestamps as strings
@@ -101,6 +109,10 @@ class BacktestResults:
             "expectancy": self.expectancy,
             "recovery_factor": self.recovery_factor,
             "ulcer_index": self.ulcer_index,
+            "lot_size": self.lot_size,
+            "gross_pnl": self.gross_pnl,
+            "total_commission": self.total_commission,
+            "net_pnl": self.net_pnl,
         }
         
         # Add detailed trades if available
@@ -138,6 +150,11 @@ class Backtester:
         self.lot_size = capital_config.get('default_lot_size', DEFAULT_LOT_SIZE)
         self.pip_value_per_lot = capital_config.get('pip_value_per_lot', DEFAULT_PIP_VALUE_PER_LOT)
         self.pip_decimal_places = capital_config.get('pip_decimal_places', DEFAULT_PIP_DECIMAL_PLACES)
+        
+        # Extract backtester-specific configuration
+        backtester_config = self.config.get('backtester', {})
+        self.lot_sizes = backtester_config.get('lot_sizes', DEFAULT_LOT_SIZES)
+        self.commission_per_lot = backtester_config.get('commission_per_lot', DEFAULT_COMMISSION_PER_LOT)
         
         # Track detailed trade information
         self.trades_detailed = []
@@ -356,13 +373,20 @@ class Backtester:
         
         bar = self.df.iloc[idx]
         
-        # Calculate volatility (ATR-like measure over last 20 bars)
+        # Calculate volatility using pips_change if available, otherwise fallback
         window_start = max(0, idx - 20)
         window = self.df.iloc[window_start:idx + 1]
         
-        if len(window) > 1:
-            high_low_range = window['high'] - window['low']
-            volatility = (high_low_range.mean() / window['close'].mean()) if window['close'].mean() > 0 else 0.0
+        if 'pips_change' in window.columns and len(window) > 1:
+            # Use pips_change standard deviation for tick data
+            volatility = float(window['pips_change'].std())
+        elif 'high' in window.columns and 'low' in window.columns and 'close' in window.columns:
+            # Fallback to OHLC-based volatility for backward compatibility
+            if len(window) > 1:
+                high_low_range = window['high'] - window['low']
+                volatility = (high_low_range.mean() / window['close'].mean()) if window['close'].mean() > 0 else 0.0
+            else:
+                volatility = 0.0
         else:
             volatility = 0.0
         
@@ -376,8 +400,8 @@ class Backtester:
         else:
             volume_relative = 1.0
         
-        # Spread (use default if not available)
-        spread_pips = float(bar.get('spread', 1.5))
+        # Spread (use spread_pips if available, otherwise default)
+        spread_pips = float(bar.get('spread_pips', bar.get('spread', 1.5)))
         
         # Pattern detected
         pattern_detected = str(bar.get('pattern', 'unknown'))
@@ -406,14 +430,15 @@ class Backtester:
     
     def _get_price_history(self, entry_idx: int, exit_idx: int) -> Dict:
         """
-        Get OHLCV data around the trade for charting.
+        Get price data around the trade for charting.
+        Works with both tick data (bid/ask/mid_price) and OHLC data.
         
         Args:
             entry_idx (int): Entry bar index
             exit_idx (int): Exit bar index
         
         Returns:
-            dict: Price history with timestamps and OHLC data
+            dict: Price history with timestamps and price data
         """
         if self.df is None:
             return {}
@@ -424,20 +449,35 @@ class Backtester:
         
         history_slice = self.df.iloc[start_idx:end_idx]
         
+        result = {
+            'timestamps': [str(ts) for ts in history_slice.index],
+        }
+        
+        # Try tick data columns first
+        if 'bid' in history_slice.columns and 'ask' in history_slice.columns:
+            result['bid'] = [float(x) for x in history_slice['bid'].tolist()]
+            result['ask'] = [float(x) for x in history_slice['ask'].tolist()]
+        
+        if 'mid_price' in history_slice.columns:
+            result['mid_price'] = [float(x) for x in history_slice['mid_price'].tolist()]
+        
+        # Fallback to OHLC if available (backward compatibility)
+        if 'open' in history_slice.columns:
+            result['open'] = [float(x) for x in history_slice['open'].tolist()]
+        if 'high' in history_slice.columns:
+            result['high'] = [float(x) for x in history_slice['high'].tolist()]
+        if 'low' in history_slice.columns:
+            result['low'] = [float(x) for x in history_slice['low'].tolist()]
+        if 'close' in history_slice.columns:
+            result['close'] = [float(x) for x in history_slice['close'].tolist()]
+        
         # Get volume data efficiently
         if 'volume' in history_slice.columns:
-            volume_data = [float(x) for x in history_slice['volume'].tolist()]
+            result['volume'] = [float(x) for x in history_slice['volume'].tolist()]
         else:
-            volume_data = [0.0] * len(history_slice)
+            result['volume'] = [0.0] * len(history_slice)
         
-        return {
-            'timestamps': [str(ts) for ts in history_slice.index],
-            'open': [float(x) for x in history_slice['open'].tolist()],
-            'high': [float(x) for x in history_slice['high'].tolist()],
-            'low': [float(x) for x in history_slice['low'].tolist()],
-            'close': [float(x) for x in history_slice['close'].tolist()],
-            'volume': volume_data
-        }
+        return result
     
     def _record_detailed_trade(self, entry_idx: int, exit_idx: int, 
                               entry_price: float, exit_price: float,
@@ -497,24 +537,32 @@ class Backtester:
     def simulate_trades(self, signals: pd.Series, prices: pd.Series,
                        stop_loss_pips: float = 20, 
                        take_profit_pips: float = 40,
-                       pip_value: float = 0.0001) -> pd.DataFrame:
+                       pip_value: float = 0.0001,
+                       bid_prices: pd.Series = None,
+                       ask_prices: pd.Series = None) -> pd.DataFrame:
         """
-        Simulate trades from signals with Forex position sizing
+        Simulate trades from signals with realistic bid/ask execution
+        
+        Uses bid/ask for realistic execution:
+        - Long: buy at ask, sell at bid
+        - Short: sell at bid, buy at ask (to close)
         
         PnL is calculated in USD based on lot size:
         - Pips are calculated from price changes
         - Pips are converted to USD using lot_size and pip_value_per_lot
-        - For 0.1 lot EUR/USD: 20 pips = 20 * ($10/pip/lot * 0.1) = $20
+        - Commission is added per trade
         
         Args:
             signals: Series with signals (1=buy, -1=sell, 0=neutral)
-            prices: Series with prices
+            prices: Series with prices (mid_price or close as fallback)
             stop_loss_pips: Stop loss in pips
             take_profit_pips: Take profit in pips
             pip_value: Value of 1 pip in price terms (0.0001 for EUR/USD)
+            bid_prices: Series with bid prices (if None, uses prices)
+            ask_prices: Series with ask prices (if None, uses prices)
             
         Returns:
-            DataFrame with trade results (pnl in USD)
+            DataFrame with trade results (pnl in USD including commission)
         """
         trades = []
         in_position = False
@@ -522,158 +570,194 @@ class Backtester:
         entry_idx = 0
         position_type = 0  # 1=long, -1=short
         
+        # Use bid/ask if available, otherwise fallback to prices
+        use_bid_ask = bid_prices is not None and ask_prices is not None
+        
         for i in range(len(signals)):
             if in_position:
-                # Check exit conditions
-                current_price = prices.iloc[i]
+                # Determine current exit price based on position type
+                if use_bid_ask:
+                    # Long exits at bid, short exits at ask
+                    exit_price = bid_prices.iloc[i] if position_type == 1 else ask_prices.iloc[i]
+                else:
+                    exit_price = prices.iloc[i]
                 
                 if position_type == 1:  # Long position
                     # Calculate pips
-                    pips = (current_price - entry_price) / pip_value
+                    pips = (exit_price - entry_price) / pip_value
                     
                     # Check stop/target
                     if pips <= -stop_loss_pips:
-                        # Stop loss hit - convert pips to USD
-                        pnl = self._pips_to_usd(-stop_loss_pips)
+                        # Stop loss hit
+                        gross_pnl = self._pips_to_usd(-stop_loss_pips)
+                        commission = 2 * self.commission_per_lot * self.lot_size  # Entry + exit
+                        net_pnl = gross_pnl - commission
+                        
                         trades.append({
                             "entry_idx": entry_idx,
                             "exit_idx": i,
                             "entry_price": entry_price,
-                            "exit_price": current_price,
-                            "pnl": pnl,
+                            "exit_price": exit_price,
+                            "pnl": net_pnl,
+                            "gross_pnl": gross_pnl,
+                            "commission": commission,
                             "type": "long",
                             "exit_reason": "stop_loss",
                         })
-                        # Record detailed trade
                         self._record_detailed_trade(
-                            entry_idx, i, entry_price, current_price,
-                            "long", -stop_loss_pips, pnl, "stop_loss"
+                            entry_idx, i, entry_price, exit_price,
+                            "long", -stop_loss_pips, net_pnl, "stop_loss"
                         )
                         in_position = False
                     elif pips >= take_profit_pips:
-                        # Take profit hit - convert pips to USD
-                        pnl = self._pips_to_usd(take_profit_pips)
+                        # Take profit hit
+                        gross_pnl = self._pips_to_usd(take_profit_pips)
+                        commission = 2 * self.commission_per_lot * self.lot_size
+                        net_pnl = gross_pnl - commission
+                        
                         trades.append({
                             "entry_idx": entry_idx,
                             "exit_idx": i,
                             "entry_price": entry_price,
-                            "exit_price": current_price,
-                            "pnl": pnl,
+                            "exit_price": exit_price,
+                            "pnl": net_pnl,
+                            "gross_pnl": gross_pnl,
+                            "commission": commission,
                             "type": "long",
                             "exit_reason": "take_profit",
                         })
-                        # Record detailed trade
                         self._record_detailed_trade(
-                            entry_idx, i, entry_price, current_price,
-                            "long", take_profit_pips, pnl, "take_profit"
+                            entry_idx, i, entry_price, exit_price,
+                            "long", take_profit_pips, net_pnl, "take_profit"
                         )
                         in_position = False
                     elif signals.iloc[i] == -1:
-                        # Exit signal - convert pips to USD
-                        pnl = self._pips_to_usd(pips)
+                        # Exit signal
+                        gross_pnl = self._pips_to_usd(pips)
+                        commission = 2 * self.commission_per_lot * self.lot_size
+                        net_pnl = gross_pnl - commission
+                        
                         trades.append({
                             "entry_idx": entry_idx,
                             "exit_idx": i,
                             "entry_price": entry_price,
-                            "exit_price": current_price,
-                            "pnl": pnl,
+                            "exit_price": exit_price,
+                            "pnl": net_pnl,
+                            "gross_pnl": gross_pnl,
+                            "commission": commission,
                             "type": "long",
                             "exit_reason": "signal",
                         })
-                        # Record detailed trade
                         self._record_detailed_trade(
-                            entry_idx, i, entry_price, current_price,
-                            "long", pips, pnl, "signal"
+                            entry_idx, i, entry_price, exit_price,
+                            "long", pips, net_pnl, "signal"
                         )
                         in_position = False
                         
                 else:  # Short position
-                    # Calculate pips
-                    pips = (entry_price - current_price) / pip_value
+                    # Calculate pips (for short: entry - exit)
+                    pips = (entry_price - exit_price) / pip_value
                     
                     # Check stop/target
                     if pips <= -stop_loss_pips:
-                        # Stop loss hit - convert pips to USD
-                        pnl = self._pips_to_usd(-stop_loss_pips)
+                        # Stop loss hit
+                        gross_pnl = self._pips_to_usd(-stop_loss_pips)
+                        commission = 2 * self.commission_per_lot * self.lot_size
+                        net_pnl = gross_pnl - commission
+                        
                         trades.append({
                             "entry_idx": entry_idx,
                             "exit_idx": i,
                             "entry_price": entry_price,
-                            "exit_price": current_price,
-                            "pnl": pnl,
+                            "exit_price": exit_price,
+                            "pnl": net_pnl,
+                            "gross_pnl": gross_pnl,
+                            "commission": commission,
                             "type": "short",
                             "exit_reason": "stop_loss",
                         })
-                        # Record detailed trade
                         self._record_detailed_trade(
-                            entry_idx, i, entry_price, current_price,
-                            "short", -stop_loss_pips, pnl, "stop_loss"
+                            entry_idx, i, entry_price, exit_price,
+                            "short", -stop_loss_pips, net_pnl, "stop_loss"
                         )
                         in_position = False
                     elif pips >= take_profit_pips:
-                        # Take profit hit - convert pips to USD
-                        pnl = self._pips_to_usd(take_profit_pips)
+                        # Take profit hit
+                        gross_pnl = self._pips_to_usd(take_profit_pips)
+                        commission = 2 * self.commission_per_lot * self.lot_size
+                        net_pnl = gross_pnl - commission
+                        
                         trades.append({
                             "entry_idx": entry_idx,
                             "exit_idx": i,
                             "entry_price": entry_price,
-                            "exit_price": current_price,
-                            "pnl": pnl,
+                            "exit_price": exit_price,
+                            "pnl": net_pnl,
+                            "gross_pnl": gross_pnl,
+                            "commission": commission,
                             "type": "short",
                             "exit_reason": "take_profit",
                         })
-                        # Record detailed trade
                         self._record_detailed_trade(
-                            entry_idx, i, entry_price, current_price,
-                            "short", take_profit_pips, pnl, "take_profit"
+                            entry_idx, i, entry_price, exit_price,
+                            "short", take_profit_pips, net_pnl, "take_profit"
                         )
                         in_position = False
                     elif signals.iloc[i] == 1:
-                        # Exit signal - convert pips to USD
-                        pnl = self._pips_to_usd(pips)
+                        # Exit signal
+                        gross_pnl = self._pips_to_usd(pips)
+                        commission = 2 * self.commission_per_lot * self.lot_size
+                        net_pnl = gross_pnl - commission
+                        
                         trades.append({
                             "entry_idx": entry_idx,
                             "exit_idx": i,
                             "entry_price": entry_price,
-                            "exit_price": current_price,
-                            "pnl": pnl,
+                            "exit_price": exit_price,
+                            "pnl": net_pnl,
+                            "gross_pnl": gross_pnl,
+                            "commission": commission,
                             "type": "short",
                             "exit_reason": "signal",
                         })
-                        # Record detailed trade
                         self._record_detailed_trade(
-                            entry_idx, i, entry_price, current_price,
-                            "short", pips, pnl, "signal"
+                            entry_idx, i, entry_price, exit_price,
+                            "short", pips, net_pnl, "signal"
                         )
                         in_position = False
             
             # Check entry signals
             if not in_position and signals.iloc[i] != 0:
                 in_position = True
-                entry_price = prices.iloc[i]
-                entry_idx = i
                 position_type = signals.iloc[i]
+                
+                # Determine entry price based on position type
+                if use_bid_ask:
+                    # Long enters at ask, short enters at bid
+                    entry_price = ask_prices.iloc[i] if position_type == 1 else bid_prices.iloc[i]
+                else:
+                    entry_price = prices.iloc[i]
+                
+                entry_idx = i
         
         return pd.DataFrame(trades)
     
     def backtest(self, strategy, df: pd.DataFrame,
-                initial_capital: float = None) -> BacktestResults:
+                initial_capital: float = None) -> Dict[float, BacktestResults]:
         """
-        Backtest a strategy
+        Backtest a strategy with multiple lot sizes
         
         Args:
             strategy: Strategy object with generate_signals method
-            df: DataFrame with price and feature data
+            df: DataFrame with price and feature data (tick or OHLC)
             initial_capital: Starting capital (uses config default if None)
             
         Returns:
-            BacktestResults object
+            Dict mapping lot_size -> BacktestResults object
+            Example: {0.01: BacktestResults(...), 0.1: BacktestResults(...), ...}
         """
         # Store DataFrame for context retrieval
         self.df = df
-        
-        # Reset detailed trades for new backtest
-        self.trades_detailed = []
         
         # Use config default if not specified
         if initial_capital is None:
@@ -695,6 +779,10 @@ class Backtester:
         else:
             raise ValueError("DataFrame must have 'mid_price' or 'close' column")
         
+        # Get bid/ask prices if available
+        bid_prices = df["bid"] if "bid" in df.columns else None
+        ask_prices = df["ask"] if "ask" in df.columns else None
+        
         # Validate price data quality
         if prices.isnull().all():
             raise ValueError("❌ All prices are null!")
@@ -705,38 +793,66 @@ class Backtester:
         if (prices <= 0).any():
             raise ValueError("❌ Price data contains zero or negative values!")
         
-        # Generate signals
+        # Generate signals once (same for all lot sizes)
         signals = strategy.generate_signals(df)
         
-        # Simulate trades
+        # Get stop loss and take profit
         stop_loss = strategy.params.get("stop_loss_pips", 20)
         take_profit = strategy.params.get("take_profit_pips", 40)
         
-        trades = self.simulate_trades(signals, prices, stop_loss, take_profit)
+        # Test multiple lot sizes in parallel
+        results_dict = {}
         
-        # Calculate equity curve
-        equity_curve = self._calculate_equity_curve(trades, initial_capital)
+        for lot_size in self.lot_sizes:
+            # Reset detailed trades for each lot size
+            self.trades_detailed = []
+            
+            # Temporarily set lot size for this iteration
+            original_lot_size = self.lot_size
+            self.lot_size = lot_size
+            
+            # Simulate trades with current lot size
+            trades = self.simulate_trades(
+                signals, prices, stop_loss, take_profit,
+                bid_prices=bid_prices, ask_prices=ask_prices
+            )
+            
+            # Calculate metrics
+            if len(trades) > 0:
+                # Calculate gross and net PnL
+                gross_pnl = trades["gross_pnl"].sum() if "gross_pnl" in trades.columns else trades["pnl"].sum()
+                total_commission = trades["commission"].sum() if "commission" in trades.columns else 0.0
+                net_pnl = gross_pnl - total_commission if "commission" in trades.columns else trades["pnl"].sum()
+            else:
+                gross_pnl = 0.0
+                total_commission = 0.0
+                net_pnl = 0.0
+            
+            # Calculate equity curve
+            equity_curve = self._calculate_equity_curve(trades, initial_capital)
+            
+            # Calculate performance metrics
+            metrics = self._calculate_metrics(trades, equity_curve)
+            
+            # Create results object
+            results = BacktestResults(
+                strategy_name=strategy.name,
+                trades=trades,
+                equity_curve=equity_curve,
+                trades_detailed=self.trades_detailed.copy(),
+                lot_size=lot_size,
+                gross_pnl=gross_pnl,
+                total_commission=total_commission,
+                net_pnl=net_pnl,
+                **metrics
+            )
+            
+            results_dict[lot_size] = results
+            
+            # Restore original lot size
+            self.lot_size = original_lot_size
         
-        # Calculate metrics
-        metrics = self._calculate_metrics(trades, equity_curve)
-        
-        # ═══ WARNING: Check if results look suspicious ═══
-        if metrics["total_return"] != 0:
-            # Returns suspiciously small (like e-07)?
-            if abs(metrics["total_return"]) < 1e-5:
-                import warnings
-                warnings.warn(f"⚠️  Suspiciously small return: {metrics['total_return']:.2e}", UserWarning)
-        
-        # Create results object
-        results = BacktestResults(
-            strategy_name=strategy.name,
-            trades=trades,
-            equity_curve=equity_curve,
-            trades_detailed=self.trades_detailed,  # Include detailed trades
-            **metrics
-        )
-        
-        return results
+        return results_dict
     
     def test_strategies(self, strategies: List['Strategy'], df: pd.DataFrame, 
                         verbose: bool = True) -> List[BacktestResults]:
