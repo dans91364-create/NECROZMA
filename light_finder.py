@@ -15,7 +15,7 @@ Features:
 
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Union
 from sklearn.preprocessing import MinMaxScaler
 
 from config import RANKING_WEIGHTS, TOP_N_STRATEGIES, OVERFITTING_CONFIG
@@ -31,6 +31,7 @@ MAX_SHARPE_FOR_NORMALIZATION = 3.0
 MAX_ULCER_FOR_NORMALIZATION = 10.0
 MAX_PROFIT_FACTOR_FOR_NORMALIZATION = 3.0
 DEFAULT_SCORE = 0.5  # Score when no variation exists
+DEFAULT_ULCER_INDEX = 5.0  # Default value when ulcer_index is missing
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -56,8 +57,25 @@ class LightFinder:
         self.weights = weights or RANKING_WEIGHTS
         self.scaler = MinMaxScaler()
         
-    def _calculate_scores(self, results: List[BacktestResults]) -> pd.DataFrame:
-        """Calculate scores for all strategies"""
+    def _calculate_scores(self, results) -> pd.DataFrame:
+        """
+        Calculate scores for all strategies
+        
+        Args:
+            results: Either a List[BacktestResults] (legacy) or pd.DataFrame (batch format)
+            
+        Returns:
+            DataFrame with calculated scores
+        """
+        # Handle DataFrame input (from batch processing)
+        if isinstance(results, pd.DataFrame):
+            return self._calculate_scores_from_df(results)
+        
+        # Handle list of BacktestResults objects (legacy)
+        return self._calculate_scores_from_objects(results)
+    
+    def _calculate_scores_from_objects(self, results: List[BacktestResults]) -> pd.DataFrame:
+        """Calculate scores from list of BacktestResults objects (legacy format)"""
         records = []
         
         for result in results:
@@ -94,6 +112,78 @@ class LightFinder:
                 "sharpe_ratio": result.sharpe_ratio,
                 "max_drawdown": result.max_drawdown,
                 "win_rate": result.win_rate,
+            })
+        
+        return pd.DataFrame(records)
+    
+    def _calculate_scores_from_df(self, results_df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calculate scores from DataFrame (batch processing format)
+        
+        Handles DataFrames with columns:
+        - strategy_name, total_return, max_drawdown, win_rate, sharpe_ratio,
+          sortino_ratio, profit_factor, n_trades
+        - ulcer_index (optional - defaults to 5.0 if missing)
+        - lot_size (optional - groups by strategy_name if present)
+        
+        Args:
+            results_df: DataFrame with backtest results
+            
+        Returns:
+            DataFrame with calculated scores for each strategy
+        """
+        # Create a copy to avoid modifying the original
+        df = results_df.copy()
+        
+        # Handle missing ulcer_index column
+        if 'ulcer_index' not in df.columns:
+            df['ulcer_index'] = DEFAULT_ULCER_INDEX
+        
+        # If DataFrame has multiple rows per strategy (different lot_sizes),
+        # we need to select the best one for each strategy
+        # For now, select the row with highest total_return per strategy
+        if 'lot_size' in df.columns and df['strategy_name'].duplicated().any():
+            # Group by strategy_name and select row with max total_return
+            df = df.loc[df.groupby('strategy_name')['total_return'].idxmax()]
+        
+        records = []
+        
+        for _, row in df.iterrows():
+            # Return score
+            return_score = row['total_return']
+            
+            # Risk score (inverse of metrics - lower is better)
+            max_dd = row['max_drawdown']
+            risk_score = 1.0 - max_dd if max_dd < 1 else 0.0
+            
+            # Consistency score
+            consistency_score = (
+                row['win_rate'] * 0.4 +
+                (row['sharpe_ratio'] / MAX_SHARPE_FOR_NORMALIZATION) * 0.3 +
+                (row['sortino_ratio'] / MAX_SHARPE_FOR_NORMALIZATION) * 0.3
+            )
+            consistency_score = min(consistency_score, 1.0)
+            
+            # Robustness score (stability)
+            ulcer = row.get('ulcer_index', DEFAULT_ULCER_INDEX)  # Use default if key doesn't exist
+            robustness_score = (
+                (row['profit_factor'] / MAX_PROFIT_FACTOR_FOR_NORMALIZATION) * 0.5 +
+                (1.0 - ulcer / MAX_ULCER_FOR_NORMALIZATION) * 0.5 
+                if ulcer < MAX_ULCER_FOR_NORMALIZATION else 0.0
+            )
+            robustness_score = max(0.0, min(robustness_score, 1.0))
+            
+            records.append({
+                "strategy_name": row['strategy_name'],
+                "return_score": return_score,
+                "risk_score": risk_score,
+                "consistency_score": consistency_score,
+                "robustness_score": robustness_score,
+                "n_trades": row['n_trades'],
+                "total_return": row['total_return'],
+                "sharpe_ratio": row['sharpe_ratio'],
+                "max_drawdown": row['max_drawdown'],
+                "win_rate": row['win_rate'],
             })
         
         return pd.DataFrame(records)
@@ -166,13 +256,12 @@ class LightFinder:
             "oos_sharpe": oos_results.sharpe_ratio,
         }
     
-    def rank_strategies(self, results: List[BacktestResults],
-                       top_n: int = None) -> pd.DataFrame:
+    def rank_strategies(self, results, top_n: int = None) -> pd.DataFrame:
         """
         Rank strategies by composite score
         
         Args:
-            results: List of BacktestResults
+            results: Either List[BacktestResults] (legacy) or pd.DataFrame (batch format)
             top_n: Number of top strategies to return
             
         Returns:
@@ -181,7 +270,14 @@ class LightFinder:
         if top_n is None:
             top_n = TOP_N_STRATEGIES
         
-        print(f"\n🌟 Ranking {len(results)} strategies...")
+        # Determine the count based on input type
+        if isinstance(results, pd.DataFrame):
+            # For DataFrame, count unique strategy names
+            n_strategies = results['strategy_name'].nunique() if 'strategy_name' in results.columns else len(results)
+        else:
+            n_strategies = len(results)
+        
+        print(f"\n🌟 Ranking {n_strategies} strategies...")
         
         # Calculate scores
         scores_df = self._calculate_scores(results)
@@ -206,10 +302,37 @@ class LightFinder:
         
         return ranked_df.head(top_n)
     
-    def get_top_strategies_by_metric(self, results: List[BacktestResults],
+    def get_top_strategies_by_metric(self, results,
                                      metric: str = "sharpe_ratio",
-                                     top_n: int = 10) -> List[BacktestResults]:
-        """Get top N strategies by specific metric"""
+                                     top_n: int = 10):
+        """
+        Get top N strategies by specific metric
+        
+        Args:
+            results: Either List[BacktestResults] (legacy) or pd.DataFrame (batch format)
+            metric: Metric name to sort by (e.g., "sharpe_ratio", "total_return")
+            top_n: Number of top strategies to return
+            
+        Returns:
+            For List input: List[BacktestResults]
+            For DataFrame input: pd.DataFrame
+        """
+        # Handle DataFrame input
+        if isinstance(results, pd.DataFrame):
+            df = results.copy()
+            
+            # Handle multiple lot_sizes per strategy (if present)
+            if 'lot_size' in df.columns and df['strategy_name'].duplicated().any():
+                # Group by strategy_name and select row with max total_return
+                df = df.loc[df.groupby('strategy_name')['total_return'].idxmax()]
+            
+            # Sort by metric and return top N
+            if metric in df.columns:
+                return df.nlargest(top_n, metric)
+            else:
+                raise ValueError(f"Metric '{metric}' not found in DataFrame columns")
+        
+        # Handle list of BacktestResults objects (legacy)
         sorted_results = sorted(
             results,
             key=lambda r: getattr(r, metric),
