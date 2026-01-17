@@ -159,6 +159,7 @@ class Backtester:
         # Track detailed trade information
         self.trades_detailed = []
         self.df = None  # Store DataFrame for context retrieval
+        self.save_detailed_trades = False  # Default False for performance (skips price_history and market_context collection)
     
     def _pips_to_usd(self, pips: float) -> float:
         """
@@ -496,6 +497,9 @@ class Backtester:
             pnl_usd: P&L in USD
             exit_reason: Reason for exit ('stop_loss', 'take_profit', 'signal')
         """
+        if not self.save_detailed_trades:  # Skip if False for performance
+            return
+        
         if self.df is None:
             return
         
@@ -573,7 +577,14 @@ class Backtester:
         # Use bid/ask if available, otherwise fallback to prices
         use_bid_ask = bid_prices is not None and ask_prices is not None
         
-        for i in range(len(signals)):
+        # Progress tracking
+        total_signals = len(signals)
+        
+        for i in range(total_signals):
+            # Progress indicator every 1M ticks
+            if i > 0 and i % 1_000_000 == 0:
+                print(f"   ⏳ Processed {i:,}/{total_signals:,} ticks ({100*i/total_signals:.1f}%)...")
+            
             if in_position:
                 # Determine current exit price based on position type
                 if use_bid_ask:
@@ -744,7 +755,8 @@ class Backtester:
     
     def backtest(self, strategy, df: pd.DataFrame,
                 initial_capital: float = None,
-                multi_lot: bool = True) -> Dict[float, BacktestResults]:
+                multi_lot: bool = True,
+                save_detailed_trades: bool = False) -> Dict[float, BacktestResults]:
         """
         Backtest a strategy with multiple lot sizes
         
@@ -753,6 +765,7 @@ class Backtester:
             df: DataFrame with price and feature data (tick or OHLC)
             initial_capital: Starting capital (uses config default if None)
             multi_lot: If True, tests multiple lot sizes; if False, single lot (default: True)
+            save_detailed_trades: If True, saves detailed trade info (slow for large datasets) (default: False)
             
         Returns:
             If multi_lot=True: Dict mapping lot_size -> BacktestResults object
@@ -760,6 +773,9 @@ class Backtester:
         """
         # Store DataFrame for context retrieval
         self.df = df
+        
+        # Set flag for detailed trade tracking (set per backtest call to control behavior)
+        self.save_detailed_trades = save_detailed_trades
         
         # Use config default if not specified
         if initial_capital is None:
