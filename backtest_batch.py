@@ -30,6 +30,10 @@ from batch_utils import prepare_features
 class BatchProgressTracker:
     """Custom progress tracker for batch processing with real-time updates"""
     
+    # Display constants
+    MAX_STRATEGY_NAME_LENGTH = 40  # Maximum chars to show for strategy name
+    PROGRESS_LINE_LENGTH = 120     # Total line length for clearing
+    
     def __init__(self, batch_number, total_batches, total_strategies, update_interval=5):
         """
         Initialize batch progress tracker
@@ -87,7 +91,7 @@ class BatchProgressTracker:
         
         # Print progress (use \r to overwrite line)
         print(f"\r{batch_prefix}:  Processing {self.current_strategy:3d}/{self.total_strategies:3d} "
-              f"({pct:5.1f}%) | {strategy_name[:40]:40s} | ETA: {eta_str:>8s}   ", 
+              f"({pct:5.1f}%) | {strategy_name[:self.MAX_STRATEGY_NAME_LENGTH]:40s} | ETA: {eta_str:>8s}   ", 
               end="", flush=True)
     
     def reprint_current(self):
@@ -232,7 +236,7 @@ def main():
                 
             except Exception as e:
                 # Clear progress line before printing error, then restore it
-                print(f"\r{' ' * 100}\r", end="")  # Clear the line
+                print(f"\r{' ' * self.PROGRESS_LINE_LENGTH}\r", end="")  # Clear the line
                 print(f"   ⚠️  Strategy '{strategy.name}' failed: {e}")
                 # Restore progress line (last printed progress)
                 progress.reprint_current()

@@ -94,6 +94,7 @@ class BatchRunner:
             Tuple of (success, elapsed_time, output_file)
         """
         output_file = self.output_dir / f"results_batch_{batch_idx}.parquet"
+        error_log_file = self.output_dir / f"error_batch_{batch_idx}.log"
         
         # Build command with batch context for progress display
         cmd = [
@@ -110,22 +111,27 @@ class BatchRunner:
         # Run subprocess (stream output for real-time progress display)
         # Note: capture_output=False means errors are printed directly to terminal
         # but not captured for programmatic handling. This is intentional to allow
-        # real-time progress visibility.
+        # real-time progress visibility. stderr is redirected to a log file for debugging.
         start_time = time.time()
         try:
-            result = subprocess.run(
-                cmd,
-                cwd=Path(__file__).parent,
-                capture_output=False,  # Stream output to terminal for real-time progress
-                timeout=3600  # 1 hour timeout per batch
-            )
+            with open(error_log_file, 'w') as error_log:
+                result = subprocess.run(
+                    cmd,
+                    cwd=Path(__file__).parent,
+                    stdout=None,  # Stream to terminal
+                    stderr=error_log,  # Capture errors to file for debugging
+                    timeout=3600  # 1 hour timeout per batch
+                )
             elapsed = time.time() - start_time
             
             if result.returncode == 0:
+                # Clean up error log if successful
+                if error_log_file.exists() and error_log_file.stat().st_size == 0:
+                    error_log_file.unlink()
                 return True, elapsed, str(output_file)
             else:
                 print(f"\n   ❌ Batch {batch_idx} failed with return code {result.returncode}")
-                print(f"      Check output above for error details")
+                print(f"      Check output above or error log: {error_log_file}")
                 return False, elapsed, str(output_file)
                 
         except subprocess.TimeoutExpired:
