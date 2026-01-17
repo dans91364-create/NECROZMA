@@ -41,8 +41,8 @@ def test_progress_with_errors():
         
         # Simulate errors on specific strategies
         if i == 5 or i == 12:
-            # Clear the line and print error (use class constant)
-            print(f"\r{' ' * BatchProgressTracker.PROGRESS_LINE_LENGTH}\r", end="")
+            # Clear the line and print error
+            BatchProgressTracker.clear_progress_line()
             print(f"   ⚠️  Strategy '{strategy_name}' failed: Simulated error for testing")
             # Restore progress line
             progress.reprint_current()

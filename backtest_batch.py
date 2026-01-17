@@ -102,6 +102,11 @@ class BatchProgressTracker:
     def finish(self):
         """Print final newline after progress is complete"""
         print()  # Newline after progress updates
+    
+    @classmethod
+    def clear_progress_line(cls):
+        """Clear the progress line (useful before printing error messages)"""
+        print(f"\r{' ' * cls.PROGRESS_LINE_LENGTH}\r", end="")
 
 
 def parse_arguments():
@@ -214,8 +219,8 @@ def main():
         bt_start = time.time()
         
         # Initialize custom progress tracker
-        batch_number = args.batch_number if args.batch_number else None
-        total_batches = args.total_batches if args.total_batches else None
+        batch_number = args.batch_number or None
+        total_batches = args.total_batches or None
         progress = BatchProgressTracker(batch_number, total_batches, batch_size, update_interval=5)
         
         backtester = Backtester()
@@ -236,7 +241,7 @@ def main():
                 
             except Exception as e:
                 # Clear progress line before printing error, then restore it
-                print(f"\r{' ' * BatchProgressTracker.PROGRESS_LINE_LENGTH}\r", end="")  # Clear the line
+                BatchProgressTracker.clear_progress_line()
                 print(f"   ⚠️  Strategy '{strategy.name}' failed: {e}")
                 # Restore progress line (last printed progress)
                 progress.reprint_current()

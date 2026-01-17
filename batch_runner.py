@@ -120,6 +120,7 @@ class BatchRunner:
                     cwd=Path(__file__).parent,
                     stdout=None,  # Stream to terminal
                     stderr=error_log,  # Capture errors to file for debugging
+                    text=True,  # Ensure text mode for error log
                     timeout=3600  # 1 hour timeout per batch
                 )
             elapsed = time.time() - start_time
