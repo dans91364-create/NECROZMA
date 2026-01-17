@@ -17,12 +17,11 @@ Features:
 import json
 import pandas as pd
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 from datetime import datetime
 
 from backtester import BacktestResults
 from config import FILE_PREFIX
-from typing import Union
 
 
 
@@ -91,8 +90,14 @@ class LightReportGenerator:
         lookup = {}
         for strategy_name in df['strategy_name'].unique():
             strategy_rows = df[df['strategy_name'] == strategy_name]
-            # Use best lot_size (highest sharpe) or first row
-            best_row = strategy_rows.loc[strategy_rows['sharpe_ratio'].idxmax()]
+            
+            # Use best lot_size (highest sharpe) or first row if sharpe is invalid
+            if 'sharpe_ratio' in strategy_rows.columns and not strategy_rows['sharpe_ratio'].isna().all():
+                best_row = strategy_rows.loc[strategy_rows['sharpe_ratio'].idxmax()]
+            else:
+                # Fallback to first row if sharpe_ratio is missing or all NaN
+                best_row = strategy_rows.iloc[0]
+            
             lookup[strategy_name] = best_row.to_dict()
         return lookup
     

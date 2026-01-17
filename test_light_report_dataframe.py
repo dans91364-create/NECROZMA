@@ -279,6 +279,34 @@ class TestLightReportDataFrameCompatibility:
         strategy = report["top_strategies"][0]
         assert strategy["trading_stats"]["largest_win"] == 0
         assert strategy["trading_stats"]["largest_loss"] == 0
+    
+    def test_dataframe_with_nan_sharpe_ratios(self, top_strategies_df):
+        """Test DataFrame with NaN sharpe ratios (should fallback to first row)"""
+        generator = LightReportGenerator(output_dir=Path("/tmp/test_reports"))
+        
+        # Create DataFrame where all sharpe ratios are NaN
+        nan_df = pd.DataFrame({
+            'strategy_name': ['Strategy_A', 'Strategy_A'],
+            'lot_size': [0.01, 0.02],
+            'sharpe_ratio': [float('nan'), float('nan')],
+            'sortino_ratio': [2.52, 2.28],
+            'calmar_ratio': [2.5, 2.3],
+            'total_return': [0.35, 0.33],
+            'max_drawdown': [0.12, 0.13],
+            'win_rate': [0.62, 0.60],
+            'n_trades': [50, 52],
+            'profit_factor': [2.0, 1.9],
+            'avg_win': [0.003, 0.0029],
+            'avg_loss': [-0.0015, -0.0016],
+            'expectancy': [0.002, 0.0019],
+        })
+        
+        # Should not raise an error, should use first row
+        lookup = generator._df_to_results_lookup(nan_df)
+        
+        assert 'Strategy_A' in lookup
+        # Should select first row when sharpe is NaN
+        assert lookup['Strategy_A']['lot_size'] == 0.01
 
 
 if __name__ == "__main__":
