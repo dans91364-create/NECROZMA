@@ -738,7 +738,7 @@ class Backtester:
         
         return results
     
-    def test_strategies(self, strategies: List, df: pd.DataFrame, 
+    def test_strategies(self, strategies: List['Strategy'], df: pd.DataFrame, 
                         verbose: bool = True) -> List[BacktestResults]:
         """
         Backtest multiple strategies
