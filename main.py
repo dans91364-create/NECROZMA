@@ -1002,17 +1002,17 @@ def run_strategy_discovery(df, args):
         print(f"\n✅ Ranking complete in {elapsed:.1f}s")
         print(f"   Top strategies selected: {n_top}")
         
-        if top_strategies:
-            best = top_strategies[0]
-            print(f"\n   🏆 Best Strategy: {best.get('name', 'Unknown')}")
-            print(f"      Sharpe Ratio: {best.get('sharpe_ratio', 0):.2f}")
-            print(f"      Total Return: {best.get('total_return', 0):.2%}")
-            print(f"      Win Rate: {best.get('win_rate', 0):.2%}")
+        if not top_strategies.empty:
+            best = top_strategies.iloc[0]
+            print(f"\n   🏆 Best Strategy: {best['strategy_name']}")
+            print(f"      Sharpe Ratio: {best['sharpe_ratio']:.2f}")
+            print(f"      Total Return: {best['total_return']:.2%}")
+            print(f"      Win Rate: {best['win_rate']:.2%}")
             
             lore.broadcast(EventType.LIGHT_FOUND, 
-                          strategy_name=best.get('name', 'Unknown'),
-                          sharpe=best.get('sharpe_ratio', 0),
-                          return_pct=best.get('total_return', 0) * 100)
+                          strategy_name=best['strategy_name'],
+                          sharpe=best['sharpe_ratio'],
+                          return_pct=best['total_return'] * 100)
         
         # ─────────────────────────────────────────────────────────
         # STEP 7: FINAL REPORT
