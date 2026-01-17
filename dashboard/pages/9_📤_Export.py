@@ -126,7 +126,7 @@ st.markdown("---")
 st.header("👀 Preview Export Data")
 
 if not filtered_df.empty:
-    st.dataframe(filtered_df.head(20), use_container_width=True)
+    st.dataframe(filtered_df.head(300), use_container_width=True)
     st.info(f"Total rows to export: {len(filtered_df)}")
 else:
     st.warning("No data to export with current filters")

@@ -211,7 +211,7 @@ if 'expectancy' in filtered_df.columns:
     col1, col2 = st.columns(2)
     
     with col1:
-        st.subheader("Top 20 by Expectancy")
+        st.subheader("Top Strategies by Expectancy")
         top_exp = filtered_df.nlargest(20, 'expectancy')[['strategy_name', 'expectancy', 'n_trades', 'net_pnl']]
         top_exp = top_exp.rename(columns={
             'strategy_name': 'Strategy',

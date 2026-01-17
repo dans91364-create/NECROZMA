@@ -517,7 +517,7 @@ RANKING_WEIGHTS = {
 }
 
 # Top strategies to report
-TOP_N_STRATEGIES = 20
+TOP_N_STRATEGIES = 300
 
 # Overfitting detection
 OVERFITTING_CONFIG = {

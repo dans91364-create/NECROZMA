@@ -1313,6 +1313,21 @@ def main():
     # Strategy discovery has its own flow and doesn't populate analyzer.results
     if analyzer.results:
         final_judgment = light_that_burns_the_sky(analyzer)
+        
+        # Save final_judgment to JSON
+        if final_judgment:
+            import json
+            from pathlib import Path
+            from config import OUTPUT_DIR
+            
+            output_dir = Path(OUTPUT_DIR)
+            output_dir.mkdir(parents=True, exist_ok=True)
+            
+            judgment_path = output_dir / "final_judgment.json"
+            with open(judgment_path, 'w') as f:
+                json.dump(final_judgment, f, indent=2, default=str)
+            
+            print(f"   💾 Saved regime analysis to {judgment_path}")
     else:
         # No results to analyze (strategy discovery mode without universe analysis)
         if args.strategy_discovery:

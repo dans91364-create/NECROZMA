@@ -116,10 +116,10 @@ if not use_precalculated:
     )
     
     # Sort by composite score
-    composite_df = calc_df.nlargest(20, 'composite_score').copy()
+    composite_df = calc_df.nlargest(300, 'composite_score').copy()
 
-# Display top 20 strategies
-st.header("🏆 Top 20 Strategies by Composite Score")
+# Display top strategies
+st.header("🏆 Top Strategies by Composite Score")
 
 # Create display dataframe
 display_cols = ['strategy_name', 'composite_score']
@@ -236,17 +236,17 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     if not composite_df.empty:
-        avg_composite = composite_df['composite_score'].mean()
+        avg_composite = composite_df.head(20)['composite_score'].mean()
         st.metric("Avg Composite Score (Top 20)", f"{avg_composite:.3f}")
 
 with col2:
     if 'total_return' in composite_df.columns:
-        avg_return = composite_df['total_return'].mean() * 100
+        avg_return = composite_df.head(20)['total_return'].mean() * 100
         st.metric("Avg Return (Top 20)", f"{avg_return:.2f}%")
 
 with col3:
     if 'sharpe_ratio' in composite_df.columns:
-        avg_sharpe = composite_df['sharpe_ratio'].mean()
+        avg_sharpe = composite_df.head(20)['sharpe_ratio'].mean()
         st.metric("Avg Sharpe (Top 20)", f"{avg_sharpe:.2f}")
 
 st.markdown("""
