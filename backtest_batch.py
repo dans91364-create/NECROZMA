@@ -55,35 +55,45 @@ class BatchProgressTracker:
             strategy_name: Name of the strategy being processed
         """
         self.current_strategy += 1
+        self.last_strategy_name = strategy_name  # Store for reprint
         
         # Show progress every N strategies or on first/last strategy
         if (self.current_strategy % self.update_interval == 0 or 
             self.current_strategy == 1 or 
             self.current_strategy == self.total_strategies):
             
-            pct = 100 * self.current_strategy / self.total_strategies
-            elapsed = time.time() - self.start_time
-            
-            # Estimate time remaining
-            if self.current_strategy > 0:
-                avg_time = elapsed / self.current_strategy
-                remaining = (self.total_strategies - self.current_strategy) * avg_time
-                eta_mins = int(remaining / 60)
-                eta_secs = int(remaining % 60)
-                eta_str = f"{eta_mins}m{eta_secs:02d}s" if eta_mins > 0 else f"{eta_secs}s"
-            else:
-                eta_str = "calculating..."
-            
-            # Batch prefix
-            if self.batch_number and self.total_batches:
-                batch_prefix = f"Batch {self.batch_number:2d}/{self.total_batches}"
-            else:
-                batch_prefix = "Batch"
-            
-            # Print progress (use \r to overwrite line)
-            print(f"\r{batch_prefix}:  Processing {self.current_strategy:3d}/{self.total_strategies:3d} "
-                  f"({pct:5.1f}%) | {strategy_name[:40]:40s} | ETA: {eta_str:>8s}   ", 
-                  end="", flush=True)
+            self._print_progress(strategy_name)
+    
+    def _print_progress(self, strategy_name):
+        """Print the progress line"""
+        pct = 100 * self.current_strategy / self.total_strategies
+        elapsed = time.time() - self.start_time
+        
+        # Estimate time remaining
+        if self.current_strategy > 0:
+            avg_time = elapsed / self.current_strategy
+            remaining = (self.total_strategies - self.current_strategy) * avg_time
+            eta_mins = int(remaining / 60)
+            eta_secs = int(remaining % 60)
+            eta_str = f"{eta_mins}m{eta_secs:02d}s" if eta_mins > 0 else f"{eta_secs}s"
+        else:
+            eta_str = "calculating..."
+        
+        # Batch prefix
+        if self.batch_number and self.total_batches:
+            batch_prefix = f"Batch {self.batch_number:2d}/{self.total_batches}"
+        else:
+            batch_prefix = "Batch"
+        
+        # Print progress (use \r to overwrite line)
+        print(f"\r{batch_prefix}:  Processing {self.current_strategy:3d}/{self.total_strategies:3d} "
+              f"({pct:5.1f}%) | {strategy_name[:40]:40s} | ETA: {eta_str:>8s}   ", 
+              end="", flush=True)
+    
+    def reprint_current(self):
+        """Reprint the current progress line (e.g., after error message)"""
+        if hasattr(self, 'last_strategy_name'):
+            self._print_progress(self.last_strategy_name)
     
     def finish(self):
         """Print final newline after progress is complete"""
@@ -209,11 +219,11 @@ def main():
         
         # Process each strategy with progress updates
         print()  # Newline before progress starts
-        for i, strategy in enumerate(batch_strategies):
+        for strategy in batch_strategies:
+            # Update progress before processing
+            progress.update(strategy.name)
+            
             try:
-                # Update progress before processing
-                progress.update(strategy.name)
-                
                 # Backtest the strategy (returns dict of {lot_size: BacktestResults})
                 strategy_results = backtester.backtest(strategy, df)
                 
@@ -221,8 +231,11 @@ def main():
                 results[strategy.name] = strategy_results
                 
             except Exception as e:
-                # Still count the strategy but note the error
-                print(f"\n   ⚠️  Strategy '{strategy.name}' failed: {e}")
+                # Clear progress line before printing error, then restore it
+                print(f"\r{' ' * 100}\r", end="")  # Clear the line
+                print(f"   ⚠️  Strategy '{strategy.name}' failed: {e}")
+                # Restore progress line (last printed progress)
+                progress.reprint_current()
         
         # Finish progress tracking
         progress.finish()

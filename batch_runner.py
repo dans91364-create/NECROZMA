@@ -107,7 +107,10 @@ class BatchRunner:
             "--total-batches", str(self.num_batches)
         ]
         
-        # Run subprocess
+        # Run subprocess (stream output for real-time progress display)
+        # Note: capture_output=False means errors are printed directly to terminal
+        # but not captured for programmatic handling. This is intentional to allow
+        # real-time progress visibility.
         start_time = time.time()
         try:
             result = subprocess.run(
@@ -121,7 +124,8 @@ class BatchRunner:
             if result.returncode == 0:
                 return True, elapsed, str(output_file)
             else:
-                print(f"\n   ❌ Batch {batch_idx} failed with code {result.returncode}")
+                print(f"\n   ❌ Batch {batch_idx} failed with return code {result.returncode}")
+                print(f"      Check output above for error details")
                 return False, elapsed, str(output_file)
                 
         except subprocess.TimeoutExpired:
