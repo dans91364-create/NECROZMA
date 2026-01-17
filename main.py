@@ -775,6 +775,26 @@ def run_strategy_discovery(df, args):
                       message=f"Generated {n_strategies} strategy candidates")
         
         # ─────────────────────────────────────────────────────────
+        # STEP 4.5: Add Tick-Level Features (if missing)
+        # ─────────────────────────────────────────────────────────
+        if 'momentum' not in df.columns:
+            print("\n📊 Adding tick-level features...")
+            
+            # Momentum: suma de pips_change nos últimos N ticks
+            df['momentum'] = df['pips_change'].rolling(window=100, min_periods=1).sum()
+            
+            # Volatility: std de pips_change nos últimos N ticks
+            df['volatility'] = df['pips_change'].rolling(window=100, min_periods=1).std().fillna(0)
+            
+            # Trend strength: abs do momentum normalizado
+            df['trend_strength'] = df['momentum'].abs() / (df['volatility'] + 1e-10)
+            
+            # Close (alias para mid_price, necessário para algumas estratégias)
+            df['close'] = df['mid_price']
+            
+            print(f"   ✅ Features added: momentum, volatility, trend_strength, close")
+        
+        # ─────────────────────────────────────────────────────────
         # STEP 5: BACKTESTING
         # ─────────────────────────────────────────────────────────
         print("\n" + "─" * 80)
