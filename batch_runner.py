@@ -95,14 +95,16 @@ class BatchRunner:
         """
         output_file = self.output_dir / f"results_batch_{batch_idx}.parquet"
         
-        # Build command
+        # Build command with batch context for progress display
         cmd = [
             sys.executable,
             "backtest_batch.py",
             "--start", str(start_idx),
             "--end", str(end_idx),
             "--output", str(output_file),
-            "--parquet", str(self.parquet_file)
+            "--parquet", str(self.parquet_file),
+            "--batch-number", str(batch_idx + 1),  # 1-based for display
+            "--total-batches", str(self.num_batches)
         ]
         
         # Run subprocess
@@ -111,8 +113,7 @@ class BatchRunner:
             result = subprocess.run(
                 cmd,
                 cwd=Path(__file__).parent,
-                capture_output=True,
-                text=True,
+                capture_output=False,  # Stream output to terminal for real-time progress
                 timeout=3600  # 1 hour timeout per batch
             )
             elapsed = time.time() - start_time
@@ -121,8 +122,6 @@ class BatchRunner:
                 return True, elapsed, str(output_file)
             else:
                 print(f"\n   ❌ Batch {batch_idx} failed with code {result.returncode}")
-                print(f"   STDOUT: {result.stdout[-500:]}")  # Last 500 chars
-                print(f"   STDERR: {result.stderr[-500:]}")
                 return False, elapsed, str(output_file)
                 
         except subprocess.TimeoutExpired:
