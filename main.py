@@ -895,8 +895,8 @@ def run_strategy_discovery(df, args):
             lore.broadcast(EventType.INSIGHT, 
                           message=f"Loaded cached results: {n_viable} viable strategies")
             
-            # Convert DataFrame to backtest_results format using helper function
-            backtest_results = convert_df_to_backtest_results(results_df)
+            # Keep as DataFrame - don't convert to dict
+            backtest_results = results_df
         else:
             # Run backtesting (cache doesn't exist or force rerun requested)
             if force_rerun and merged_results_path.exists():
@@ -935,8 +935,8 @@ def run_strategy_discovery(df, args):
                     print(f"\n   📊 Loading merged results from: {merged_results_file}")
                     results_df = pd.read_parquet(merged_results_file)
                     
-                    # Convert DataFrame back to backtest_results format using helper function
-                    backtest_results = convert_df_to_backtest_results(results_df)
+                    # Keep as DataFrame - don't convert to dict
+                    backtest_results = results_df
                     
                     # Clean up temp file
                     if temp_parquet.exists():
@@ -954,10 +954,16 @@ def run_strategy_discovery(df, args):
             
             elapsed = time.time() - start_time
             
-            # Count viable strategies (handle both dict and list formats)
-            if isinstance(backtest_results, dict):
-                # New format: dict of {strategy_name: {lot_size: results}}
+            # Count viable strategies (handle DataFrame, dict, and list formats)
+            if isinstance(backtest_results, pd.DataFrame):
+                # DataFrame format (from batch processing or cache)
+                viable_df = backtest_results[backtest_results['sharpe_ratio'] > 1.0]
+                n_viable = viable_df['strategy_name'].nunique()
+                n_strategies = backtest_results['strategy_name'].nunique()
+            elif isinstance(backtest_results, dict):
+                # Dict format: {strategy_name: {lot_size: results}}
                 n_viable = 0
+                n_strategies = len(backtest_results)
                 for strategy_name, lot_results in backtest_results.items():
                     for lot_size, result in lot_results.items():
                         sharpe = result.get('sharpe_ratio', 0) if isinstance(result, dict) else getattr(result, 'sharpe_ratio', 0)
@@ -965,7 +971,8 @@ def run_strategy_discovery(df, args):
                             n_viable += 1
                             break  # Count strategy once even if multiple lot sizes are viable
             else:
-                # Old format: list of results
+                # List format (legacy)
+                n_strategies = len(backtest_results)
                 n_viable = sum(1 for r in backtest_results if r.get('sharpe_ratio', 0) > 1.0)
             
             print(f"\n✅ Backtesting complete in {elapsed:.1f}s")
@@ -1023,9 +1030,9 @@ def run_strategy_discovery(df, args):
         report_gen = LightReportGenerator()
         report_path = report_gen.generate_report(
             top_strategies=top_strategies,
-            patterns=patterns,
-            regimes=regime_analysis,
-            backtest_results=backtest_results
+            feature_importance=patterns,
+            regime_analysis=regime_analysis,
+            all_backtest_results=backtest_results
         )
         elapsed = time.time() - start_time
         
