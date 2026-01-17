@@ -652,6 +652,45 @@ def show_progress(
 # 🌟 STRATEGY DISCOVERY PIPELINE
 # ═══════════════════════════════════════════════════════════════
 
+def convert_df_to_backtest_results(results_df):
+    """
+    Convert DataFrame of backtest results to backtest_results format
+    
+    Args:
+        results_df: DataFrame with columns: strategy_name, lot_size, metrics...
+    
+    Returns:
+        dict: Backtest results in format {strategy_name: {lot_size: metrics_dict}}
+    """
+    backtest_results = {}
+    for _, row in results_df.iterrows():
+        strategy_name = row['strategy_name']
+        lot_size = row['lot_size']
+        
+        if strategy_name not in backtest_results:
+            backtest_results[strategy_name] = {}
+        
+        # Create a simple dict with metrics (compatible with ranking)
+        backtest_results[strategy_name][lot_size] = {
+            'sharpe_ratio': row.get('sharpe_ratio', 0),
+            'sortino_ratio': row.get('sortino_ratio', 0),
+            'calmar_ratio': row.get('calmar_ratio', 0),
+            'total_return': row.get('total_return', 0),
+            'max_drawdown': row.get('max_drawdown', 0),
+            'win_rate': row.get('win_rate', 0),
+            'n_trades': row.get('n_trades', 0),
+            'profit_factor': row.get('profit_factor', 0),
+            'avg_win': row.get('avg_win', 0),
+            'avg_loss': row.get('avg_loss', 0),
+            'expectancy': row.get('expectancy', 0),
+            'gross_pnl': row.get('gross_pnl', 0),
+            'net_pnl': row.get('net_pnl', 0),
+            'total_commission': row.get('total_commission', 0),
+        }
+    
+    return backtest_results
+
+
 def run_strategy_discovery(df, args):
     """
     Run complete strategy discovery pipeline
@@ -833,8 +872,9 @@ def run_strategy_discovery(df, args):
         
         # Check for cached results
         merged_results_path = OUTPUT_DIR / f"{FILE_PREFIX}backtest_results_merged.parquet"
+        force_rerun = getattr(args, 'force_rerun', False)
         
-        if merged_results_path.exists() and not args.force_rerun:
+        if merged_results_path.exists() and not force_rerun:
             print(f"\n✅ Found cached backtest results!")
             print(f"   Loading from: {merged_results_path}")
             
@@ -855,35 +895,11 @@ def run_strategy_discovery(df, args):
             lore.broadcast(EventType.INSIGHT, 
                           message=f"Loaded cached results: {n_viable} viable strategies")
             
-            # Convert DataFrame to backtest_results format
-            backtest_results = {}
-            for _, row in results_df.iterrows():
-                strategy_name = row['strategy_name']
-                lot_size = row['lot_size']
-                
-                if strategy_name not in backtest_results:
-                    backtest_results[strategy_name] = {}
-                
-                # Create a simple dict with metrics (compatible with ranking)
-                backtest_results[strategy_name][lot_size] = {
-                    'sharpe_ratio': row.get('sharpe_ratio', 0),
-                    'sortino_ratio': row.get('sortino_ratio', 0),
-                    'calmar_ratio': row.get('calmar_ratio', 0),
-                    'total_return': row.get('total_return', 0),
-                    'max_drawdown': row.get('max_drawdown', 0),
-                    'win_rate': row.get('win_rate', 0),
-                    'n_trades': row.get('n_trades', 0),
-                    'profit_factor': row.get('profit_factor', 0),
-                    'avg_win': row.get('avg_win', 0),
-                    'avg_loss': row.get('avg_loss', 0),
-                    'expectancy': row.get('expectancy', 0),
-                    'gross_pnl': row.get('gross_pnl', 0),
-                    'net_pnl': row.get('net_pnl', 0),
-                    'total_commission': row.get('total_commission', 0),
-                }
+            # Convert DataFrame to backtest_results format using helper function
+            backtest_results = convert_df_to_backtest_results(results_df)
         else:
             # Run backtesting (cache doesn't exist or force rerun requested)
-            if args.force_rerun and merged_results_path.exists():
+            if force_rerun and merged_results_path.exists():
                 print(f"\n🔄 Force rerun requested, reprocessing all batches...")
             
             lore.broadcast(EventType.PROGRESS, 
@@ -919,33 +935,8 @@ def run_strategy_discovery(df, args):
                     print(f"\n   📊 Loading merged results from: {merged_results_file}")
                     results_df = pd.read_parquet(merged_results_file)
                     
-                    # Convert DataFrame back to backtest_results format
-                    # Group by strategy name and lot size
-                    backtest_results = {}
-                    for _, row in results_df.iterrows():
-                        strategy_name = row['strategy_name']
-                        lot_size = row['lot_size']
-                        
-                        if strategy_name not in backtest_results:
-                            backtest_results[strategy_name] = {}
-                        
-                        # Create a simple dict with metrics (compatible with ranking)
-                        backtest_results[strategy_name][lot_size] = {
-                            'sharpe_ratio': row.get('sharpe_ratio', 0),
-                            'sortino_ratio': row.get('sortino_ratio', 0),
-                            'calmar_ratio': row.get('calmar_ratio', 0),
-                            'total_return': row.get('total_return', 0),
-                            'max_drawdown': row.get('max_drawdown', 0),
-                            'win_rate': row.get('win_rate', 0),
-                            'n_trades': row.get('n_trades', 0),
-                            'profit_factor': row.get('profit_factor', 0),
-                            'avg_win': row.get('avg_win', 0),
-                            'avg_loss': row.get('avg_loss', 0),
-                            'expectancy': row.get('expectancy', 0),
-                            'gross_pnl': row.get('gross_pnl', 0),
-                            'net_pnl': row.get('net_pnl', 0),
-                            'total_commission': row.get('total_commission', 0),
-                        }
+                    # Convert DataFrame back to backtest_results format using helper function
+                    backtest_results = convert_df_to_backtest_results(results_df)
                     
                     # Clean up temp file
                     if temp_parquet.exists():

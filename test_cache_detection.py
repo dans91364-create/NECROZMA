@@ -21,14 +21,19 @@ sys.path.insert(0, str(Path(__file__).parent))
 from config import OUTPUT_DIR, FILE_PREFIX
 
 
+# Test constants
+TEST_NUM_STRATEGIES = 100
+TEST_LOT_SIZES = [0.01, 0.05, 0.10]
+
+
 def create_mock_cached_results():
     """Create a mock cached results file for testing"""
     print("\n🧪 Creating mock cached results...")
     
     # Create sample backtest results DataFrame
     strategies = []
-    for i in range(100):  # 100 strategies
-        for lot_size in [0.01, 0.05, 0.10]:  # 3 lot sizes per strategy
+    for i in range(TEST_NUM_STRATEGIES):
+        for lot_size in TEST_LOT_SIZES:
             strategies.append({
                 'strategy_name': f'Strategy_{i}',
                 'lot_size': lot_size,

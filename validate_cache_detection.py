@@ -21,6 +21,12 @@ sys.path.insert(0, str(Path(__file__).parent))
 from config import OUTPUT_DIR, FILE_PREFIX
 
 
+# Validation constants (matching problem statement)
+VALIDATION_NUM_STRATEGIES = 4620
+VALIDATION_LOT_SIZES = [0.01, 0.05, 0.10]
+VALIDATION_NUM_BATCHES = 24
+
+
 def create_sample_cache():
     """Create a sample cache file simulating batch processing results"""
     print("\n" + "="*80)
@@ -32,8 +38,8 @@ def create_sample_cache():
     
     # Create 4,620 strategies with 3 lot sizes each (13,860 rows total)
     # This matches the problem statement example
-    for i in range(4620):
-        for lot_size in [0.01, 0.05, 0.10]:
+    for i in range(VALIDATION_NUM_STRATEGIES):
+        for lot_size in VALIDATION_LOT_SIZES:
             # Generate realistic metrics
             sharpe = np.random.uniform(-1, 4)  # Mix of good and bad strategies
             strategies.append({
@@ -64,9 +70,9 @@ def create_sample_cache():
     batch_dir = OUTPUT_DIR / "batch_results"
     batch_dir.mkdir(parents=True, exist_ok=True)
     
-    # Simulate 24 batches
-    batch_size = len(results_df) // 24
-    for i in range(24):
+    # Simulate batches
+    batch_size = len(results_df) // VALIDATION_NUM_BATCHES
+    for i in range(VALIDATION_NUM_BATCHES):
         start_idx = i * batch_size
         end_idx = start_idx + batch_size if i < 23 else len(results_df)
         batch_df = results_df.iloc[start_idx:end_idx]
