@@ -307,6 +307,35 @@ class TestLightReportDataFrameCompatibility:
         assert 'Strategy_A' in lookup
         # Should select first row when sharpe is NaN
         assert lookup['Strategy_A']['lot_size'] == 0.01
+    
+    def test_dataframe_with_mixed_nan_sharpe_ratios(self):
+        """Test DataFrame with some NaN sharpe ratios (should select best valid value)"""
+        generator = LightReportGenerator(output_dir=Path("/tmp/test_reports"))
+        
+        # Create DataFrame where some sharpe ratios are NaN
+        mixed_nan_df = pd.DataFrame({
+            'strategy_name': ['Strategy_B', 'Strategy_B', 'Strategy_B'],
+            'lot_size': [0.01, 0.02, 0.05],
+            'sharpe_ratio': [float('nan'), 2.5, 2.1],  # First is NaN, should select 0.02
+            'sortino_ratio': [2.52, 2.28, 2.1],
+            'calmar_ratio': [2.5, 2.3, 2.2],
+            'total_return': [0.35, 0.33, 0.30],
+            'max_drawdown': [0.12, 0.13, 0.14],
+            'win_rate': [0.62, 0.60, 0.58],
+            'n_trades': [50, 52, 54],
+            'profit_factor': [2.0, 1.9, 1.8],
+            'avg_win': [0.003, 0.0029, 0.0028],
+            'avg_loss': [-0.0015, -0.0016, -0.0017],
+            'expectancy': [0.002, 0.0019, 0.0018],
+        })
+        
+        # Should select best valid sharpe_ratio (2.5 at lot_size 0.02)
+        lookup = generator._df_to_results_lookup(mixed_nan_df)
+        
+        assert 'Strategy_B' in lookup
+        # Should select lot_size with best valid sharpe_ratio
+        assert lookup['Strategy_B']['lot_size'] == 0.02
+        assert lookup['Strategy_B']['sharpe_ratio'] == 2.5
 
 
 if __name__ == "__main__":

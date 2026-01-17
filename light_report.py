@@ -93,7 +93,8 @@ class LightReportGenerator:
             
             # Use best lot_size (highest sharpe) or first row if sharpe is invalid
             if 'sharpe_ratio' in strategy_rows.columns and not strategy_rows['sharpe_ratio'].isna().all():
-                best_row = strategy_rows.loc[strategy_rows['sharpe_ratio'].idxmax()]
+                # Use skipna=True to ignore NaN values when finding max
+                best_row = strategy_rows.loc[strategy_rows['sharpe_ratio'].idxmax(skipna=True)]
             else:
                 # Fallback to first row if sharpe_ratio is missing or all NaN
                 best_row = strategy_rows.iloc[0]
