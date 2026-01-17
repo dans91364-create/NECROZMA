@@ -236,7 +236,7 @@ def main():
                 
             except Exception as e:
                 # Clear progress line before printing error, then restore it
-                print(f"\r{' ' * self.PROGRESS_LINE_LENGTH}\r", end="")  # Clear the line
+                print(f"\r{' ' * BatchProgressTracker.PROGRESS_LINE_LENGTH}\r", end="")  # Clear the line
                 print(f"   ⚠️  Strategy '{strategy.name}' failed: {e}")
                 # Restore progress line (last printed progress)
                 progress.reprint_current()
