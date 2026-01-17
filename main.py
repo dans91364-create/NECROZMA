@@ -1311,10 +1311,7 @@ def main():
     print("\n")
     # Only call light_that_burns_the_sky if we have analyzer results
     # Strategy discovery has its own flow and doesn't populate analyzer.results
-    if analyzer.results and not args.strategy_discovery:
-        final_judgment = light_that_burns_the_sky(analyzer)
-    elif args.strategy_discovery and analyzer.results:
-        # Run regime analysis even after strategy discovery if we have universe results
+    if analyzer.results:
         final_judgment = light_that_burns_the_sky(analyzer)
     else:
         # No results to analyze (strategy discovery mode without universe analysis)
