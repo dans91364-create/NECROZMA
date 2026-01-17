@@ -31,6 +31,7 @@ MAX_SHARPE_FOR_NORMALIZATION = 3.0
 MAX_ULCER_FOR_NORMALIZATION = 10.0
 MAX_PROFIT_FACTOR_FOR_NORMALIZATION = 3.0
 DEFAULT_SCORE = 0.5  # Score when no variation exists
+DEFAULT_ULCER_INDEX = 5.0  # Default value when ulcer_index is missing
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -136,7 +137,7 @@ class LightFinder:
         
         # Handle missing ulcer_index column
         if 'ulcer_index' not in df.columns:
-            df['ulcer_index'] = 5.0  # Default value
+            df['ulcer_index'] = DEFAULT_ULCER_INDEX
         
         # If DataFrame has multiple rows per strategy (different lot_sizes),
         # we need to select the best one for each strategy
@@ -164,7 +165,7 @@ class LightFinder:
             consistency_score = min(consistency_score, 1.0)
             
             # Robustness score (stability)
-            ulcer = row.get('ulcer_index', 5.0)  # Use default if key doesn't exist
+            ulcer = row.get('ulcer_index', DEFAULT_ULCER_INDEX)  # Use default if key doesn't exist
             robustness_score = (
                 (row['profit_factor'] / MAX_PROFIT_FACTOR_FOR_NORMALIZATION) * 0.5 +
                 (1.0 - ulcer / MAX_ULCER_FOR_NORMALIZATION) * 0.5 
@@ -301,10 +302,37 @@ class LightFinder:
         
         return ranked_df.head(top_n)
     
-    def get_top_strategies_by_metric(self, results: List[BacktestResults],
+    def get_top_strategies_by_metric(self, results,
                                      metric: str = "sharpe_ratio",
-                                     top_n: int = 10) -> List[BacktestResults]:
-        """Get top N strategies by specific metric"""
+                                     top_n: int = 10):
+        """
+        Get top N strategies by specific metric
+        
+        Args:
+            results: Either List[BacktestResults] (legacy) or pd.DataFrame (batch format)
+            metric: Metric name to sort by (e.g., "sharpe_ratio", "total_return")
+            top_n: Number of top strategies to return
+            
+        Returns:
+            For List input: List[BacktestResults]
+            For DataFrame input: pd.DataFrame
+        """
+        # Handle DataFrame input
+        if isinstance(results, pd.DataFrame):
+            df = results.copy()
+            
+            # Handle multiple lot_sizes per strategy (if present)
+            if 'lot_size' in df.columns and df['strategy_name'].duplicated().any():
+                # Group by strategy_name and select row with max total_return
+                df = df.loc[df.groupby('strategy_name')['total_return'].idxmax()]
+            
+            # Sort by metric and return top N
+            if metric in df.columns:
+                return df.nlargest(top_n, metric)
+            else:
+                raise ValueError(f"Metric '{metric}' not found in DataFrame columns")
+        
+        # Handle list of BacktestResults objects (legacy)
         sorted_results = sorted(
             results,
             key=lambda r: getattr(r, metric),

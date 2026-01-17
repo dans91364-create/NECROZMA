@@ -7,6 +7,7 @@ Tests for LightFinder with both BacktestResults objects and DataFrame input
 import pytest
 import numpy as np
 import pandas as pd
+
 from backtester import BacktestResults
 from light_finder import LightFinder
 
@@ -320,6 +321,78 @@ class TestLightFinderConsistency:
         
         # Verify all strategy names are present in both
         assert set(ranked_objects['strategy_name']) == set(ranked_df['strategy_name'])
+    
+    def test_get_top_strategies_by_metric_with_dataframe(self):
+        """Test get_top_strategies_by_metric with DataFrame input"""
+        np.random.seed(123)
+        
+        # Create DataFrame with varying sharpe ratios
+        df = pd.DataFrame({
+            'strategy_name': ['Strategy_A', 'Strategy_B', 'Strategy_C', 'Strategy_D'],
+            'lot_size': [0.1, 0.1, 0.1, 0.1],
+            'total_return': [0.3, 0.2, 0.4, 0.35],
+            'sharpe_ratio': [1.5, 2.0, 1.2, 1.8],  # Strategy_B has highest Sharpe
+            'sortino_ratio': [2.0, 2.5, 1.8, 2.2],
+            'max_drawdown': [0.15, 0.20, 0.12, 0.18],
+            'win_rate': [0.6, 0.55, 0.65, 0.58],
+            'n_trades': [50, 45, 55, 52],
+            'profit_factor': [1.5, 1.3, 1.7, 1.6],
+            'avg_win': [0.003, 0.002, 0.004, 0.0035],
+            'avg_loss': [-0.002, -0.003, -0.002, -0.0025],
+            'expectancy': [0.001, 0.0008, 0.0012, 0.0011],
+            'gross_pnl': [300, 200, 400, 350],
+            'net_pnl': [295, 195, 395, 345],
+            'total_commission': [5, 5, 5, 5],
+        })
+        
+        finder = LightFinder()
+        
+        # Get top 2 by sharpe_ratio
+        top_sharpe = finder.get_top_strategies_by_metric(df, metric='sharpe_ratio', top_n=2)
+        
+        # Verify output
+        assert isinstance(top_sharpe, pd.DataFrame)
+        assert len(top_sharpe) == 2
+        assert top_sharpe.iloc[0]['strategy_name'] == 'Strategy_B'  # Highest Sharpe
+        assert top_sharpe.iloc[1]['strategy_name'] == 'Strategy_D'  # Second highest
+        
+        # Get top 2 by total_return
+        top_return = finder.get_top_strategies_by_metric(df, metric='total_return', top_n=2)
+        
+        # Verify output
+        assert isinstance(top_return, pd.DataFrame)
+        assert len(top_return) == 2
+        assert top_return.iloc[0]['strategy_name'] == 'Strategy_C'  # Highest return
+        assert top_return.iloc[1]['strategy_name'] == 'Strategy_D'  # Second highest
+    
+    def test_get_top_strategies_by_metric_with_objects(self):
+        """Test get_top_strategies_by_metric with BacktestResults objects"""
+        np.random.seed(123)
+        
+        # Create BacktestResults objects with varying sharpe ratios
+        results = []
+        for i, (name, sharpe) in enumerate([('A', 1.5), ('B', 2.0), ('C', 1.2), ('D', 1.8)]):
+            result = BacktestResults(
+                strategy_name=f'Strategy_{name}',
+                n_trades=50, win_rate=0.6, profit_factor=1.5,
+                total_return=0.3, sharpe_ratio=sharpe, sortino_ratio=2.0,
+                calmar_ratio=1.2, max_drawdown=0.15, avg_win=0.003,
+                avg_loss=-0.002, largest_win=0.01, largest_loss=-0.008,
+                expectancy=0.001, recovery_factor=2.0, ulcer_index=3.0,
+                trades=pd.DataFrame(), equity_curve=pd.Series([10000, 13000])
+            )
+            results.append(result)
+        
+        finder = LightFinder()
+        
+        # Get top 2 by sharpe_ratio
+        top_sharpe = finder.get_top_strategies_by_metric(results, metric='sharpe_ratio', top_n=2)
+        
+        # Verify output
+        assert isinstance(top_sharpe, list)
+        assert len(top_sharpe) == 2
+        assert top_sharpe[0].strategy_name == 'Strategy_B'  # Highest Sharpe
+        assert top_sharpe[1].strategy_name == 'Strategy_D'  # Second highest
 
 
 if __name__ == "__main__":
