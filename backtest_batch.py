@@ -27,6 +27,85 @@ from config import PARQUET_FILE, STRATEGY_TEMPLATES, STRATEGY_PARAMS
 from batch_utils import prepare_features
 
 
+class BatchProgressTracker:
+    """Custom progress tracker for batch processing with real-time updates"""
+    
+    # Display constants
+    MAX_STRATEGY_NAME_LENGTH = 40  # Maximum chars to show for strategy name
+    PROGRESS_LINE_LENGTH = 120     # Total line length for clearing
+    
+    def __init__(self, batch_number, total_batches, total_strategies, update_interval=5):
+        """
+        Initialize batch progress tracker
+        
+        Args:
+            batch_number: Current batch number (e.g., 1 for first batch)
+            total_batches: Total number of batches
+            total_strategies: Number of strategies in this batch
+            update_interval: Show progress every N strategies (default: 5)
+        """
+        self.batch_number = batch_number
+        self.total_batches = total_batches
+        self.total_strategies = total_strategies
+        self.update_interval = update_interval
+        self.current_strategy = 0
+        self.start_time = time.time()
+        
+    def update(self, strategy_name):
+        """
+        Update progress for current strategy
+        
+        Args:
+            strategy_name: Name of the strategy being processed
+        """
+        self.current_strategy += 1
+        self.last_strategy_name = strategy_name  # Store for reprint
+        
+        # Show progress every N strategies or on first/last strategy
+        if (self.current_strategy % self.update_interval == 0 or 
+            self.current_strategy == 1 or 
+            self.current_strategy == self.total_strategies):
+            
+            self._print_progress(strategy_name)
+    
+    def _print_progress(self, strategy_name):
+        """Print the progress line"""
+        pct = 100 * self.current_strategy / self.total_strategies
+        elapsed = time.time() - self.start_time
+        
+        # Estimate time remaining (current_strategy is always >= 1 here)
+        avg_time = elapsed / self.current_strategy
+        remaining = (self.total_strategies - self.current_strategy) * avg_time
+        eta_mins = int(remaining / 60)
+        eta_secs = int(remaining % 60)
+        eta_str = f"{eta_mins}m{eta_secs:02d}s" if eta_mins > 0 else f"{eta_secs}s"
+        
+        # Batch prefix
+        if self.batch_number and self.total_batches:
+            batch_prefix = f"Batch {self.batch_number:2d}/{self.total_batches}"
+        else:
+            batch_prefix = "Batch"
+        
+        # Print progress (use \r to overwrite line)
+        print(f"\r{batch_prefix}:  Processing {self.current_strategy:3d}/{self.total_strategies:3d} "
+              f"({pct:5.1f}%) | {strategy_name[:self.MAX_STRATEGY_NAME_LENGTH]:40s} | ETA: {eta_str:>8s}   ", 
+              end="", flush=True)
+    
+    def reprint_current(self):
+        """Reprint the current progress line (e.g., after error message)"""
+        if hasattr(self, 'last_strategy_name'):
+            self._print_progress(self.last_strategy_name)
+    
+    def finish(self):
+        """Print final newline after progress is complete"""
+        print()  # Newline after progress updates
+    
+    @classmethod
+    def clear_progress_line(cls):
+        """Clear the progress line (useful before printing error messages)"""
+        print(f"\r{' ' * cls.PROGRESS_LINE_LENGTH}\r", end="")
+
+
 def parse_arguments():
     """Parse command-line arguments"""
     parser = argparse.ArgumentParser(
@@ -59,6 +138,20 @@ def parse_arguments():
         type=str,
         default=None,
         help="Path to input parquet data file (overrides config)"
+    )
+    
+    parser.add_argument(
+        "--batch-number",
+        type=int,
+        default=None,
+        help="Batch number for display (e.g., 1 for first batch)"
+    )
+    
+    parser.add_argument(
+        "--total-batches",
+        type=int,
+        default=None,
+        help="Total number of batches for display"
     )
     
     return parser.parse_args()
@@ -122,18 +215,41 @@ def main():
         print(f"\n🚀 Backtesting {batch_size} strategies...")
         bt_start = time.time()
         
+        # Initialize custom progress tracker
+        batch_number = args.batch_number or None
+        total_batches = args.total_batches or None
+        progress = BatchProgressTracker(batch_number, total_batches, batch_size, update_interval=5)
+        
         backtester = Backtester()
-        results = backtester.test_strategies(
-            batch_strategies, 
-            df,
-            verbose=True,
-            show_progress_bar=True
-        )
+        results = {}
+        
+        # Process each strategy with progress updates
+        print()  # Newline before progress starts
+        for strategy in batch_strategies:
+            # Update progress before processing
+            progress.update(strategy.name)
+            
+            try:
+                # Backtest the strategy (returns dict of {lot_size: BacktestResults})
+                strategy_results = backtester.backtest(strategy, df)
+                
+                # Store results
+                results[strategy.name] = strategy_results
+                
+            except Exception as e:
+                # Clear progress line before printing error, then restore it
+                BatchProgressTracker.clear_progress_line()
+                print(f"   ⚠️  Strategy '{strategy.name}' failed: {e}")
+                # Restore progress line (last printed progress)
+                progress.reprint_current()
+        
+        # Finish progress tracking
+        progress.finish()
         
         bt_time = time.time() - bt_start
         avg_time = bt_time / batch_size if batch_size > 0 else 0
         
-        print(f"\n   ✅ Backtesting complete in {bt_time:.1f}s")
+        print(f"   ✅ Backtesting complete in {bt_time:.1f}s")
         print(f"      Average: {avg_time:.3f}s per strategy")
         
         # Step 6: Convert results to DataFrame

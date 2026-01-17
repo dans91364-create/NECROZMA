@@ -94,35 +94,44 @@ class BatchRunner:
             Tuple of (success, elapsed_time, output_file)
         """
         output_file = self.output_dir / f"results_batch_{batch_idx}.parquet"
+        error_log_file = self.output_dir / f"error_batch_{batch_idx}.log"
         
-        # Build command
+        # Build command with batch context for progress display
         cmd = [
             sys.executable,
             "backtest_batch.py",
             "--start", str(start_idx),
             "--end", str(end_idx),
             "--output", str(output_file),
-            "--parquet", str(self.parquet_file)
+            "--parquet", str(self.parquet_file),
+            "--batch-number", str(batch_idx + 1),  # 1-based for display
+            "--total-batches", str(self.num_batches)
         ]
         
-        # Run subprocess
+        # Run subprocess (stream stdout for real-time progress display)
+        # Note: stdout streams directly to terminal for real-time progress visibility
+        # stderr is captured to error log file for debugging while still visible in terminal
         start_time = time.time()
         try:
-            result = subprocess.run(
-                cmd,
-                cwd=Path(__file__).parent,
-                capture_output=True,
-                text=True,
-                timeout=3600  # 1 hour timeout per batch
-            )
+            with open(error_log_file, 'w') as error_log:
+                result = subprocess.run(
+                    cmd,
+                    cwd=Path(__file__).parent,
+                    stdout=None,  # Stream to terminal
+                    stderr=error_log,  # Capture errors to file for debugging
+                    text=True,  # Ensure text mode for error log
+                    timeout=3600  # 1 hour timeout per batch
+                )
             elapsed = time.time() - start_time
             
             if result.returncode == 0:
+                # Clean up error log if successful
+                if error_log_file.exists() and error_log_file.stat().st_size == 0:
+                    error_log_file.unlink()
                 return True, elapsed, str(output_file)
             else:
-                print(f"\n   ❌ Batch {batch_idx} failed with code {result.returncode}")
-                print(f"   STDOUT: {result.stdout[-500:]}")  # Last 500 chars
-                print(f"   STDERR: {result.stderr[-500:]}")
+                print(f"\n   ❌ Batch {batch_idx} failed with return code {result.returncode}")
+                print(f"      Check output above or error log: {error_log_file}")
                 return False, elapsed, str(output_file)
                 
         except subprocess.TimeoutExpired:
