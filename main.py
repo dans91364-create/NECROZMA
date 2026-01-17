@@ -644,6 +644,8 @@ def run_strategy_discovery(df, args):
     print("═" * 80)
     
     from lore import LoreSystem, EventType
+    from config import OUTPUT_DIR, FILE_PREFIX
+    import pandas as pd
     
     # Initialize Lore System
     lore = LoreSystem(enable_telegram=not args.skip_telegram)
@@ -687,21 +689,39 @@ def run_strategy_discovery(df, args):
         
         from regime_detector import RegimeDetector
         
-        start_time = time.time()
-        detector = RegimeDetector()
-        regimes_df = detector.detect_regimes(df)
-        regime_analysis = detector.analyze_regimes(regimes_df)
-        elapsed = time.time() - start_time
-        
-        n_regimes = regime_analysis.get('n_regimes', 0)
-        print(f"\n✅ Regime detection complete in {elapsed:.1f}s")
-        print(f"   Regimes detected: {n_regimes}")
-        
-        # Save regimes to file
+        # Ensure output directory exists
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
         regimes_path = OUTPUT_DIR / f"{FILE_PREFIX}regimes.parquet"
-        regimes_df.to_parquet(regimes_path, compression='snappy')
-        print(f"   💾 Regimes saved to: {regimes_path}")
+        
+        # Check if regimes already exist (cache)
+        if regimes_path.exists():
+            print("✅ Loading saved regimes from cache...")
+            start_time = time.time()
+            regimes_df = pd.read_parquet(regimes_path)
+            elapsed = time.time() - start_time
+            
+            # Analyze cached regimes
+            detector = RegimeDetector()
+            regime_analysis = detector.analyze_regimes(regimes_df)
+            n_regimes = regime_analysis.get('n_regimes', 0)
+            
+            print(f"   Loaded in {elapsed:.1f}s")
+            print(f"   Regimes loaded: {n_regimes}")
+        else:
+            print("🔄 Running HDBSCAN clustering (this may take ~97 minutes)...")
+            start_time = time.time()
+            detector = RegimeDetector()
+            regimes_df = detector.detect_regimes(df)
+            regime_analysis = detector.analyze_regimes(regimes_df)
+            elapsed = time.time() - start_time
+            
+            n_regimes = regime_analysis.get('n_regimes', 0)
+            print(f"\n✅ Regime detection complete in {elapsed:.1f}s")
+            print(f"   Regimes detected: {n_regimes}")
+            
+            # Save regimes to file
+            regimes_df.to_parquet(regimes_path, compression='snappy')
+            print(f"   💾 Regimes saved to: {regimes_path}")
         
         lore.broadcast(EventType.REGIME_CHANGE, 
                       message=f"Detected {n_regimes} distinct market regimes")
