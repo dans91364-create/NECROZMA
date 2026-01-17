@@ -59,48 +59,56 @@ st.markdown('<p class="subtitle">"The Light That Burns The Sky - Visualized"</p>
 st.markdown("""
 ## Welcome to NECROZMA Dashboard
 
-This interactive dashboard provides comprehensive analysis of backtesting results across multiple strategies and universes.
+This interactive dashboard provides comprehensive analysis of backtesting results across multiple strategies and configurations.
 
 ### 📊 Available Pages
 
 Navigate using the sidebar to explore:
 
-- **📊 Overview**: Global performance summary and top strategies
-- **🌍 Universe Analysis**: Compare performance across 25 universes
-- **🎯 Strategy Deep Dive**: Detailed analysis of individual strategies
-- **🔧 SL/TP Optimization**: Optimize stop-loss and take-profit parameters
-- **⚠️ Risk Analysis**: Analyze risk-adjusted returns and drawdowns
-- **💰 Trade Analysis**: Examine best and worst trades with market context
-- **🏆 Composite Ranking**: Multi-factor composite score analysis (NEW!)
-- **💰 Max Profit Ranking**: Five profit-focused perspectives (NEW!)
+- **📊 Overview**: Global performance summary and top strategies with filtering
+- **📈 Performance Matrix**: Heatmap analysis of templates vs lot sizes
+- **🎯 Strategy Explorer**: Search, filter, and compare up to 5 strategies side-by-side
+- **⚠️ Risk Analysis**: Analyze risk-adjusted returns, drawdowns, and risk tiers
+- **💰 Profitability**: Net PnL analysis, commission impact, and expectancy
+- **🔧 Lot Size Analysis**: Compare strategies across different lot sizes
+- **📊 Strategy Templates**: Performance by template type with parameter analysis
+- **🏆 Top Performers**: Multi-criteria ranking and composite scores
+- **📤 Export**: Download filtered results, top strategies, and config files
 
 ### 🚀 Getting Started
 
-1. Ensure you have run backtests to generate results in `ultra_necrozma_results/backtest_results/`
-2. Select a page from the sidebar
+1. Ensure you have backtest results (parquet or JSON format)
+2. Select a page from the sidebar to begin analysis
 3. Use filters to drill down into specific strategies or conditions
 4. Export data and charts as needed
 
 ### 📈 Features
 
-- **Interactive Charts**: Zoom, pan, and hover for details
-- **Dynamic Filtering**: Filter by metrics, universes, patterns, and more
-- **Data Export**: Download filtered data as CSV
+- **Parquet Support**: Fast loading of batch processing results (13,860+ rows)
+- **Interactive Charts**: Zoom, pan, and hover for details (Plotly)
+- **Advanced Filtering**: Filter by lot size, template, Sharpe, win rate, and more
+- **Data Export**: Download CSV, JSON, or Parquet formats
 - **Real-time Updates**: Charts update instantly with filter changes
 - **Responsive Design**: Works on desktop, tablet, and mobile
-- **Multi-Factor Analysis**: Composite scores across 4 key dimensions
-- **Profit Perspectives**: 5 different ways to analyze profitability
+- **Template Analysis**: Identify best-performing strategy templates
+- **Lot Size Optimization**: Find optimal position sizing
 
 ### 💡 Tips
 
-- Use the **Overview** page to identify top performers
-- Explore **Universe Analysis** to find optimal timeframes
-- Deep dive into specific strategies with **Strategy Deep Dive**
-- Optimize parameters with **SL/TP Optimization**
-- Assess risk with **Risk Analysis**
-- Learn from winning/losing trades in **Trade Analysis**
-- Find balanced strategies with **Composite Ranking**
-- Discover profit leaders with **Max Profit Ranking**
+- Use **Overview** to identify top performers quickly
+- Explore **Performance Matrix** to find optimal template/lot size combinations
+- **Strategy Explorer** lets you compare multiple strategies side-by-side
+- Assess risk with **Risk Analysis** and classify strategies by risk tier
+- Analyze profitability with **Profitability** page (PnL, commission impact)
+- Use **Lot Size Analysis** to optimize position sizing
+- Find best templates with **Strategy Templates** page
+- Export top strategies for deployment with **Export** page
+
+### 🎯 Data Format Support
+
+- ✅ **Parquet** (batch processing): Optimized for 13,860+ strategies
+- ✅ **JSON** (legacy): Backward compatible with existing results
+- ✅ **Smart Storage**: Automatic format detection
 
 ---
 
@@ -114,14 +122,15 @@ with st.sidebar:
     st.markdown("""
     **NECROZMA Dashboard**
     
-    Version: 1.0.0
+    Version: 2.0.0 (Batch Processing Edition)
     
     Built with:
     - Streamlit
     - Plotly
     - Pandas
+    - PyArrow (Parquet support)
     
-    © 2024 NECROZMA Project
+    © 2024-2026 NECROZMA Project
     """)
     
     st.markdown("---")

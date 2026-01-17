@@ -205,3 +205,100 @@ def show_filter_summary(original_count: int, filtered_count: int):
     else:
         pct = (filtered_count / original_count * 100) if original_count > 0 else 0
         st.info(f"📊 Showing {filtered_count} of {original_count} items ({pct:.1f}%)")
+
+
+def create_parquet_filters(df: pd.DataFrame) -> dict:
+    """
+    Create comprehensive filter panel for parquet batch processing data
+    
+    Args:
+        df: DataFrame with batch processing results
+        
+    Returns:
+        Dictionary of applied filters
+    """
+    st.sidebar.header("🔍 Filters")
+    
+    filters = {}
+    
+    # Lot Size filter (if available)
+    if 'lot_size' in df.columns:
+        st.sidebar.subheader("Lot Size")
+        lot_sizes = sorted(df['lot_size'].unique().tolist())
+        selected_lots = st.sidebar.multiselect(
+            "Select Lot Sizes",
+            options=lot_sizes,
+            default=lot_sizes
+        )
+        if selected_lots:
+            filters['lot_size'] = selected_lots
+    
+    # Strategy Template filter
+    if 'strategy_name' in df.columns:
+        from dashboard.utils.data_loader import extract_strategy_template
+        
+        st.sidebar.subheader("Strategy Template")
+        df['template'] = df['strategy_name'].apply(extract_strategy_template)
+        templates = sorted(df['template'].unique().tolist())
+        selected_templates = st.sidebar.multiselect(
+            "Select Templates",
+            options=templates,
+            default=templates
+        )
+        if selected_templates:
+            filters['template'] = selected_templates
+    
+    # Sharpe Ratio filter
+    if 'sharpe_ratio' in df.columns:
+        st.sidebar.subheader("Performance Metrics")
+        sharpe_range = st.sidebar.slider(
+            "Min Sharpe Ratio",
+            min_value=float(df['sharpe_ratio'].min()),
+            max_value=float(df['sharpe_ratio'].max()),
+            value=float(df['sharpe_ratio'].min()),
+            step=0.1
+        )
+        filters['sharpe_ratio'] = (sharpe_range, float(df['sharpe_ratio'].max()))
+    
+    # Win Rate filter
+    if 'win_rate' in df.columns:
+        win_rate_range = st.sidebar.slider(
+            "Min Win Rate (%)",
+            min_value=0.0,
+            max_value=100.0,
+            value=0.0,
+            step=5.0
+        )
+        filters['win_rate'] = (win_rate_range / 100.0, 1.0)
+    
+    # Max Drawdown filter
+    if 'max_drawdown' in df.columns:
+        max_dd = st.sidebar.slider(
+            "Max Drawdown (%)",
+            min_value=0.0,
+            max_value=float(abs(df['max_drawdown'].min()) * 100),
+            value=float(abs(df['max_drawdown'].min()) * 100),
+            step=5.0
+        )
+        filters['max_drawdown'] = (float(df['max_drawdown'].min()), -max_dd / 100.0)
+    
+    # Min Trades filter
+    if 'n_trades' in df.columns:
+        min_trades = st.sidebar.slider(
+            "Min Number of Trades",
+            min_value=0,
+            max_value=int(df['n_trades'].max()),
+            value=0,
+            step=10
+        )
+        filters['n_trades'] = (min_trades, int(df['n_trades'].max()))
+    
+    # Reset button
+    if st.sidebar.button("🔄 Reset All Filters"):
+        # Clear session state if it exists
+        if hasattr(st, 'session_state'):
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
+        st.rerun()
+    
+    return filters

@@ -265,3 +265,131 @@ def extract_sl_tp_statistics(strategies_df):
     }
     
     return stats
+
+
+def calculate_composite_score(df: pd.DataFrame,
+                             weights: dict = None) -> pd.Series:
+    """
+    Calculate composite score from multiple metrics
+    
+    Args:
+        df: DataFrame with strategy metrics
+        weights: Dictionary of metric weights (default: equal weights)
+        
+    Returns:
+        Series with composite scores
+    """
+    if weights is None:
+        weights = {
+            'sharpe_ratio': 0.3,
+            'total_return': 0.3,
+            'win_rate': 0.2,
+            'profit_factor': 0.2
+        }
+    
+    score = pd.Series(0.0, index=df.index)
+    
+    for metric, weight in weights.items():
+        if metric in df.columns:
+            metric_range = df[metric].max() - df[metric].min()
+            
+            # Handle case where all values are the same
+            if metric_range == 0:
+                continue
+            
+            # Normalize metric to 0-1 range
+            normalized = (df[metric] - df[metric].min()) / metric_range
+            score += normalized * weight
+    
+    return score
+
+
+def calculate_lot_size_impact(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate the impact of lot size on performance metrics
+    
+    Args:
+        df: DataFrame with lot_size column and metrics
+        
+    Returns:
+        DataFrame with lot size statistics
+    """
+    if 'lot_size' not in df.columns:
+        return pd.DataFrame()
+    
+    lot_stats = df.groupby('lot_size').agg({
+        'sharpe_ratio': ['mean', 'std', 'max'],
+        'total_return': ['mean', 'std', 'max'],
+        'win_rate': 'mean',
+        'max_drawdown': 'mean',
+        'n_trades': 'mean'
+    }).round(4)
+    
+    lot_stats.columns = ['_'.join(col).strip() for col in lot_stats.columns.values]
+    
+    return lot_stats.reset_index()
+
+
+def calculate_template_performance(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate performance by strategy template
+    
+    Args:
+        df: DataFrame with strategy_name and metrics
+        
+    Returns:
+        DataFrame with template statistics
+    """
+    from dashboard.utils.data_loader import extract_strategy_template
+    
+    if 'strategy_name' not in df.columns:
+        return pd.DataFrame()
+    
+    df['template'] = df['strategy_name'].apply(extract_strategy_template)
+    
+    template_stats = df.groupby('template').agg({
+        'sharpe_ratio': ['mean', 'std', 'max', 'count'],
+        'total_return': ['mean', 'max'],
+        'win_rate': 'mean',
+        'max_drawdown': 'mean',
+        'profit_factor': 'mean',
+        'n_trades': 'mean'
+    }).round(4)
+    
+    template_stats.columns = ['_'.join(col).strip() for col in template_stats.columns.values]
+    
+    return template_stats.reset_index().sort_values('sharpe_ratio_mean', ascending=False)
+
+
+def get_profitability_metrics(df: pd.DataFrame) -> dict:
+    """
+    Calculate profitability-focused metrics
+    
+    Args:
+        df: DataFrame with PnL columns
+        
+    Returns:
+        Dictionary with profitability metrics
+    """
+    metrics = {}
+    
+    if 'net_pnl' in df.columns:
+        metrics['total_net_pnl'] = df['net_pnl'].sum()
+        metrics['avg_net_pnl'] = df['net_pnl'].mean()
+        metrics['max_net_pnl'] = df['net_pnl'].max()
+        metrics['min_net_pnl'] = df['net_pnl'].min()
+        metrics['profitable_strategies'] = (df['net_pnl'] > 0).sum()
+    
+    if 'gross_pnl' in df.columns:
+        metrics['total_gross_pnl'] = df['gross_pnl'].sum()
+        metrics['avg_gross_pnl'] = df['gross_pnl'].mean()
+    
+    if 'total_commission' in df.columns:
+        metrics['total_commission'] = df['total_commission'].sum()
+        metrics['avg_commission'] = df['total_commission'].mean()
+    
+    if 'expectancy' in df.columns:
+        metrics['avg_expectancy'] = df['expectancy'].mean()
+        metrics['max_expectancy'] = df['expectancy'].max()
+    
+    return metrics
