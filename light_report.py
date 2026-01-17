@@ -22,6 +22,7 @@ from datetime import datetime
 
 from backtester import BacktestResults
 from config import FILE_PREFIX
+from typing import Union
 
 
 
@@ -77,29 +78,82 @@ class LightReportGenerator:
             "avg_win_rate": float(top_strategies["win_rate"].mean()),
         }
     
+    def _df_to_results_lookup(self, df: pd.DataFrame) -> Dict:
+        """
+        Convert DataFrame to dict mapping strategy_name -> result dict
+        
+        Args:
+            df: DataFrame with columns: strategy_name, lot_size, sharpe_ratio, etc.
+            
+        Returns:
+            Dictionary mapping strategy_name to best result dict (highest sharpe_ratio)
+        """
+        lookup = {}
+        for strategy_name in df['strategy_name'].unique():
+            strategy_rows = df[df['strategy_name'] == strategy_name]
+            # Use best lot_size (highest sharpe) or first row
+            best_row = strategy_rows.loc[strategy_rows['sharpe_ratio'].idxmax()]
+            lookup[strategy_name] = best_row.to_dict()
+        return lookup
+    
     def _create_strategy_details(self, strategy_name: str,
-                                 backtest_result: BacktestResults) -> Dict:
-        """Create detailed strategy information"""
-        return {
-            "name": strategy_name,
-            "performance": {
-                "total_return": float(backtest_result.total_return),
-                "sharpe_ratio": float(backtest_result.sharpe_ratio),
-                "sortino_ratio": float(backtest_result.sortino_ratio),
-                "calmar_ratio": float(backtest_result.calmar_ratio),
-                "max_drawdown": float(backtest_result.max_drawdown),
-                "profit_factor": float(backtest_result.profit_factor),
-                "win_rate": float(backtest_result.win_rate),
-                "expectancy": float(backtest_result.expectancy),
-            },
-            "trading_stats": {
-                "total_trades": int(backtest_result.n_trades),
-                "avg_win": float(backtest_result.avg_win),
-                "avg_loss": float(backtest_result.avg_loss),
-                "largest_win": float(backtest_result.largest_win),
-                "largest_loss": float(backtest_result.largest_loss),
-            },
-        }
+                                 result: Union[BacktestResults, Dict]) -> Dict:
+        """
+        Create detailed strategy information
+        
+        Args:
+            strategy_name: Name of the strategy
+            result: Either a BacktestResults object or a dict from DataFrame
+            
+        Returns:
+            Dictionary with strategy details
+        """
+        # Handle both BacktestResults object and dict
+        if isinstance(result, dict):
+            # DataFrame result dict
+            return {
+                "name": strategy_name,
+                "performance": {
+                    "total_return": float(result.get('total_return', 0)),
+                    "sharpe_ratio": float(result.get('sharpe_ratio', 0)),
+                    "sortino_ratio": float(result.get('sortino_ratio', 0)),
+                    "calmar_ratio": float(result.get('calmar_ratio', 0)),
+                    "max_drawdown": float(result.get('max_drawdown', 0)),
+                    "profit_factor": float(result.get('profit_factor', 0)),
+                    "win_rate": float(result.get('win_rate', 0)),
+                    "expectancy": float(result.get('expectancy', 0)),
+                },
+                "trading_stats": {
+                    "total_trades": int(result.get('n_trades', 0)),
+                    "avg_win": float(result.get('avg_win', 0)),
+                    "avg_loss": float(result.get('avg_loss', 0)),
+                    # These may not exist in DataFrame results
+                    "largest_win": float(result.get('largest_win', 0)),
+                    "largest_loss": float(result.get('largest_loss', 0)),
+                },
+            }
+        else:
+            # BacktestResults object
+            return {
+                "name": strategy_name,
+                "performance": {
+                    "total_return": float(result.total_return),
+                    "sharpe_ratio": float(result.sharpe_ratio),
+                    "sortino_ratio": float(result.sortino_ratio),
+                    "calmar_ratio": float(result.calmar_ratio),
+                    "max_drawdown": float(result.max_drawdown),
+                    "profit_factor": float(result.profit_factor),
+                    "win_rate": float(result.win_rate),
+                    "expectancy": float(result.expectancy),
+                },
+                "trading_stats": {
+                    "total_trades": int(result.n_trades),
+                    "avg_win": float(result.avg_win),
+                    "avg_loss": float(result.avg_loss),
+                    "largest_win": float(result.largest_win),
+                    "largest_loss": float(result.largest_loss),
+                },
+            }
     
     def _create_feature_insights(self, feature_importance: Dict) -> Dict:
         """Create feature insights section"""
@@ -211,7 +265,7 @@ class LightReportGenerator:
     
     def generate_report(self,
                        top_strategies: pd.DataFrame,
-                       all_backtest_results: Dict[str, BacktestResults],
+                       all_backtest_results: Union[Dict[str, BacktestResults], pd.DataFrame],
                        feature_importance: Dict = None,
                        regime_analysis: Dict = None,
                        total_strategies: int = 0) -> Dict:
@@ -220,7 +274,8 @@ class LightReportGenerator:
         
         Args:
             top_strategies: Ranked top strategies DataFrame
-            all_backtest_results: Dictionary mapping strategy_name -> BacktestResults
+            all_backtest_results: Either Dict mapping strategy_name -> BacktestResults (legacy)
+                                or DataFrame with result columns (new batch format)
             feature_importance: Feature importance analysis results
             regime_analysis: Regime detection analysis results
             total_strategies: Total number of strategies tested
@@ -229,6 +284,12 @@ class LightReportGenerator:
             Complete report dictionary
         """
         print("\n📝 Generating Light Report...")
+        
+        # Convert DataFrame to dict-like lookup if needed
+        if isinstance(all_backtest_results, pd.DataFrame):
+            results_lookup = self._df_to_results_lookup(all_backtest_results)
+        else:
+            results_lookup = all_backtest_results
         
         report = {
             "title": "⚡🌟💎 WHERE THE LIGHT IS - NECROZMA FINAL REPORT 💎🌟⚡",
@@ -244,10 +305,10 @@ class LightReportGenerator:
         # Add detailed info for top strategies
         for _, row in top_strategies.iterrows():
             strategy_name = row["strategy_name"]
-            if strategy_name in all_backtest_results:
+            if strategy_name in results_lookup:
                 details = self._create_strategy_details(
                     strategy_name,
-                    all_backtest_results[strategy_name]
+                    results_lookup[strategy_name]
                 )
                 details["rank"] = int(row["rank"])
                 details["composite_score"] = float(row["composite_score"])
