@@ -871,10 +871,14 @@ def run_strategy_discovery(df, args):
                         'total_return': row.get('total_return', 0),
                         'max_drawdown': row.get('max_drawdown', 0),
                         'win_rate': row.get('win_rate', 0),
-                        'total_trades': row.get('total_trades', 0),
+                        'n_trades': row.get('n_trades', 0),
                         'profit_factor': row.get('profit_factor', 0),
-                        'avg_trade_pips': row.get('avg_trade_pips', 0),
-                        'avg_trade_usd': row.get('avg_trade_usd', 0),
+                        'avg_win': row.get('avg_win', 0),
+                        'avg_loss': row.get('avg_loss', 0),
+                        'expectancy': row.get('expectancy', 0),
+                        'gross_pnl': row.get('gross_pnl', 0),
+                        'net_pnl': row.get('net_pnl', 0),
+                        'total_commission': row.get('total_commission', 0),
                     }
                 
                 # Clean up temp file

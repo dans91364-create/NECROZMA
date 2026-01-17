@@ -165,10 +165,14 @@ def main():
                     'total_return': backtest_result.total_return,
                     'max_drawdown': backtest_result.max_drawdown,
                     'win_rate': backtest_result.win_rate,
-                    'total_trades': backtest_result.total_trades,
+                    'n_trades': backtest_result.n_trades,
                     'profit_factor': backtest_result.profit_factor,
-                    'avg_trade_pips': backtest_result.avg_trade_pips,
-                    'avg_trade_usd': backtest_result.avg_trade_usd,
+                    'avg_win': backtest_result.avg_win,
+                    'avg_loss': backtest_result.avg_loss,
+                    'expectancy': backtest_result.expectancy,
+                    'gross_pnl': backtest_result.gross_pnl,
+                    'net_pnl': backtest_result.net_pnl,
+                    'total_commission': backtest_result.total_commission,
                 }
                 results_data.append(result_dict)
         
