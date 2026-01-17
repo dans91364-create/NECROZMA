@@ -44,16 +44,16 @@ def test_tick_features_calculation(sample_tick_data):
     
     # Simulate the code from main.py Step 4.5
     if 'momentum' not in df.columns:
-        # Momentum: suma de pips_change nos últimos N ticks
+        # Momentum: sum of pips_change over last N ticks
         df['momentum'] = df['pips_change'].rolling(window=100, min_periods=1).sum()
         
-        # Volatility: std de pips_change nos últimos N ticks
+        # Volatility: standard deviation of pips_change over last N ticks
         df['volatility'] = df['pips_change'].rolling(window=100, min_periods=1).std().fillna(0)
         
-        # Trend strength: abs do momentum normalizado
+        # Trend strength: absolute normalized momentum
         df['trend_strength'] = df['momentum'].abs() / (df['volatility'] + 1e-10)
         
-        # Close (alias para mid_price, necessário para algumas estratégias)
+        # Close (alias for mid_price, needed by some strategies)
         df['close'] = df['mid_price']
     
     # Assertions
