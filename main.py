@@ -118,6 +118,10 @@ Examples:
   # Sequential processing (disable multiprocessing)
   python main.py --sequential
   
+  # Batch processing (prevents memory accumulation during backtesting)
+  python main.py --strategy-discovery --batch-mode
+  python main.py --strategy-discovery --batch-mode --batch-size 200
+  
   # Chunked processing examples
   python main.py --chunk-size monthly --strategy auto
   python main.py --chunk-size weekly --strategy universe
@@ -245,6 +249,20 @@ Examples:
         "--open-dashboard",
         action="store_true",
         help="Auto-open dashboard in browser (implies --generate-dashboard)"
+    )
+    
+    # Batch processing arguments
+    parser.add_argument(
+        "--batch-mode",
+        action="store_true",
+        help="Enable batch processing with subprocess isolation (prevents memory accumulation)"
+    )
+    
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=200,
+        help="Number of strategies per batch (default: 200)"
     )
     
     # Chunking arguments
@@ -807,14 +825,88 @@ def run_strategy_discovery(df, args):
         lore.broadcast(EventType.PROGRESS, 
                       message="Step 5/7: Backtesting strategies...")
         
-        from backtester import Backtester
+        # Check if batch mode is enabled
+        use_batch_mode = getattr(args, 'batch_mode', False)
         
         start_time = time.time()
-        backtester = Backtester()
-        backtest_results = backtester.test_strategies(strategies, df)
+        
+        if use_batch_mode:
+            # Use batch processing with subprocess isolation
+            print(f"\n🔄 Using batch mode (batch size: {args.batch_size})")
+            
+            from batch_runner import run_batch_processing
+            from config import PARQUET_FILE
+            
+            # Save current dataframe to ensure batch workers use same data
+            temp_parquet = OUTPUT_DIR / "temp_batch_data.parquet"
+            print(f"   💾 Saving data for batch processing: {temp_parquet}")
+            df.to_parquet(temp_parquet, compression='snappy')
+            
+            # Run batch processing
+            merged_results_file = run_batch_processing(
+                batch_size=args.batch_size,
+                parquet_file=temp_parquet
+            )
+            
+            # Load merged results
+            if merged_results_file and merged_results_file.exists():
+                print(f"\n   📊 Loading merged results from: {merged_results_file}")
+                results_df = pd.read_parquet(merged_results_file)
+                
+                # Convert DataFrame back to backtest_results format
+                # Group by strategy name and lot size
+                backtest_results = {}
+                for _, row in results_df.iterrows():
+                    strategy_name = row['strategy_name']
+                    lot_size = row['lot_size']
+                    
+                    if strategy_name not in backtest_results:
+                        backtest_results[strategy_name] = {}
+                    
+                    # Create a simple dict with metrics (compatible with ranking)
+                    backtest_results[strategy_name][lot_size] = {
+                        'sharpe_ratio': row.get('sharpe_ratio', 0),
+                        'sortino_ratio': row.get('sortino_ratio', 0),
+                        'calmar_ratio': row.get('calmar_ratio', 0),
+                        'total_return': row.get('total_return', 0),
+                        'max_drawdown': row.get('max_drawdown', 0),
+                        'win_rate': row.get('win_rate', 0),
+                        'total_trades': row.get('total_trades', 0),
+                        'profit_factor': row.get('profit_factor', 0),
+                        'avg_trade_pips': row.get('avg_trade_pips', 0),
+                        'avg_trade_usd': row.get('avg_trade_usd', 0),
+                    }
+                
+                # Clean up temp file
+                if temp_parquet.exists():
+                    temp_parquet.unlink()
+                    print(f"   🗑️  Cleaned up temp data file")
+            else:
+                print(f"\n   ❌ Batch processing failed or no results!")
+                backtest_results = {}
+        else:
+            # Original in-process backtesting
+            from backtester import Backtester
+            
+            backtester = Backtester()
+            backtest_results = backtester.test_strategies(strategies, df)
+        
         elapsed = time.time() - start_time
         
-        n_viable = sum(1 for r in backtest_results if r.get('sharpe_ratio', 0) > 1.0)
+        # Count viable strategies (handle both dict and list formats)
+        if isinstance(backtest_results, dict):
+            # New format: dict of {strategy_name: {lot_size: results}}
+            n_viable = 0
+            for strategy_name, lot_results in backtest_results.items():
+                for lot_size, result in lot_results.items():
+                    sharpe = result.get('sharpe_ratio', 0) if isinstance(result, dict) else getattr(result, 'sharpe_ratio', 0)
+                    if sharpe > 1.0:
+                        n_viable += 1
+                        break  # Count strategy once even if multiple lot sizes are viable
+        else:
+            # Old format: list of results
+            n_viable = sum(1 for r in backtest_results if r.get('sharpe_ratio', 0) > 1.0)
+        
         print(f"\n✅ Backtesting complete in {elapsed:.1f}s")
         print(f"   Viable strategies (Sharpe > 1.0): {n_viable}/{n_strategies}")
         
