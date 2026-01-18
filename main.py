@@ -274,6 +274,12 @@ Examples:
         help="Force rerun of backtesting even if cached results exist"
     )
     
+    parser.add_argument(
+        "--clean-strategy-cache",
+        action="store_true",
+        help="Delete strategy-related cache (batch_results, rankings, reports) before running. Keeps labels, regimes, patterns, and final merged results."
+    )
+    
     # Chunking arguments
     parser.add_argument(
         "--chunk-size",
@@ -573,6 +579,70 @@ def cleanup_memory():
         print(f"💾 After cooldown: {mem.used/1e9:.1f}GB / {mem.total/1e9:.1f}GB ({mem.percent}%)")
 
 
+def clean_strategy_cache():
+    """
+    Delete strategy-related cache files.
+    
+    DELETES:
+    - batch_results/ (Step 5 intermediate files)
+    - *_rankings* (Step 6)
+    - *_LIGHT_REPORT_*.json (Step 7)
+    
+    KEEPS:
+    - labels/ (Step 1)
+    - cache/labels_*.pkl (Step 1 cache)
+    - *regimes.parquet (Step 2)
+    - *patterns.json (Step 3 cache)
+    - universes/ (original analysis)
+    - *_backtest_results_merged.parquet (FINAL RESULTS - valuable for ML training)
+    """
+    import shutil
+    from config import OUTPUT_DIR
+    
+    print("\n🗑️  Cleaning strategy cache...")
+    
+    deleted_count = 0
+    
+    # 1. Delete batch_results directory
+    batch_dir = OUTPUT_DIR / "batch_results"
+    if batch_dir.exists():
+        shutil.rmtree(batch_dir)
+        print(f"   ✅ Deleted: {batch_dir}")
+        deleted_count += 1
+    
+    # 2. Delete rankings files
+    for f in OUTPUT_DIR.glob("*_rankings*"):
+        f.unlink()
+        print(f"   ✅ Deleted: {f.name}")
+        deleted_count += 1
+    
+    # 3. Delete LIGHT_REPORT files
+    for f in OUTPUT_DIR.glob("*_LIGHT_REPORT_*.json"):
+        f.unlink()
+        print(f"   ✅ Deleted: {f.name}")
+        deleted_count += 1
+    
+    # Also check reports subdirectory
+    reports_dir = OUTPUT_DIR / "reports"
+    if reports_dir.exists():
+        for f in reports_dir.glob("*_rankings*"):
+            f.unlink()
+            print(f"   ✅ Deleted: reports/{f.name}")
+            deleted_count += 1
+        for f in reports_dir.glob("*_LIGHT_REPORT_*.json"):
+            f.unlink()
+            print(f"   ✅ Deleted: reports/{f.name}")
+            deleted_count += 1
+    
+    if deleted_count == 0:
+        print("   ℹ️  No strategy cache files found to delete")
+    else:
+        print(f"\n   🧹 Cleaned {deleted_count} items")
+    
+    print("   ✅ Labels, regimes, patterns, and merged results preserved\n")
+
+
+
 def show_progress(
     universe_idx: int,
     total_universes: int,
@@ -713,7 +783,7 @@ def run_strategy_discovery(df, args):
     print("═" * 80)
     
     from lore import LoreSystem, EventType
-    from config import OUTPUT_DIR, FILE_PREFIX
+    from config import OUTPUT_DIR, FILE_PREFIX, FILE_PREFIX_STABLE
     import pandas as pd
     
     # Initialize Lore System
@@ -760,7 +830,8 @@ def run_strategy_discovery(df, args):
         
         # Ensure output directory exists
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-        regimes_path = OUTPUT_DIR / f"{FILE_PREFIX}regimes.parquet"
+        # Use stable prefix for regime cache (reusable between runs)
+        regimes_path = OUTPUT_DIR / f"{FILE_PREFIX_STABLE}regimes.parquet"
         
         # Check if regimes already exist (cache)
         if regimes_path.exists():
@@ -806,15 +877,38 @@ def run_strategy_discovery(df, args):
                       message="Step 3/7: Mining patterns with ML...")
         
         from pattern_miner import PatternMiner
+        from config import FILE_PREFIX_STABLE
+        import json
         
-        start_time = time.time()
-        miner = PatternMiner()
-        patterns = miner.discover_patterns(df, labels_dict)
-        elapsed = time.time() - start_time
+        # Use stable prefix for pattern cache (reusable between runs)
+        patterns_cache_path = OUTPUT_DIR / f"{FILE_PREFIX_STABLE}patterns.json"
         
-        n_patterns = len(patterns.get('important_features', []))
-        print(f"\n✅ Pattern mining complete in {elapsed:.1f}s")
-        print(f"   Important features found: {n_patterns}")
+        # Check if patterns already exist (cache)
+        if patterns_cache_path.exists():
+            print("✅ Loading saved patterns from cache...")
+            start_time = time.time()
+            with open(patterns_cache_path, 'r') as f:
+                patterns = json.load(f)
+            elapsed = time.time() - start_time
+            
+            n_patterns = len(patterns.get('important_features', []))
+            print(f"   Loaded in {elapsed:.1f}s")
+            print(f"   Important features cached: {n_patterns}")
+        else:
+            print("🔄 Running pattern mining (this may take several minutes)...")
+            start_time = time.time()
+            miner = PatternMiner()
+            patterns = miner.discover_patterns(df, labels_dict)
+            elapsed = time.time() - start_time
+            
+            n_patterns = len(patterns.get('important_features', []))
+            print(f"\n✅ Pattern mining complete in {elapsed:.1f}s")
+            print(f"   Important features found: {n_patterns}")
+            
+            # Save patterns to cache
+            with open(patterns_cache_path, 'w') as f:
+                json.dump(patterns, f, indent=2, default=str)
+            print(f"   💾 Patterns saved to: {patterns_cache_path}")
         
         lore.broadcast(EventType.DISCOVERY, 
                       message=f"Discovered {n_patterns} important patterns")
@@ -1101,6 +1195,10 @@ def main():
     """
     # Parse arguments
     args = parse_arguments()
+    
+    # Clean strategy cache if requested (before any other processing)
+    if args.clean_strategy_cache:
+        clean_strategy_cache()
     
     # Show banner
     print(ULTRA_NECROZMA_BANNER)
