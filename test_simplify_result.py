@@ -17,7 +17,7 @@ TOP_PATTERNS_PER_LEVEL = 10  # Default value from config
 
 def _simplify_result(result):
     """Simplify result for JSON serialization"""
-    # Verificar se result tem estrutura válida
+    # Check if result has valid structure
     if result is None or not isinstance(result, dict):
         return result
     
@@ -31,7 +31,7 @@ def _simplify_result(result):
         "metadata": result.get("metadata", {}),
     }
     
-    # Se não tem results, retorna simplificado vazio
+    # If no results, return empty simplified
     if "results" not in result or not result["results"]:
         return simplified
     

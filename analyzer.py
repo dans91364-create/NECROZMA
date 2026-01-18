@@ -1075,7 +1075,7 @@ class UltraNecrozmaAnalyzer:
     
     def _simplify_result(self, result):
         """Simplify result for JSON serialization"""
-        # Verificar se result tem estrutura válida
+        # Check if result has valid structure
         if result is None or not isinstance(result, dict):
             return result
         
@@ -1089,7 +1089,7 @@ class UltraNecrozmaAnalyzer:
             "metadata": result.get("metadata", {}),
         }
         
-        # Se não tem results, retorna simplificado vazio
+        # If no results, return empty simplified
         if "results" not in result or not result["results"]:
             return simplified
         
