@@ -1075,17 +1075,25 @@ class UltraNecrozmaAnalyzer:
     
     def _simplify_result(self, result):
         """Simplify result for JSON serialization"""
+        # Check if result has valid structure
+        if result is None or not isinstance(result, dict):
+            return result
+        
         simplified = {
-            "name": result["name"],
-            "config": result["config"],
-            "processing_time": result["processing_time"],
-            "total_patterns":  result["total_patterns"],
+            "name": result.get("name", "unknown"),
+            "config": result.get("config", {}),
+            "processing_time": result.get("processing_time", 0),
+            "total_patterns": result.get("total_patterns", 0),
             "results": {},
-            "ohlc_data":  result.get("ohlc_data", []),
+            "ohlc_data": result.get("ohlc_data", []),
             "metadata": result.get("metadata", {}),
         }
         
-        for level in result["results"]: 
+        # If no results, return empty simplified
+        if "results" not in result or not result["results"]:
+            return simplified
+        
+        for level in result["results"]:
             simplified["results"][level] = {}
             
             for direction in result["results"][level]:
@@ -1095,15 +1103,15 @@ class UltraNecrozmaAnalyzer:
                 patterns = level_data.get("patterns", {})
                 top_patterns = sorted(
                     patterns.items(),
-                    key=lambda x: x[1]["count"],
+                    key=lambda x: x[1].get("count", 0),
                     reverse=True
                 )[:TOP_PATTERNS_PER_LEVEL]
                 
                 simplified["results"][level][direction] = {
-                    "total_occurrences": level_data["total_occurrences"],
+                    "total_occurrences": level_data.get("total_occurrences", 0),
                     "unique_patterns": len(patterns),
                     "top_patterns": [
-                        {"signature": sig, "count": data["count"]}
+                        {"signature": sig, "count": data.get("count", 0)}
                         for sig, data in top_patterns
                     ],
                     "feature_stats": level_data.get("feature_stats", {})
