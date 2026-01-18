@@ -103,7 +103,6 @@ class BatchRunner:
         
         # Check if batch already exists (cache detection)
         if self.skip_existing and output_file.exists():
-            file_size_mb = output_file.stat().st_size / (1024 ** 2)
             return True, 0.0, str(output_file), True  # from_cache=True
         
         # Build command with batch context for progress display
