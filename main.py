@@ -927,7 +927,8 @@ def run_strategy_discovery(df, args):
                 # Run batch processing
                 merged_results_file = run_batch_processing(
                     batch_size=args.batch_size,
-                    parquet_file=temp_parquet
+                    parquet_file=temp_parquet,
+                    force_rerun=force_rerun
                 )
                 
                 # Load merged results

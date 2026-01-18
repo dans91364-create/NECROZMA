@@ -32,24 +32,29 @@ from config import STRATEGY_TEMPLATES, STRATEGY_PARAMS, OUTPUT_DIR, PARQUET_FILE
 class BatchRunner:
     """Orchestrator for batch processing strategy backtests"""
     
-    def __init__(self, batch_size: int = 200, parquet_file: Path = None):
+    def __init__(self, batch_size: int = 200, parquet_file: Path = None, skip_existing: bool = True, force_rerun: bool = False):
         """
         Initialize batch runner
         
         Args:
             batch_size: Number of strategies per batch (default: 200)
             parquet_file: Path to data parquet file (default: from config)
+            skip_existing: Skip batches with existing results (default: True)
+            force_rerun: Force rerun all batches, ignore cache (default: False)
         """
         self.batch_size = batch_size
         self.parquet_file = parquet_file or PARQUET_FILE
         self.output_dir = OUTPUT_DIR / "batch_results"
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.skip_existing = skip_existing and not force_rerun  # force_rerun overrides skip_existing
+        self.force_rerun = force_rerun
         
         # Track batches
         self.total_strategies = 0
         self.num_batches = 0
         self.batch_files = []
         self.failed_batches = []
+        self.cached_batches = []  # Track which batches were loaded from cache
     
     def calculate_batches(self) -> List[Tuple[int, int]]:
         """
@@ -81,7 +86,7 @@ class BatchRunner:
         
         return batches
     
-    def run_batch(self, batch_idx: int, start_idx: int, end_idx: int) -> Tuple[bool, float, str]:
+    def run_batch(self, batch_idx: int, start_idx: int, end_idx: int) -> Tuple[bool, float, str, bool]:
         """
         Run a single batch in subprocess
         
@@ -91,10 +96,14 @@ class BatchRunner:
             end_idx: Strategy end index (exclusive)
         
         Returns:
-            Tuple of (success, elapsed_time, output_file)
+            Tuple of (success, elapsed_time, output_file, from_cache)
         """
         output_file = self.output_dir / f"results_batch_{batch_idx}.parquet"
         error_log_file = self.output_dir / f"error_batch_{batch_idx}.log"
+        
+        # Check if batch already exists (cache detection)
+        if self.skip_existing and output_file.exists():
+            return True, 0.0, str(output_file), True  # from_cache=True
         
         # Build command with batch context for progress display
         cmd = [
@@ -128,21 +137,21 @@ class BatchRunner:
                 # Clean up error log if successful
                 if error_log_file.exists() and error_log_file.stat().st_size == 0:
                     error_log_file.unlink()
-                return True, elapsed, str(output_file)
+                return True, elapsed, str(output_file), False  # from_cache=False
             else:
                 print(f"\n   ❌ Batch {batch_idx} failed with return code {result.returncode}")
                 print(f"      Check output above or error log: {error_log_file}")
-                return False, elapsed, str(output_file)
+                return False, elapsed, str(output_file), False  # from_cache=False
                 
         except subprocess.TimeoutExpired:
             elapsed = time.time() - start_time
             print(f"\n   ⏰ Batch {batch_idx} timed out after {elapsed:.0f}s")
-            return False, elapsed, str(output_file)
+            return False, elapsed, str(output_file), False  # from_cache=False
         
         except Exception as e:
             elapsed = time.time() - start_time
             print(f"\n   ❌ Batch {batch_idx} error: {e}")
-            return False, elapsed, str(output_file)
+            return False, elapsed, str(output_file), False  # from_cache=False
     
     def run_all_batches(self) -> List[str]:
         """
@@ -153,9 +162,37 @@ class BatchRunner:
         """
         batches = self.calculate_batches()
         
+        # Check for existing batches (cache detection)
+        cached_batch_indices = []
+        if self.skip_existing:
+            for batch_idx in range(self.num_batches):
+                output_file = self.output_dir / f"results_batch_{batch_idx}.parquet"
+                if output_file.exists():
+                    cached_batch_indices.append(batch_idx + 1)  # 1-based for display
+        
+        # Display cache status
         print(f"\n{'='*80}")
         print(f"🚀 BATCH PROCESSING: {self.total_strategies:,} strategies in {self.num_batches} batches")
         print(f"{'='*80}\n")
+        
+        if cached_batch_indices:
+            n_cached = len(cached_batch_indices)
+            n_remaining = self.num_batches - n_cached
+            
+            print(f"✅ Found {n_cached} cached batch result{'s' if n_cached != 1 else ''}!")
+            
+            # Display ranges of cached batches
+            if n_cached <= 5:
+                # Show individual batch numbers if few
+                batch_list = ", ".join(map(str, cached_batch_indices))
+                print(f"   Skipping batches: {batch_list}")
+            else:
+                # Show range if many
+                print(f"   Skipping batches: {cached_batch_indices[0]}-{cached_batch_indices[-1]}")
+            
+            print(f"   Processing remaining: {n_remaining} batch{'es' if n_remaining != 1 else ''}\n")
+        elif self.force_rerun:
+            print(f"🔄 Force rerun enabled - reprocessing all batches\n")
         
         successful_files = []
         total_start = time.time()
@@ -170,15 +207,22 @@ class BatchRunner:
             print(f"\n{'─'*80}")
             print(f"Batch {batch_idx:2d}/{self.num_batches}: {start_idx:5d}-{end_idx:5d}  ", end="")
             
-            # Run batch
-            success, elapsed, output_file = self.run_batch(batch_idx - 1, start_idx, end_idx)
+            # Run batch (with cache detection)
+            success, elapsed, output_file, from_cache = self.run_batch(batch_idx - 1, start_idx, end_idx)
             
             if success:
                 # Check output file exists
                 if Path(output_file).exists():
                     file_size_mb = Path(output_file).stat().st_size / (1024 ** 2)
                     successful_files.append(output_file)
-                    print(f"✅ {elapsed:5.1f}s | {batch_size:3d} strategies | RAM: {mem_pct:4.1f}% | {file_size_mb:.2f}MB")
+                    
+                    if from_cache:
+                        # Cached batch
+                        print(f"📦 CACHED | {batch_size:3d} strategies | RAM: {mem_pct:4.1f}% | {file_size_mb:.2f}MB")
+                        self.cached_batches.append((batch_idx, start_idx, end_idx))
+                    else:
+                        # Newly processed batch
+                        print(f"✅ {elapsed:5.1f}s | {batch_size:3d} strategies | RAM: {mem_pct:4.1f}% | {file_size_mb:.2f}MB")
                 else:
                     print(f"⚠️  {elapsed:5.1f}s | Output file missing!")
                     self.failed_batches.append((batch_idx, start_idx, end_idx))
@@ -194,6 +238,14 @@ class BatchRunner:
         print(f"{'='*80}")
         print(f"   Total time: {int(total_elapsed//60)}m {int(total_elapsed%60)}s")
         print(f"   Successful batches: {len(successful_files)}/{self.num_batches}")
+        
+        # Show cache vs processed breakdown
+        n_cached = len(self.cached_batches)
+        n_processed = len(successful_files) - n_cached
+        if n_cached > 0:
+            print(f"   Cached batches: {n_cached}")
+            print(f"   Processed batches: {n_processed}")
+        
         print(f"   Failed batches: {len(self.failed_batches)}")
         
         if self.failed_batches:
@@ -284,18 +336,19 @@ class BatchRunner:
         return None
 
 
-def run_batch_processing(batch_size: int = 200, parquet_file: Path = None) -> Path:
+def run_batch_processing(batch_size: int = 200, parquet_file: Path = None, force_rerun: bool = False) -> Path:
     """
     Convenience function to run batch processing
     
     Args:
         batch_size: Number of strategies per batch (default: 200)
         parquet_file: Path to data parquet file (default: from config)
+        force_rerun: Force rerun all batches, ignore cache (default: False)
     
     Returns:
         Path to merged results file
     """
-    runner = BatchRunner(batch_size=batch_size, parquet_file=parquet_file)
+    runner = BatchRunner(batch_size=batch_size, parquet_file=parquet_file, force_rerun=force_rerun)
     return runner.run(merge=True)
 
 
@@ -307,12 +360,22 @@ if __name__ == "__main__":
     parser.add_argument("--batch-size", type=int, default=200, help="Batch size (default: 200)")
     parser.add_argument("--parquet", type=str, default=None, help="Path to parquet data file")
     parser.add_argument("--no-merge", action="store_true", help="Skip merging results")
+    parser.add_argument("--force-rerun", action="store_true", help="Force rerun all batches, ignore cache")
+    parser.add_argument("--no-skip-existing", action="store_true", help="Don't skip existing batches (reprocess all)")
     
     args = parser.parse_args()
     
     parquet_path = Path(args.parquet) if args.parquet else None
     
-    runner = BatchRunner(batch_size=args.batch_size, parquet_file=parquet_path)
+    # Determine skip_existing based on flags
+    skip_existing = not args.no_skip_existing
+    
+    runner = BatchRunner(
+        batch_size=args.batch_size, 
+        parquet_file=parquet_path,
+        skip_existing=skip_existing,
+        force_rerun=args.force_rerun
+    )
     result_file = runner.run(merge=not args.no_merge)
     
     if result_file:
