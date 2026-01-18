@@ -137,17 +137,11 @@ def load_labels(labels_dir: Path = None, batch_mode: bool = False) -> Dict[str, 
     if batch_mode:
         print(f"   🔄 Batch mode: returning file paths (not loading into memory)")
         for f in parquet_files:
-            config_key = f.stem  # e.g., "T10_S5_H30" or "EURUSD_2025_T10_S5_H30"
-            # Remove prefix if present
-            if FILE_PREFIX_STABLE and config_key.startswith(FILE_PREFIX_STABLE.rstrip('_')):
-                config_key = config_key[len(FILE_PREFIX_STABLE):]
+            config_key = f.stem  # e.g., "T10_S5_H30"
             labels[config_key] = f  # Store path instead of DataFrame
     else:
         for f in parquet_files:
-            config_key = f.stem  # e.g., "T10_S5_H30" or "EURUSD_2025_T10_S5_H30"
-            # Remove prefix if present
-            if FILE_PREFIX_STABLE and config_key.startswith(FILE_PREFIX_STABLE.rstrip('_')):
-                config_key = config_key[len(FILE_PREFIX_STABLE):]
+            config_key = f.stem  # e.g., "T10_S5_H30"
             
             try:
                 labels[config_key] = pd.read_parquet(f)
