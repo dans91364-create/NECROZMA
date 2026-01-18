@@ -32,7 +32,7 @@ from config import (
     NUM_WORKERS, MIN_SAMPLES, FEATURE_GROUPS,
     CONFIDENCE_THRESHOLDS, TOP_PATTERNS_PER_LEVEL,
     get_all_configs, get_output_dirs, THEME, MAX_MEMORY_GB,
-    FILE_PREFIX_STABLE, FILE_PREFIX
+    FILE_PREFIX
 )
 from data_loader import resample_to_ohlc
 from features_core import extract_core_features
@@ -510,8 +510,8 @@ class UltraNecrozmaAnalyzer:
         if not CACHE_CONFIG.get("skip_existing_universes", True):
             return False
         
-        parquet_path = self.output_dirs["universes"] / f"{FILE_PREFIX_STABLE}{universe_name}.parquet"
-        json_path = self.output_dirs["universes"] / f"{FILE_PREFIX_STABLE}{universe_name}.json"
+        parquet_path = self.output_dirs["universes"] / f"{FILE_PREFIX}{universe_name}.parquet"
+        json_path = self.output_dirs["universes"] / f"{FILE_PREFIX}{universe_name}.json"
         
         return parquet_path.exists() or json_path.exists()
     
@@ -526,7 +526,7 @@ class UltraNecrozmaAnalyzer:
         Returns:
             dict: Universe metadata or None
         """
-        metadata_path = self.output_dirs["universes"] / f"{FILE_PREFIX_STABLE}{universe_name}_metadata.json"
+        metadata_path = self.output_dirs["universes"] / f"{FILE_PREFIX}{universe_name}_metadata.json"
         
         if metadata_path.exists():
             try:
@@ -537,7 +537,7 @@ class UltraNecrozmaAnalyzer:
                 return None
         
         # Try to extract from json file if no metadata sidecar
-        json_path = self.output_dirs["universes"] / f"{FILE_PREFIX_STABLE}{universe_name}.json"
+        json_path = self.output_dirs["universes"] / f"{FILE_PREFIX}{universe_name}.json"
         if json_path.exists():
             try:
                 with open(json_path, 'r') as f:
@@ -854,7 +854,7 @@ class UltraNecrozmaAnalyzer:
     
     def _save_checkpoint(self, step):
         """Save checkpoint (Dimensional Anchor)"""
-        checkpoint_file = self.output_dirs["checkpoints"] / f"{FILE_PREFIX_STABLE}checkpoint_{step}.json"
+        checkpoint_file = self.output_dirs["checkpoints"] / f"{FILE_PREFIX}checkpoint_{step}.json"
         
         checkpoint_data = {
             "step": step,
@@ -988,7 +988,7 @@ class UltraNecrozmaAnalyzer:
                     self._save_universe_parquet(name, result_simplified)
                 else:
                     # Save as JSON (legacy)
-                    universe_file = self.output_dirs["universes"] / f"{FILE_PREFIX_STABLE}{name}.json"
+                    universe_file = self.output_dirs["universes"] / f"{FILE_PREFIX}{name}.json"
                     with open(universe_file, "w") as f:
                         json.dump(result_simplified, f, indent=2, default=str)
         
@@ -1057,7 +1057,7 @@ class UltraNecrozmaAnalyzer:
             
             # Save as Parquet
             compression = STORAGE_CONFIG.get("compression", "snappy")
-            parquet_file = self.output_dirs["universes"] / f"{FILE_PREFIX_STABLE}{name}.parquet"
+            parquet_file = self.output_dirs["universes"] / f"{FILE_PREFIX}{name}.parquet"
             df.to_parquet(parquet_file, compression=compression, index=False)
             
             # Save metadata separately if enabled
@@ -1069,7 +1069,7 @@ class UltraNecrozmaAnalyzer:
                     "total_patterns": result_simplified.get("total_patterns", 0),
                     "metadata": result_simplified.get("metadata", {})
                 }
-                metadata_file = self.output_dirs["universes"] / f"{FILE_PREFIX_STABLE}{name}_metadata.json"
+                metadata_file = self.output_dirs["universes"] / f"{FILE_PREFIX}{name}_metadata.json"
                 with open(metadata_file, "w") as f:
                     json.dump(metadata, f, indent=2, default=str)
     
