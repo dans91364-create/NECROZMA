@@ -20,7 +20,7 @@ from scipy import stats
 import json
 from datetime import datetime
 
-from config import OUTPUT_DIR, FILE_PREFIX
+from config import OUTPUT_DIR, FILE_PREFIX, FILE_PREFIX_STABLE
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -129,8 +129,8 @@ def load_labels(labels_dir: Path = None, batch_mode: bool = False) -> Dict[str, 
     parquet_files = list(labels_dir.glob("*.parquet"))
     
     if not parquet_files:
-        # Try with FILE_PREFIX
-        parquet_files = list(labels_dir.glob(f"{FILE_PREFIX}*.parquet"))
+        # Try with FILE_PREFIX_STABLE (for cached labels)
+        parquet_files = list(labels_dir.glob(f"{FILE_PREFIX_STABLE}*.parquet"))
     
     print(f"📂 Loading {len(parquet_files)} label files...")
     
@@ -139,15 +139,15 @@ def load_labels(labels_dir: Path = None, batch_mode: bool = False) -> Dict[str, 
         for f in parquet_files:
             config_key = f.stem  # e.g., "T10_S5_H30" or "EURUSD_2025_T10_S5_H30"
             # Remove prefix if present
-            if FILE_PREFIX and config_key.startswith(FILE_PREFIX):
-                config_key = config_key[len(FILE_PREFIX):]
+            if FILE_PREFIX_STABLE and config_key.startswith(FILE_PREFIX_STABLE.rstrip('_')):
+                config_key = config_key[len(FILE_PREFIX_STABLE):]
             labels[config_key] = f  # Store path instead of DataFrame
     else:
         for f in parquet_files:
             config_key = f.stem  # e.g., "T10_S5_H30" or "EURUSD_2025_T10_S5_H30"
             # Remove prefix if present
-            if FILE_PREFIX and config_key.startswith(FILE_PREFIX):
-                config_key = config_key[len(FILE_PREFIX):]
+            if FILE_PREFIX_STABLE and config_key.startswith(FILE_PREFIX_STABLE.rstrip('_')):
+                config_key = config_key[len(FILE_PREFIX_STABLE):]
             
             try:
                 labels[config_key] = pd.read_parquet(f)
@@ -172,9 +172,9 @@ def load_regimes(regimes_path: Path = None) -> pd.DataFrame:
     search_paths = [
         regimes_path,
         Path("regimes.parquet"),
-        Path(f"{FILE_PREFIX}regimes.parquet"),
+        Path(f"{FILE_PREFIX_STABLE}regimes.parquet"),
         OUTPUT_DIR / "regimes.parquet",
-        OUTPUT_DIR / f"{FILE_PREFIX}regimes.parquet",
+        OUTPUT_DIR / f"{FILE_PREFIX_STABLE}regimes.parquet",
     ]
     
     for path in search_paths:
