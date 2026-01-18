@@ -672,7 +672,9 @@ class UltraNecrozmaAnalyzer:
                         "name": universe_name,
                         "total_patterns": total_patterns,
                         "config": metadata.get("config", {}),
-                        "metadata": metadata.get("metadata", {})
+                        "metadata": metadata.get("metadata", {}),
+                        "processing_time": metadata.get("processing_time", 0),
+                        "results": {}
                     }
                 else:
                     print(f"   ⚠️ Cache exists but metadata unavailable, continuing...", flush=True)
@@ -772,7 +774,9 @@ class UltraNecrozmaAnalyzer:
                         "name": universe_name,
                         "total_patterns": total_patterns,
                         "config": metadata.get("config", {}),
-                        "metadata": metadata.get("metadata", {})
+                        "metadata": metadata.get("metadata", {}),
+                        "processing_time": metadata.get("processing_time", 0),
+                        "results": {}
                     }
                     skipped_count += 1
             else:
