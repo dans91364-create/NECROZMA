@@ -95,17 +95,9 @@ def get_pair_info():
 # Extract pair name and year from PARQUET_FILE
 PAIR_NAME, DATA_YEAR = get_pair_info()
 
-# Generate timestamp for unique run identification
-_run_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-
-# File prefix for stable caches (reusable between runs)
-# Used for: patterns, regimes, labels - data that doesn't change with strategy params
-FILE_PREFIX_STABLE = f"{PAIR_NAME}_{DATA_YEAR}_"
-
-# File prefix for unique results (includes timestamp to prevent overwriting)
-# Used for: backtest results, rankings, reports - data specific to this run
-# Example: "EURUSD_2025_20260118_143052_backtest_results_merged.parquet"
-FILE_PREFIX = f"{PAIR_NAME}_{DATA_YEAR}_{_run_timestamp}_"
+# File prefix for all outputs: "EURUSD_2025_"
+# This prevents overwriting when running multiple pairs
+FILE_PREFIX = f"{PAIR_NAME}_{DATA_YEAR}_"
 
 
 # Output: Analysis results / Resultados das análises
