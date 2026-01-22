@@ -1,0 +1,275 @@
+⚡🌟💎 ULTRA NECROZMA - FREQUENCY ANALYSIS REPORT 💎🌟⚡
+====================================================================================================
+
+📊 FREQUENCY BANDS DEFINITION
+----------------------------------------------------------------------------------------------------
+❌ DISCARDED:   < 50 trades       - No statistical significance
+📊 FAIXA 1:     50-500 trades     - Low Frequency (Swing/Position Trading) ~0.2-2 trades/day
+📊 FAIXA 2:     500-5000 trades   - Medium Frequency (Day Trading) ~2-20 trades/day
+📊 FAIXA 3:     5000-50000 trades - High Frequency (Scalping) ~20-200 trades/day
+⚠️  IMPRACTICAL: > 50000 trades    - Too many to operate (>200 trades/day)
+
+📈 GENERAL SUMMARY
+----------------------------------------------------------------------------------------------------
+Total Strategies Analyzed:  2,244
+Discarded (< 50 trades):    1,357
+
+Distribution by Band:
+  FAIXA 1 LOW         :     48 (  5.4%)
+  FAIXA 2 MEDIUM      :     52 (  5.9%)
+  FAIXA 3 HIGH        :    195 ( 22.0%)
+  IMPRACTICAL         :    592 ( 66.7%)
+
+📊 FAIXA 1 - LOW FREQUENCY (50-500 trades)
+----------------------------------------------------------------------------------------------------
+Total Strategies: 48
+
+📈 Aggregate Statistics:
+  Metric                       Mean       Median          Max          Min
+  --------------------------------------------------------------------
+  Sharpe Ratio                0.384       -0.016        3.400       -0.917
+  Profit Factor               1.078        0.998        1.707        0.887
+  Win Rate                   31.0%       31.5%       43.3%       17.0%
+  N Trades                      191          112          454           66
+  Total Return               -0.007       -0.000        0.026       -0.251
+  Max Drawdown                0.025        0.003        0.675        0.001
+
+🏆 Top 10 by Sharpe Ratio:
+  #    Strategy                                                    Sharpe         PF    WinRate     Trades
+  ---------------------------------------------------------------------------------------------------
+  1    MeanReverter_T1.8_SL30_TP50                                  3.400      1.633      40.9%         66
+  2    MeanReverter_T1.8_SL10_TP50                                  2.960      1.707      22.1%         68
+  3    MeanReverter_T1.8_SL20_TP50                                  2.753      1.523      31.3%         67
+  4    MeanReverter_T1.8_SL10_TP40                                  2.364      1.490      23.5%         68
+  5    MeanReverter_T1.8_SL15_TP50                                  2.248      1.442      25.4%         67
+  6    MeanReverter_T1.8_SL20_TP30                                  1.993      1.323      38.8%         67
+  7    MeanReverter_T1.8_SL20_TP40                                  1.867      1.315      32.8%         67
+  8    MeanReverter_T1.8_SL10_TP30                                  1.775      1.319      26.5%         68
+  9    MeanReverter_T1.8_SL15_TP40                                  1.465      1.253      26.9%         67
+  10   MeanReverterV2_T0.5_SL20_TP40                                1.311      1.207      36.3%        113
+
+💰 Top 10 by Profit Factor:
+  #    Strategy                                                        PF     Sharpe    WinRate     Trades
+  ---------------------------------------------------------------------------------------------------
+  1    MeanReverter_T1.8_SL10_TP50                                  1.707      2.960      22.1%         68
+  2    MeanReverter_T1.8_SL30_TP50                                  1.633      3.400      40.9%         66
+  3    MeanReverter_T1.8_SL20_TP50                                  1.523      2.753      31.3%         67
+  4    MeanReverter_T1.8_SL10_TP40                                  1.490      2.364      23.5%         68
+  5    MeanReverter_T1.8_SL15_TP50                                  1.442      2.248      25.4%         67
+  6    MeanReverter_T1.8_SL20_TP30                                  1.323      1.993      38.8%         67
+  7    MeanReverter_T1.8_SL10_TP30                                  1.319      1.775      26.5%         68
+  8    MeanReverter_T1.8_SL20_TP40                                  1.315      1.867      32.8%         67
+  9    MeanReverter_T1.8_SL15_TP40                                  1.253      1.465      26.9%         67
+  10   MeanReverterV2_T0.5_SL20_TP40                                1.207      1.311      36.3%        113
+
+🎯 Top 10 by Win Rate:
+  #    Strategy                                                   WinRate     Sharpe         PF     Trades
+  ---------------------------------------------------------------------------------------------------
+  1    MeanReverterV2_T1.0_SL20_TP30                                43.3%      0.801      1.113         90
+  2    MeanReverterV2_T1.0_SL20_TP30_RSI30-75                       41.4%      0.233      1.032        324
+  3    MeanReverter_T1.8_SL30_TP50                                  40.9%      3.400      1.633         66
+  4    MeanReverterV2_T1.0_SL30_TP50                                40.9%      0.389      1.055         88
+  5    MeanReverterV2_T0.8_SL20_TP30_RSI30-75                       40.2%      0.115      1.016        336
+  6    MeanReverterV2_T0.8_SL20_TP30                                39.4%     -0.070      0.990         99
+  7    MeanReverterV2_T0.5_SL20_TP30_RSI30-75                       39.4%     -0.115      0.984        358
+  8    MeanReverterV2_T0.5_SL20_TP30                                39.1%      0.511      1.073        115
+  9    MeanReverterV2_T1.0_SL20_TP40                                38.9%      1.265      1.193         90
+  10   MeanReverterV2_T1.0_SL30_TP50_RSI30-75                       38.8%     -0.070      0.990        260
+
+
+📊 FAIXA 2 - MEDIUM FREQUENCY (500-5000 trades)
+----------------------------------------------------------------------------------------------------
+Total Strategies: 52
+
+📈 Aggregate Statistics:
+  Metric                       Mean       Median          Max          Min
+  --------------------------------------------------------------------
+  Sharpe Ratio               -0.725       -0.706       -0.332       -1.165
+  Profit Factor               0.900        0.901        0.957        0.848
+  Win Rate                   24.8%       23.9%       37.9%       15.1%
+  N Trades                    1,528        1,364        3,326          525
+  Total Return               -0.019       -0.014       -0.006       -0.143
+  Max Drawdown                0.026        0.018        0.181        0.009
+
+🏆 Top 10 by Sharpe Ratio:
+  #    Strategy                                                    Sharpe         PF    WinRate     Trades
+  ---------------------------------------------------------------------------------------------------
+  1    MeanReverterV2_T1.8_SL10_TP20_RSI20-65                      -0.332      0.957      32.4%      3,211
+  2    MeanReverterV2_T1.5_SL10_TP20_RSI20-65                      -0.437      0.943      32.1%      3,281
+  3    MeanReverterV2_T1.2_SL10_TP20_RSI20-65                      -0.514      0.934      31.9%      3,313
+  4    MeanReverterV2_T1.5_SL10_TP40_RSI20-65                      -0.535      0.919      18.8%      1,756
+  5    MeanReverterV2_T1.0_SL10_TP20_RSI20-65                      -0.537      0.931      31.9%      3,312
+  6    SessionBreakout_T0.8_SL10_TP40                              -0.543      0.918      18.7%        883
+  7    SessionBreakout_T0.5_SL10_TP40                              -0.543      0.918      18.7%        883
+  8    MeanReverterV2_T0.8_SL10_TP20_RSI20-65                      -0.558      0.928      31.8%      3,319
+  9    MeanReverterV2_T0.5_SL10_TP20_RSI20-65                      -0.579      0.925      31.7%      3,326
+  10   MeanReverterV2_T1.5_SL10_TP30_RSI20-65                      -0.592      0.917      23.5%      2,340
+
+💰 Top 10 by Profit Factor:
+  #    Strategy                                                        PF     Sharpe    WinRate     Trades
+  ---------------------------------------------------------------------------------------------------
+  1    MeanReverterV2_T1.8_SL10_TP20_RSI20-65                       0.957     -0.332      32.4%      3,211
+  2    MeanReverterV2_T1.5_SL10_TP20_RSI20-65                       0.943     -0.437      32.1%      3,281
+  3    MeanReverterV2_T1.2_SL10_TP20_RSI20-65                       0.934     -0.514      31.9%      3,313
+  4    MeanReverterV2_T1.0_SL10_TP20_RSI20-65                       0.931     -0.537      31.9%      3,312
+  5    MeanReverterV2_T0.8_SL10_TP20_RSI20-65                       0.928     -0.558      31.8%      3,319
+  6    MeanReverterV2_T0.5_SL10_TP20_RSI20-65                       0.925     -0.579      31.7%      3,326
+  7    MeanReverterV2_T1.5_SL10_TP40_RSI20-65                       0.919     -0.535      18.8%      1,756
+  8    SessionBreakout_T0.8_SL10_TP40                               0.918     -0.543      18.7%        883
+  9    SessionBreakout_T0.5_SL10_TP40                               0.918     -0.543      18.7%        883
+  10   MeanReverterV2_T1.5_SL10_TP30_RSI20-65                       0.917     -0.592      23.5%      2,340
+
+🎯 Top 10 by Win Rate:
+  #    Strategy                                                   WinRate     Sharpe         PF     Trades
+  ---------------------------------------------------------------------------------------------------
+  1    SessionBreakout_T0.5_SL20_TP30                               37.9%     -0.698      0.914        615
+  2    SessionBreakout_T0.8_SL20_TP30                               37.9%     -0.698      0.914        615
+  3    MeanReverterV2_T1.8_SL10_TP20_RSI20-65                       32.4%     -0.332      0.957      3,211
+  4    MeanReverterV2_T1.5_SL10_TP20_RSI20-65                       32.1%     -0.437      0.943      3,281
+  5    MeanReverterV2_T1.2_SL10_TP20_RSI20-65                       31.9%     -0.514      0.934      3,313
+  6    MeanReverterV2_T1.0_SL10_TP20_RSI20-65                       31.9%     -0.537      0.931      3,312
+  7    MeanReverterV2_T0.8_SL10_TP20_RSI20-65                       31.8%     -0.558      0.928      3,319
+  8    MeanReverterV2_T0.5_SL10_TP20_RSI20-65                       31.7%     -0.579      0.925      3,326
+  9    MeanReverterV2_T1.2_SL15_TP30_RSI20-65                       31.3%     -0.690      0.912      1,662
+  10   MeanReverterV2_T1.5_SL15_TP30_RSI20-65                       31.2%     -0.719      0.908      1,643
+
+
+📊 FAIXA 3 - HIGH FREQUENCY (5000-50000 trades)
+----------------------------------------------------------------------------------------------------
+Total Strategies: 195
+
+📈 Aggregate Statistics:
+  Metric                       Mean       Median          Max          Min
+  --------------------------------------------------------------------
+  Sharpe Ratio               -0.079        0.037        0.390       -0.724
+  Profit Factor               0.984        1.006        1.069        0.861
+  Win Rate                   49.0%       49.1%       53.8%       36.4%
+  N Trades                   24,835       24,887       44,712        6,781
+  Total Return               -0.003        0.003        0.037       -0.053
+  Max Drawdown                0.019        0.009        0.054        0.004
+
+🏆 Top 10 by Sharpe Ratio:
+  #    Strategy                                                    Sharpe         PF    WinRate     Trades
+  ---------------------------------------------------------------------------------------------------
+  1    MomentumBurst_T1.5_SL10_TP50_CD240                           0.390      1.069      48.8%     29,716
+  2    MomentumBurst_T1.5_SL10_TP40_CD240                           0.385      1.068      48.8%     29,718
+  3    MomentumBurst_T1.5_SL10_TP30_CD240                           0.377      1.066      48.8%     29,733
+  4    MomentumBurst_T1.5_SL10_TP20_CD240                           0.369      1.064      48.8%     29,823
+  5    MomentumBurst_T1.5_SL15_TP50_CD240                           0.366      1.065      48.9%     29,253
+  6    MomentumBurst_T1.5_SL15_TP40_CD240                           0.362      1.064      48.9%     29,254
+  7    MomentumBurst_T1.5_SL15_TP30_CD240                           0.352      1.062      48.9%     29,269
+  8    MomentumBurst_T1.5_SL20_TP50_CD240                           0.335      1.060      48.9%     29,182
+  9    MomentumBurst_T1.5_SL20_TP40_CD240                           0.331      1.059      48.9%     29,183
+  10   MomentumBurst_T1.5_SL30_TP50_CD240                           0.328      1.059      48.9%     29,146
+
+💰 Top 10 by Profit Factor:
+  #    Strategy                                                        PF     Sharpe    WinRate     Trades
+  ---------------------------------------------------------------------------------------------------
+  1    MomentumBurst_T1.5_SL10_TP50_CD240                           1.069      0.390      48.8%     29,716
+  2    MomentumBurst_T1.5_SL10_TP40_CD240                           1.068      0.385      48.8%     29,718
+  3    MomentumBurst_T1.5_SL10_TP30_CD240                           1.066      0.377      48.8%     29,733
+  4    MomentumBurst_T1.5_SL15_TP50_CD240                           1.065      0.366      48.9%     29,253
+  5    MomentumBurst_T1.5_SL15_TP40_CD240                           1.064      0.362      48.9%     29,254
+  6    MomentumBurst_T1.5_SL10_TP20_CD240                           1.064      0.369      48.8%     29,823
+  7    MomentumBurst_T1.5_SL15_TP30_CD240                           1.062      0.352      48.9%     29,269
+  8    MomentumBurst_T1.5_SL20_TP50_CD240                           1.060      0.335      48.9%     29,182
+  9    MomentumBurst_T1.5_SL20_TP40_CD240                           1.059      0.331      48.9%     29,183
+  10   MomentumBurst_T1.5_SL30_TP50_CD240                           1.059      0.328      48.9%     29,146
+
+🎯 Top 10 by Win Rate:
+  #    Strategy                                                   WinRate     Sharpe         PF     Trades
+  ---------------------------------------------------------------------------------------------------
+  1    MeanReverterV2_T1.2_SL15_TP30_RSI30-75                       53.8%     -0.255      0.950     17,639
+  2    MeanReverterV2_T1.2_SL15_TP50_RSI30-75                       53.8%     -0.235      0.953     17,478
+  3    MeanReverterV2_T1.2_SL15_TP40_RSI30-75                       53.8%     -0.245      0.951     17,521
+  4    MeanReverterV2_T1.2_SL30_TP50_RSI25-70                       53.8%     -0.616      0.874     16,507
+  5    MeanReverterV2_T1.0_SL30_TP50_RSI25-70                       53.6%     -0.634      0.870     16,965
+  6    MeanReverterV2_T1.0_SL15_TP30_RSI30-75                       53.5%     -0.308      0.940     18,199
+  7    MeanReverterV2_T1.0_SL15_TP50_RSI30-75                       53.5%     -0.284      0.943     18,044
+  8    MeanReverterV2_T0.8_SL30_TP50_RSI25-70                       53.5%     -0.648      0.867     17,280
+  9    MeanReverterV2_T1.0_SL15_TP40_RSI30-75                       53.5%     -0.292      0.942     18,086
+  10   MeanReverterV2_T0.8_SL15_TP30_RSI30-75                       53.4%     -0.331      0.935     18,500
+
+
+⚠️  IMPRACTICAL BAND (> 50000 trades)
+----------------------------------------------------------------------------------------------------
+Total Strategies: 592
+
+⚠️  NOTE: These strategies have too many trades to be practically operated (>200 trades/day).
+         While they may show good metrics, they are not recommended for manual trading.
+
+📈 Aggregate Statistics:
+  Metric                       Mean       Median          Max
+  --------------------------------------------------------
+  Sharpe Ratio                0.125        0.249        1.846
+  Profit Factor               1.030        1.047        1.513
+  Win Rate                   45.3%       45.9%       69.0%
+  N Trades                  479,344      143,760    5,313,381
+
+
+❌ DISCARDED STRATEGIES (< 50 trades)
+----------------------------------------------------------------------------------------------------
+Total Discarded: 1,357
+
+ℹ️  NOTE: Strategies with fewer than 50 trades lack statistical significance.
+        They often show extreme Sharpe Ratios (e.g., 1e+17) due to low variance.
+        These have been excluded from all rankings and analysis.
+
+
+🔍 COMPARISON BETWEEN BANDS
+----------------------------------------------------------------------------------------------------
+Average Performance by Band:
+  Metric                       FAIXA 1         FAIXA 2         FAIXA 3
+  -----------------------------------------------------------------
+  Sharpe Ratio                   0.384          -0.725          -0.079
+  Profit Factor                  1.078           0.900           0.984
+  Win Rate                      31.0%          24.8%          49.0%
+  Total Return                  -0.007          -0.019          -0.003
+
+Best Band by Metric:
+  Sharpe Ratio        : FAIXA 1 LOW
+  Profit Factor       : FAIXA 1 LOW
+  Win Rate            : FAIXA 3 HIGH
+  Total Return        : FAIXA 3 HIGH
+
+💡 RECOMMENDATION:
+   Based on average performance, FAIXA 1 LOW shows the strongest overall metrics.
+   However, consider your trading style and time availability when choosing.
+
+
+🏆 FINAL CANDIDATE STRATEGIES
+----------------------------------------------------------------------------------------------------
+Top 5 from each valid band (ordered by Sharpe Ratio):
+
+📊 FAIXA 1 - LOW FREQUENCY:
+  #    Strategy                                                         Sharpe         PF         WR
+  ----------------------------------------------------------------------------------------------
+  1    MeanReverter_L5_T1.8_SL30_TP50                                    3.400      1.633      40.9%
+  2    MeanReverter_L5_T1.8_SL10_TP50                                    2.960      1.707      22.1%
+  3    MeanReverter_L5_T1.8_SL20_TP50                                    2.753      1.523      31.3%
+  4    MeanReverter_L5_T1.8_SL10_TP40                                    2.364      1.490      23.5%
+  5    MeanReverter_L5_T1.8_SL15_TP50                                    2.248      1.442      25.4%
+
+📊 FAIXA 2 - MEDIUM FREQUENCY:
+  #    Strategy                                                         Sharpe         PF         WR
+  ----------------------------------------------------------------------------------------------
+  1    MeanReverterV2_L30_T1.8_SL10_TP20_RSI20-65                       -0.332      0.957      32.4%
+  2    MeanReverterV2_L30_T1.5_SL10_TP20_RSI20-65                       -0.437      0.943      32.1%
+  3    MeanReverterV2_L30_T1.2_SL10_TP20_RSI20-65                       -0.514      0.934      31.9%
+  4    MeanReverterV2_L30_T1.5_SL10_TP40_RSI20-65                       -0.535      0.919      18.8%
+  5    MeanReverterV2_L30_T1.0_SL10_TP20_RSI20-65                       -0.537      0.931      31.9%
+
+📊 FAIXA 3 - HIGH FREQUENCY:
+  #    Strategy                                                         Sharpe         PF         WR
+  ----------------------------------------------------------------------------------------------
+  1    MomentumBurst_L10_T1.5_SL10_TP50_CD240                            0.390      1.069      48.8%
+  2    MomentumBurst_L10_T1.5_SL10_TP40_CD240                            0.385      1.068      48.8%
+  3    MomentumBurst_L10_T1.5_SL10_TP30_CD240                            0.377      1.066      48.8%
+  4    MomentumBurst_L10_T1.5_SL10_TP20_CD240                            0.369      1.064      48.8%
+  5    MomentumBurst_L10_T1.5_SL15_TP50_CD240                            0.366      1.065      48.9%
+
+Total Candidates for GBPUSD Testing: 15
+
+====================================================================================================
+END OF FREQUENCY ANALYSIS REPORT
+====================================================================================================
