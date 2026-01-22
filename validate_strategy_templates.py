@@ -17,13 +17,9 @@ sys.path.insert(0, str(Path(__file__).parent))
 from strategy_factory import (
     TrendFollower,
     MeanReverter,
-    BreakoutTrader,
     RegimeAdapter,
     MeanReverterV2,
-    ScalpingStrategy,
-    SessionBreakout,
     MomentumBurst,
-    PatternRecognition,
     StrategyFactory
 )
 from config import STRATEGY_TEMPLATES
@@ -131,12 +127,8 @@ def test_all_templates():
     templates = [
         (TrendFollower, "TrendFollower"),
         (MeanReverter, "MeanReverter"),
-        (BreakoutTrader, "BreakoutTrader"),
         (MeanReverterV2, "MeanReverterV2"),
-        (ScalpingStrategy, "ScalpingStrategy"),
-        (SessionBreakout, "SessionBreakout"),
         (MomentumBurst, "MomentumBurst"),
-        (PatternRecognition, "PatternRecognition"),
     ]
     
     print(f"\n📊 Testing {len(templates)} strategy templates...")

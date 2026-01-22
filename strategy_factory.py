@@ -159,51 +159,6 @@ class MeanReverter(Strategy):
 
 
 # ═══════════════════════════════════════════════════════════════
-# 💥 BREAKOUT TRADER
-# ═══════════════════════════════════════════════════════════════
-
-class BreakoutTrader(Strategy):
-    """Breakout trading strategy"""
-    
-    def __init__(self, params: Dict):
-        super().__init__("BreakoutTrader", params)
-        self.lookback = params.get("lookback_periods", 20)
-        self.threshold = params.get("threshold", 1.5)
-        
-        # Add rules
-        self.add_rule({
-            "type": "entry_long",
-            "condition": f"price > upper_band AND volume > avg_volume * 1.5"
-        })
-        self.add_rule({
-            "type": "entry_short",
-            "condition": f"price < lower_band AND volume > avg_volume * 1.5"
-        })
-    
-    def generate_signals(self, df: pd.DataFrame) -> pd.Series:
-        """Generate breakout signals"""
-        signals = pd.Series(0, index=df.index)
-        
-        if "mid_price" in df.columns:
-            price = df["mid_price"]
-            
-            # Calculate bands
-            rolling_mean = price.rolling(self.lookback).mean()
-            rolling_std = price.rolling(self.lookback).std()
-            
-            upper_band = rolling_mean + (self.threshold * rolling_std)
-            lower_band = rolling_mean - (self.threshold * rolling_std)
-            
-            # Buy on upward breakout
-            signals[price > upper_band] = 1
-            
-            # Sell on downward breakout
-            signals[price < lower_band] = -1
-        
-        return signals
-
-
-# ═══════════════════════════════════════════════════════════════
 # 🎭 REGIME ADAPTER
 # ═══════════════════════════════════════════════════════════════
 
@@ -316,140 +271,6 @@ class MeanReverterV2(Strategy):
 
 
 # ═══════════════════════════════════════════════════════════════
-# ⚡ SCALPING STRATEGY (Micro movements)
-# ═══════════════════════════════════════════════════════════════
-
-class ScalpingStrategy(Strategy):
-    """
-    High-frequency scalping for 1-5 pip movements
-    - Very tight stop loss (3-5 pips)
-    - Quick take profit (5-10 pips)
-    - Uses spread and micro-momentum
-    """
-    
-    def __init__(self, params: Dict):
-        super().__init__("ScalpingStrategy", params)
-        self.lookback = params.get("lookback_periods", 5)  # Short lookback
-        self.threshold = params.get("threshold", 0.5)  # Low threshold
-        
-        # Scalping-specific params
-        self.stop_loss_pips = params.get("stop_loss_pips", 5)
-        self.take_profit_pips = params.get("take_profit_pips", 10)
-        
-        # Add rules
-        self.add_rule({
-            "type": "entry_long",
-            "condition": f"micro_momentum > {self.threshold} AND spread < avg_spread * 1.2"
-        })
-        self.add_rule({
-            "type": "entry_short",
-            "condition": f"micro_momentum < -{self.threshold} AND spread < avg_spread * 1.2"
-        })
-        self.add_rule({
-            "type": "exit",
-            "condition": f"SL: {self.stop_loss_pips} pips, TP: {self.take_profit_pips} pips"
-        })
-    
-    def generate_signals(self, df: pd.DataFrame) -> pd.Series:
-        """Generate scalping signals based on micro-momentum"""
-        signals = pd.Series(0, index=df.index)
-        
-        if "mid_price" in df.columns or "close" in df.columns:
-            price = df.get("mid_price", df.get("close"))
-            
-            # Micro-momentum: very short-term price change
-            micro_momentum = price.diff(periods=1)  # Fixed: correct pandas diff usage
-            
-            # Spread filter (only trade when spread is tight)
-            if "spread_mean" in df.columns:
-                avg_spread = df["spread_mean"].rolling(20).mean()
-                tight_spread = df["spread_mean"] < avg_spread * 1.2
-            else:
-                tight_spread = True  # No spread filter if not available
-            
-            # Buy on positive micro-momentum with tight spread
-            buy_signal = (micro_momentum > self.threshold) & tight_spread
-            signals[buy_signal] = 1
-            
-            # Sell on negative micro-momentum with tight spread
-            sell_signal = (micro_momentum < -self.threshold) & tight_spread
-            signals[sell_signal] = -1
-        
-        return signals
-
-
-# ═══════════════════════════════════════════════════════════════
-# 🌍 SESSION BREAKOUT (London/NY/Tokyo)
-# ═══════════════════════════════════════════════════════════════
-
-class SessionBreakout(Strategy):
-    """
-    Breakout strategy for major session opens
-    - Detects session open times (London 8:00, NY 13:00, Tokyo 0:00 UTC)
-    - Enters on breakout of pre-session range
-    - Time-based filtering
-    """
-    
-    def __init__(self, params: Dict):
-        super().__init__("SessionBreakout", params)
-        self.lookback = params.get("lookback_periods", 12)  # Pre-session period (1 hour for 5min bars)
-        self.threshold = params.get("threshold", 1.2)
-        
-        # Session times (UTC)
-        self.session_times = {
-            "tokyo": 0,    # 00:00 UTC
-            "london": 8,   # 08:00 UTC
-            "ny": 13,      # 13:00 UTC
-        }
-        
-        # Add rules
-        self.add_rule({
-            "type": "entry_long",
-            "condition": "price breaks above pre-session high at session open"
-        })
-        self.add_rule({
-            "type": "entry_short",
-            "condition": "price breaks below pre-session low at session open"
-        })
-    
-    def generate_signals(self, df: pd.DataFrame) -> pd.Series:
-        """Generate session breakout signals"""
-        signals = pd.Series(0, index=df.index)
-        
-        if "mid_price" in df.columns or "close" in df.columns:
-            price = df.get("mid_price", df.get("close"))
-            
-            # Try to get hour from timestamp
-            if "timestamp" in df.columns:
-                df_copy = df.copy()
-                df_copy["hour"] = pd.to_datetime(df_copy["timestamp"]).dt.hour
-            elif hasattr(df.index, 'hour'):
-                df_copy = df.copy()
-                df_copy["hour"] = df.index.hour
-            else:
-                # No time info, use simple breakout
-                df_copy = df.copy()
-                df_copy["hour"] = 0
-            
-            # Calculate pre-session high/low
-            session_high = price.rolling(self.lookback).max()
-            session_low = price.rolling(self.lookback).min()
-            
-            # Detect session opens
-            is_session_open = df_copy["hour"].isin(list(self.session_times.values()))
-            
-            # Buy on upward breakout at session open (consistent threshold application)
-            buy_signal = is_session_open & (price > session_high * self.threshold)
-            signals[buy_signal] = 1
-            
-            # Sell on downward breakout at session open (consistent threshold application)
-            sell_signal = is_session_open & (price < session_low / self.threshold)
-            signals[sell_signal] = -1
-        
-        return signals
-
-
-# ═══════════════════════════════════════════════════════════════
 # 💥 MOMENTUM BURST (Explosions of momentum)
 # ═══════════════════════════════════════════════════════════════
 
@@ -513,72 +334,6 @@ class MomentumBurst(Strategy):
                 elif raw_sell.iloc[i] and (i - last_signal_idx) > self.cooldown:
                     signals.iloc[i] = -1
                     last_signal_idx = i
-        
-        return signals
-
-
-# ═══════════════════════════════════════════════════════════════
-# 🎯 PATTERN RECOGNITION (Use discovered patterns)
-# ═══════════════════════════════════════════════════════════════
-
-class PatternRecognition(Strategy):
-    """
-    Uses discovered patterns from universe analysis
-    - Matches current candle pattern signature (ohl:H, ohl:VH, etc)
-    - Enters based on historical pattern success rate
-    - Leverages the 839K+ patterns discovered
-    """
-    
-    def __init__(self, params: Dict):
-        super().__init__("PatternRecognition", params)
-        self.lookback = params.get("lookback_periods", 5)
-        self.threshold = params.get("threshold", 0.3)  # Changed from 0.6
-        
-        # Add rules
-        self.add_rule({
-            "type": "entry_long",
-            "condition": f"pattern matches high-confidence bullish patterns (confidence > {self.threshold})"
-        })
-        self.add_rule({
-            "type": "entry_short",
-            "condition": f"pattern matches high-confidence bearish patterns (confidence > {self.threshold})"
-        })
-    
-    def generate_signals(self, df: pd.DataFrame) -> pd.Series:
-        """Generate signals based on pattern recognition"""
-        signals = pd.Series(0, index=df.index)
-        
-        # Pattern recognition based on OHLC structure
-        if all(col in df.columns for col in ["open", "high", "low", "close"]):
-            # Calculate pattern features
-            body = df["close"] - df["open"]
-            range_val = df["high"] - df["low"]
-            
-            # Avoid division by zero - use small epsilon instead of NaN
-            range_val = range_val.replace(0, EPSILON)
-            
-            # Body ratio (bullish/bearish strength)
-            body_ratio = body / range_val
-            
-            # Pattern classification (simplified)
-            # Strong bullish: large green body
-            strong_bullish = (body > 0) & (body_ratio > self.threshold)
-            
-            # Strong bearish: large red body
-            strong_bearish = (body < 0) & (body_ratio < -self.threshold)
-            
-            # Use momentum/trend_strength if available as pattern confidence
-            if "trend_strength" in df.columns:
-                pattern_confidence = df["trend_strength"]
-            else:
-                pattern_confidence = abs(body_ratio)
-            
-            # Generate signals based on high-confidence patterns
-            buy_signal = strong_bullish & (pattern_confidence > self.threshold)
-            signals[buy_signal] = 1
-            
-            sell_signal = strong_bearish & (pattern_confidence > self.threshold)
-            signals[sell_signal] = -1
         
         return signals
 
@@ -891,14 +646,10 @@ class StrategyFactory:
         self.template_classes = {
             "TrendFollower": TrendFollower,
             "MeanReverter": MeanReverter,
-            "BreakoutTrader": BreakoutTrader,
             "RegimeAdapter": RegimeAdapter,
             "MeanReverterV2": MeanReverterV2,
-            "ScalpingStrategy": ScalpingStrategy,
-            "SessionBreakout": SessionBreakout,
             "MomentumBurst": MomentumBurst,
-            "PatternRecognition": PatternRecognition,
-            # NEW - Correlation Templates
+            # Correlation Templates (not used in Round 3)
             "CorrelationTrader": CorrelationTrader,
             "PairDivergence": PairDivergence,
             "LeadLagStrategy": LeadLagStrategy,
@@ -906,31 +657,38 @@ class StrategyFactory:
             "USDStrength": USDStrength,
         }
     
-    def generate_parameter_combinations(self) -> List[Dict]:
+    def generate_parameter_combinations(self, template_name: str) -> List[Dict]:
         """
-        Generate all parameter combinations
+        Generate parameter combinations for a specific strategy template
         
+        Args:
+            template_name: Name of the strategy template
+            
         Returns:
             List of parameter dictionaries
         """
-        # Get parameter ranges
-        lookbacks = self.params.get("lookback_periods", [10, 20, 30])
-        thresholds = self.params.get("thresholds", [1.0, 2.0, 3.0])
-        stop_losses = self.params.get("stop_loss_pips", [10, 20, 30])
-        take_profits = self.params.get("take_profit_pips", [20, 30, 40])
-        cooldowns = self.params.get("cooldown", [30, 60, 120, 240])
-        rsi_oversolds = self.params.get("rsi_oversold", [20, 25, 30, 35])
-        rsi_overboughts = self.params.get("rsi_overbought", [65, 70, 75, 80])
-        pattern_thresholds = self.params.get("pattern_threshold", [0.2, 0.3, 0.4, 0.5])
+        # Get template-specific params or use global params as fallback
+        if isinstance(self.params, dict) and template_name in self.params:
+            # New format: per-strategy parameters
+            template_params = self.params[template_name]
+        else:
+            # Old format: global parameters (fallback for compatibility)
+            template_params = self.params
         
-        # Generate combinations
         combinations = []
+        
+        # Extract parameter lists
+        lookbacks = template_params.get("lookback_periods", [20])
+        thresholds = template_params.get("threshold_std", template_params.get("thresholds", [1.0]))
+        stop_losses = template_params.get("stop_loss_pips", [20])
+        take_profits = template_params.get("take_profit_pips", [40])
+        
+        # Generate all combinations of core parameters
         for lookback, threshold, stop, profit in product(
             lookbacks, thresholds, stop_losses, take_profits
         ):
-            # Only keep reasonable risk/reward
+            # Only keep reasonable risk/reward (profit >= stop * 1.5)
             if profit >= stop * 1.5:
-                # Base combination
                 base_params = {
                     "lookback_periods": lookback,
                     "threshold": threshold,
@@ -938,27 +696,31 @@ class StrategyFactory:
                     "take_profit_pips": profit,
                 }
                 
-                # Add base combination
-                combinations.append(base_params.copy())
+                # Add strategy-specific parameters
+                if template_name == "MomentumBurst":
+                    # Add cooldown variations
+                    cooldowns = template_params.get("cooldown_minutes", template_params.get("cooldown", [60]))
+                    for cooldown in cooldowns:
+                        params = base_params.copy()
+                        params["cooldown"] = cooldown
+                        combinations.append(params)
                 
-                # Add cooldown variations for MomentumBurst
-                for cooldown in cooldowns:
-                    params = base_params.copy()
-                    params["cooldown"] = cooldown
-                    combinations.append(params)
+                elif template_name == "MeanReverterV2":
+                    # Add RSI and volume filter variations
+                    rsi_oversolds = template_params.get("rsi_oversold", [30])
+                    rsi_overboughts = template_params.get("rsi_overbought", [70])
+                    volume_filters = template_params.get("volume_filter", [1.5])
+                    
+                    for rsi_os, rsi_ob, vol_filter in product(rsi_oversolds, rsi_overboughts, volume_filters):
+                        params = base_params.copy()
+                        params["rsi_oversold"] = rsi_os
+                        params["rsi_overbought"] = rsi_ob
+                        params["volume_filter"] = vol_filter
+                        combinations.append(params)
                 
-                # Add RSI variations for MeanReverterV2
-                for rsi_os, rsi_ob in zip(rsi_oversolds, rsi_overboughts):
-                    params = base_params.copy()
-                    params["rsi_oversold"] = rsi_os
-                    params["rsi_overbought"] = rsi_ob
-                    combinations.append(params)
-                
-                # Add pattern threshold variations
-                for pt in pattern_thresholds:
-                    params = base_params.copy()
-                    params["pattern_threshold"] = pt
-                    combinations.append(params)
+                else:
+                    # For other strategies (TrendFollower, MeanReverter), just use base params
+                    combinations.append(base_params)
         
         return combinations
     
@@ -975,11 +737,6 @@ class StrategyFactory:
         print(f"\n🏭 Generating strategies from {len(self.templates)} templates...")
         
         strategies = []
-        param_combinations = self.generate_parameter_combinations()
-        
-        print(f"   Parameter combinations: {len(param_combinations)}")
-        
-        # Track strategy names to avoid duplicates
         strategy_names = set()
         
         for template_name in self.templates:
@@ -989,18 +746,22 @@ class StrategyFactory:
             
             template_class = self.template_classes[template_name]
             
+            # Generate parameter combinations for this template
+            param_combinations = self.generate_parameter_combinations(template_name)
+            print(f"   {template_name}: {len(param_combinations)} combinations")
+            
             for params in param_combinations:
                 # Create unique name including all key parameters
-                # Strategy-specific parameter additions
                 strategy_name = f"{template_name}_L{params['lookback_periods']}_T{params['threshold']}_SL{params['stop_loss_pips']}_TP{params['take_profit_pips']}"
                 
                 # Add strategy-specific parameters to name
                 if template_name == "MomentumBurst" and "cooldown" in params:
                     strategy_name += f"_CD{params['cooldown']}"
-                elif template_name == "MeanReverterV2" and "rsi_oversold" in params and "rsi_overbought" in params:
-                    strategy_name += f"_RSI{params['rsi_oversold']}-{params['rsi_overbought']}"
-                elif template_name == "PatternRecognition" and "pattern_threshold" in params:
-                    strategy_name += f"_PT{params['pattern_threshold']}"
+                elif template_name == "MeanReverterV2":
+                    if "rsi_oversold" in params and "rsi_overbought" in params:
+                        strategy_name += f"_RSI{params['rsi_oversold']}-{params['rsi_overbought']}"
+                    if "volume_filter" in params:
+                        strategy_name += f"_VF{params['volume_filter']}"
                 
                 # Check for duplicates
                 if strategy_name in strategy_names:
@@ -1017,20 +778,9 @@ class StrategyFactory:
             if max_strategies and len(strategies) >= max_strategies:
                 break
         
-        # Final deduplication check (just in case)
-        unique_strategies = []
-        seen_names = set()
-        for strategy in strategies:
-            if strategy.name not in seen_names:
-                unique_strategies.append(strategy)
-                seen_names.add(strategy.name)
+        print(f"   ✅ Generated {len(strategies)} unique strategies")
         
-        if len(unique_strategies) < len(strategies):
-            print(f"   ⚠️  Removed {len(strategies) - len(unique_strategies)} duplicate strategies")
-        
-        print(f"   ✅ Generated {len(unique_strategies)} unique strategies")
-        
-        return unique_strategies
+        return strategies
     
     def create_strategy_from_rules(self, rules: List[Dict], 
                                    name: str = "CustomStrategy") -> Strategy:
