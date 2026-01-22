@@ -430,7 +430,7 @@ def generate_report(df, template_stats, param_analysis, heatmaps, tiers, recomme
     
     # 1. COMPLETE LISTING
     report.append("="*100)
-    report.append("1. COMPLETE LISTING - ALL 295 OPERATIONAL STRATEGIES")
+    report.append(f"1. COMPLETE LISTING - ALL {len(df)} OPERATIONAL STRATEGIES")
     report.append("="*100)
     report.append("")
     
