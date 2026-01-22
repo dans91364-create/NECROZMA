@@ -99,18 +99,24 @@ def get_strategy_type_stats(df):
     for template in df['template'].unique():
         template_df = df[df['template'] == template]
         
+        # Helper to safely get float value, handling NaN
+        def safe_float(value):
+            if pd.isna(value):
+                return None
+            return float(value)
+        
         stats[template] = {
             'count': len(template_df),
-            'sharpe_mean': float(template_df['sharpe_ratio'].mean()),
-            'sharpe_max': float(template_df['sharpe_ratio'].max()),
-            'sharpe_min': float(template_df['sharpe_ratio'].min()),
-            'sortino_mean': float(template_df['sortino_ratio'].mean()),
-            'sortino_max': float(template_df['sortino_ratio'].max()),
-            'win_rate_mean': float(template_df['win_rate'].mean()),
-            'win_rate_max': float(template_df['win_rate'].max()),
-            'profit_factor_mean': float(template_df['profit_factor'].mean()),
-            'profit_factor_max': float(template_df['profit_factor'].max()),
-            'avg_trades': float(template_df['n_trades'].mean()),
+            'sharpe_mean': safe_float(template_df['sharpe_ratio'].mean()),
+            'sharpe_max': safe_float(template_df['sharpe_ratio'].max()),
+            'sharpe_min': safe_float(template_df['sharpe_ratio'].min()),
+            'sortino_mean': safe_float(template_df['sortino_ratio'].mean()),
+            'sortino_max': safe_float(template_df['sortino_ratio'].max()),
+            'win_rate_mean': safe_float(template_df['win_rate'].mean()),
+            'win_rate_max': safe_float(template_df['win_rate'].max()),
+            'profit_factor_mean': safe_float(template_df['profit_factor'].mean()),
+            'profit_factor_max': safe_float(template_df['profit_factor'].max()),
+            'avg_trades': safe_float(template_df['n_trades'].mean()),
         }
     
     return stats
@@ -127,20 +133,25 @@ def get_top_strategies(df, metric, n=20, min_trades=None, ascending=False):
     # Sort and get top N
     top_df = filtered_df.nlargest(n, metric) if not ascending else filtered_df.nsmallest(n, metric)
     
-    # Convert to list of dicts
+    # Convert to list of dicts with NaN handling
     top_strategies = []
     for _, row in top_df.iterrows():
+        def safe_float(value):
+            if pd.isna(value):
+                return None
+            return float(value)
+        
         top_strategies.append({
             'strategy_name': row['strategy_name'],
             'template': row.get('template', 'Unknown'),
-            'lot_size': float(row['lot_size']),
-            metric: float(row[metric]),
-            'sharpe_ratio': float(row['sharpe_ratio']),
-            'sortino_ratio': float(row['sortino_ratio']),
-            'win_rate': float(row['win_rate']),
-            'profit_factor': float(row['profit_factor']),
-            'n_trades': int(row['n_trades']),
-            'net_pnl': float(row['net_pnl'])
+            'lot_size': safe_float(row['lot_size']),
+            metric: safe_float(row[metric]),
+            'sharpe_ratio': safe_float(row['sharpe_ratio']),
+            'sortino_ratio': safe_float(row['sortino_ratio']),
+            'win_rate': safe_float(row['win_rate']),
+            'profit_factor': safe_float(row['profit_factor']),
+            'n_trades': int(row['n_trades']) if not pd.isna(row['n_trades']) else 0,
+            'net_pnl': safe_float(row['net_pnl'])
         })
     
     return top_strategies
@@ -294,6 +305,17 @@ def generate_summary(screening_dir="screening_results"):
 def generate_text_report(summary, output_path):
     """Generate human-readable text report."""
     
+    def format_value(value, is_percentage=False, width=10):
+        """Format value handling extreme numbers and NaN."""
+        if value is None:
+            return f"{'N/A':>{width}}"
+        if is_percentage:
+            return f"{value:>{width}.1%}"
+        # Use scientific notation for very large or very small values
+        if abs(value) > 1e6 or (abs(value) < 0.001 and value != 0):
+            return f"{value:>{width}.2e}"
+        return f"{value:>{width}.3f}"
+    
     lines = []
     lines.append("⚡🌟💎 ULTRA NECROZMA - SCREENING SUMMARY REPORT 💎🌟⚡")
     lines.append("=" * 80)
@@ -322,8 +344,8 @@ def generate_text_report(summary, output_path):
     for template, data in sorted_templates:
         lines.append(
             f"{template:<25} {data['count']:>8,} "
-            f"{data['sharpe_mean']:>10.3f} {data['sortino_mean']:>10.3f} "
-            f"{data['win_rate_mean']:>10.1%} {data['profit_factor_mean']:>10.3f}"
+            f"{format_value(data['sharpe_mean'])} {format_value(data['sortino_mean'])} "
+            f"{format_value(data['win_rate_mean'], is_percentage=True)} {format_value(data['profit_factor_mean'])}"
         )
     lines.append("")
     
@@ -348,16 +370,16 @@ def generate_text_report(summary, output_path):
             
             # Format value based on metric
             if 'rate' in metric_col:
-                value_str = f"{value:>10.1%}"
+                value_str = format_value(value, is_percentage=True)
             else:
-                value_str = f"{value:>10.3f}"
+                value_str = format_value(value)
             
             # Truncate strategy name if too long
             name = strat['strategy_name']
             if len(name) > 50:
                 name = name[:47] + "..."
             
-            lines.append(f"{i:<6} {name:<50} {value_str} {sharpe:>10.3f}")
+            lines.append(f"{i:<6} {name:<50} {value_str} {format_value(sharpe)}")
         
         lines.append("")
     
@@ -408,8 +430,8 @@ def generate_text_report(summary, output_path):
         for value, stats in sorted_values[:10]:  # Show top 10 values
             lines.append(
                 f"  {value:<15} {stats['count']:>8,} "
-                f"{stats['avg_sharpe']:>10.3f} {stats['avg_sortino']:>10.3f} "
-                f"{stats['avg_win_rate']:>10.1%} {stats['avg_profit_factor']:>10.3f}"
+                f"{format_value(stats['avg_sharpe'])} {format_value(stats['avg_sortino'])} "
+                f"{format_value(stats['avg_win_rate'], is_percentage=True)} {format_value(stats['avg_profit_factor'])}"
             )
     
     lines.append("")
