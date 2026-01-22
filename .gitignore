@@ -47,6 +47,7 @@ htmlcov/
 *.parquet
 *.csv
 !screening_results/screening_summary.*
+!screening_results/frequency_analysis.*
 data/
 
 # Labels directory (individual label parquet files)
