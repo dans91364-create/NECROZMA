@@ -1,0 +1,287 @@
+====================================================================================================
+⚡🌟💎 ULTRA NECROZMA - EXTREME DIAGNOSIS REPORT 💎🌟⚡
+====================================================================================================
+
+====================================================================================================
+1. STRATEGIES WITH < 50 TRADES (Insufficient Statistical Significance)
+====================================================================================================
+
+Total: 1,357 strategies
+
+BREAKDOWN BY TEMPLATE:
+----------------------------------------------------------------------------------------------------
+Template                            Count % of Low Trades
+----------------------------------------------------------------------------------------------------
+PatternRecognition                    451           33.2%
+MeanReverterV2                        290           21.4%
+ScalpingStrategy                       99            7.3%
+SessionBreakout                        77            5.7%
+CorrelationTrader                      66            4.9%
+LeadLagStrategy                        66            4.9%
+PairDivergence                         66            4.9%
+RegimeAdapter                          66            4.9%
+RiskSentiment                          66            4.9%
+USDStrength                            66            4.9%
+MeanReverter                           33            2.4%
+BreakoutTrader                         11            0.8%
+
+BREAKDOWN BY PARAMETER:
+----------------------------------------------------------------------------------------------------
+
+Parameter: L
+  Unique values tested: 6
+  Most common values:
+    5: 615 (45.3%)
+    50: 262 (19.3%)
+    30: 237 (17.5%)
+    20: 133 (9.8%)
+    10: 87 (6.4%)
+
+Parameter: PT
+  Unique values tested: 4
+  Most common values:
+    0.2: 88 (6.5%)
+    0.3: 88 (6.5%)
+    0.4: 88 (6.5%)
+    0.5: 88 (6.5%)
+
+Parameter: RSI
+  Unique values tested: 4
+  Most common values:
+    35-80: 88 (6.5%)
+    30-75: 57 (4.2%)
+    25-70: 43 (3.2%)
+    20-65: 34 (2.5%)
+
+Parameter: SL
+  Unique values tested: 4
+  Most common values:
+    10: 489 (36.0%)
+    20: 383 (28.2%)
+    15: 361 (26.6%)
+    30: 124 (9.1%)
+
+Parameter: T
+  Unique values tested: 9
+  Most common values:
+    2.0: 209 (15.4%)
+    2.5: 209 (15.4%)
+    1.5: 184 (13.6%)
+    1.0: 157 (11.6%)
+    0.5: 148 (10.9%)
+
+Parameter: TP
+  Unique values tested: 4
+  Most common values:
+    50: 501 (36.9%)
+    40: 370 (27.3%)
+    30: 368 (27.1%)
+    20: 118 (8.7%)
+
+Parameter: V
+  Unique values tested: 1
+  Most common values:
+    2: 290 (21.4%)
+
+PATTERNS IDENTIFIED:
+----------------------------------------------------------------------------------------------------
+  • 25.1% of strategies with < 50 trades have T > 2.0
+  • 16.4% of strategies with < 50 trades use RSI filters
+
+EXAMPLES:
+----------------------------------------------------------------------------------------------------
+
+Zero Trades (10 examples):
+Strategy Name                                                Template                    Trades
+----------------------------------------------------------------------------------------------------
+CorrelationTrader_L5_T0.5_SL10_TP20                          CorrelationTrader                0
+CorrelationTrader_L5_T0.5_SL10_TP30                          CorrelationTrader                0
+CorrelationTrader_L5_T0.5_SL10_TP40                          CorrelationTrader                0
+CorrelationTrader_L5_T0.5_SL10_TP50                          CorrelationTrader                0
+CorrelationTrader_L5_T0.5_SL15_TP30                          CorrelationTrader                0
+CorrelationTrader_L5_T0.5_SL15_TP40                          CorrelationTrader                0
+CorrelationTrader_L5_T0.5_SL15_TP50                          CorrelationTrader                0
+CorrelationTrader_L5_T0.5_SL20_TP30                          CorrelationTrader                0
+CorrelationTrader_L30_T0.5_SL20_TP40                         CorrelationTrader                0
+CorrelationTrader_L30_T0.5_SL20_TP50                         CorrelationTrader                0
+
+1-10 Trades (10 examples):
+Strategy Name                                                Template                    Trades
+----------------------------------------------------------------------------------------------------
+BreakoutTrader_L10_T3.0_SL10_TP20                            BreakoutTrader                   2
+BreakoutTrader_L10_T3.0_SL10_TP30                            BreakoutTrader                   2
+BreakoutTrader_L10_T3.0_SL10_TP40                            BreakoutTrader                   2
+BreakoutTrader_L10_T3.0_SL10_TP50                            BreakoutTrader                   2
+BreakoutTrader_L10_T3.0_SL15_TP30                            BreakoutTrader                   2
+BreakoutTrader_L10_T3.0_SL15_TP40                            BreakoutTrader                   2
+BreakoutTrader_L10_T3.0_SL15_TP50                            BreakoutTrader                   2
+BreakoutTrader_L10_T3.0_SL20_TP30                            BreakoutTrader                   2
+BreakoutTrader_L10_T3.0_SL20_TP40                            BreakoutTrader                   2
+BreakoutTrader_L10_T3.0_SL20_TP50                            BreakoutTrader                   2
+
+10-49 Trades (10 examples):
+Strategy Name                                                Template                    Trades
+----------------------------------------------------------------------------------------------------
+MeanReverterV2_L50_T0.5_SL10_TP20_RSI35-80                   MeanReverterV2                  32
+MeanReverterV2_L50_T0.5_SL10_TP30_RSI35-80                   MeanReverterV2                  31
+MeanReverterV2_L50_T0.5_SL10_TP40_RSI35-80                   MeanReverterV2                  31
+MeanReverterV2_L50_T0.5_SL10_TP50_RSI35-80                   MeanReverterV2                  31
+MeanReverterV2_L50_T0.5_SL15_TP30_RSI35-80                   MeanReverterV2                  31
+MeanReverterV2_L50_T0.5_SL15_TP40_RSI35-80                   MeanReverterV2                  30
+MeanReverterV2_L50_T0.5_SL15_TP50_RSI35-80                   MeanReverterV2                  30
+MeanReverterV2_L50_T0.5_SL20_TP30_RSI35-80                   MeanReverterV2                  30
+MeanReverterV2_L50_T0.5_SL20_TP40_RSI30-75                   MeanReverterV2                  10
+MeanReverterV2_L50_T0.5_SL20_TP40_RSI35-80                   MeanReverterV2                  29
+
+
+====================================================================================================
+2. STRATEGIES WITH > 50,000 TRADES (Impractical to Operate)
+====================================================================================================
+
+Total: 592 strategies
+
+BREAKDOWN BY TEMPLATE:
+----------------------------------------------------------------------------------------------------
+Template                            Count % of High Trades
+----------------------------------------------------------------------------------------------------
+MomentumBurst                         341           57.6%
+BreakoutTrader                         88           14.9%
+TrendFollower                          88           14.9%
+MeanReverter                           55            9.3%
+MeanReverterV2                         20            3.4%
+
+BREAKDOWN BY PARAMETER:
+----------------------------------------------------------------------------------------------------
+
+Parameter: CD
+  Unique values tested: 3
+  Most common values:
+    30: 88 (14.9%)
+    60: 88 (14.9%)
+    120: 66 (11.1%)
+
+Parameter: L
+  Unique values tested: 6
+  Most common values:
+    5: 169 (28.5%)
+    30: 150 (25.3%)
+    50: 102 (17.2%)
+    15: 67 (11.3%)
+    10: 58 (9.8%)
+
+Parameter: RSI
+  Unique values tested: 1
+  Most common values:
+    20-65: 20 (3.4%)
+
+Parameter: SL
+  Unique values tested: 4
+  Most common values:
+    10: 208 (35.1%)
+    20: 169 (28.5%)
+    15: 158 (26.7%)
+    30: 57 (9.6%)
+
+Parameter: T
+  Unique values tested: 9
+  Most common values:
+    0.8: 82 (13.9%)
+    0.5: 81 (13.7%)
+    1.0: 81 (13.7%)
+    1.2: 81 (13.7%)
+    1.5: 80 (13.5%)
+
+Parameter: TP
+  Unique values tested: 4
+  Most common values:
+    50: 219 (37.0%)
+    40: 161 (27.2%)
+    30: 160 (27.0%)
+    20: 52 (8.8%)
+
+Parameter: V
+  Unique values tested: 1
+  Most common values:
+    2: 20 (3.4%)
+
+PATTERNS IDENTIFIED:
+----------------------------------------------------------------------------------------------------
+  • 27.5% of strategies with > 50k trades have T < 1.0
+  • 14.9% of strategies with > 50k trades have CD ≤ 30 or no CD
+
+DISTRIBUTION BY TRADE COUNT:
+----------------------------------------------------------------------------------------------------
+  50k-100k               185 ( 31.2%)
+  100k-500k              315 ( 53.2%)
+  500k-1M                 26 (  4.4%)
+  >1M                     66 ( 11.1%)
+
+
+====================================================================================================
+3. ANALYSIS OF NON-FUNCTIONING TEMPLATES (0 Trades)
+====================================================================================================
+
+Template                        Zero Trades      Total     % Zero Status         
+----------------------------------------------------------------------------------------------------
+CorrelationTrader                        66         66     100.0% ALL ZERO       
+LeadLagStrategy                          66         66     100.0% ALL ZERO       
+PairDivergence                           66         66     100.0% ALL ZERO       
+PatternRecognition                      451        451     100.0% ALL ZERO       
+RegimeAdapter                            66         66     100.0% ALL ZERO       
+RiskSentiment                            66         66     100.0% ALL ZERO       
+ScalpingStrategy                         99         99     100.0% ALL ZERO       
+USDStrength                              66         66     100.0% ALL ZERO       
+SessionBreakout                          77         99      77.8% PARTIAL        
+
+
+====================================================================================================
+4. RECOMMENDATIONS
+====================================================================================================
+
+FOR STRATEGIES WITH LOW TRADES (<50):
+----------------------------------------------------------------------------------------------------
+  • Consider wider RSI ranges or removing RSI filter entirely
+
+FOR STRATEGIES WITH HIGH TRADES (>50,000):
+----------------------------------------------------------------------------------------------------
+  • Increase T (Threshold) from 0.8 to 1.5-2.5 range
+  • Add or increase CD (Cooldown) from 30 to 300-600 seconds
+
+FOR NON-FUNCTIONING TEMPLATES:
+----------------------------------------------------------------------------------------------------
+Template                       Action          Justification                                     
+----------------------------------------------------------------------------------------------------
+CorrelationTrader              REMOVE          All variations produce 0 trades - logic issue or incompatible with data
+LeadLagStrategy                REMOVE          All variations produce 0 trades - logic issue or incompatible with data
+PairDivergence                 REMOVE          All variations produce 0 trades - logic issue or incompatible with data
+PatternRecognition             REMOVE          All variations produce 0 trades - logic issue or incompatible with data
+RegimeAdapter                  REMOVE          All variations produce 0 trades - logic issue or incompatible with data
+RiskSentiment                  REMOVE          All variations produce 0 trades - logic issue or incompatible with data
+ScalpingStrategy               REMOVE          All variations produce 0 trades - logic issue or incompatible with data
+SessionBreakout                ADJUST          77.8% produce 0 trades - consider parameter adjustments
+USDStrength                    REMOVE          All variations produce 0 trades - logic issue or incompatible with data
+
+
+====================================================================================================
+5. FINAL DECISION SUMMARY
+====================================================================================================
+
+Category                            Total Recommendation                                    
+----------------------------------------------------------------------------------------------------
+Low Trades (<50)                    1,357 DISCARD - Insufficient statistical significance   
+High Trades (>50k)                    592 DISCARD - Impractical to operate                  
+Templates to Remove                     8 REMOVE - Logic issues or incompatible             
+Templates to Review                     0 REVIEW - Configuration issues                     
+Templates to Adjust                     1 ADJUST - Parameter tuning for Round 3             
+
+CONCLUSION:
+----------------------------------------------------------------------------------------------------
+  • 1,357 strategies with < 50 trades should be DISCARDED
+  • 592 strategies with > 50k trades should be DISCARDED
+  • 8 templates should be REMOVED from future screenings
+  • 0 templates need CODE REVIEW
+  • 1 templates can be ADJUSTED for Round 3
+
+====================================================================================================
+END OF DIAGNOSIS REPORT
+====================================================================================================
