@@ -1,0 +1,1325 @@
+====================================================================================================
+⚡🌟💎 ULTRA NECROZMA - DEEP ANALYSIS REPORT 💎🌟⚡
+====================================================================================================
+
+Total Operational Strategies Analyzed: 748
+
+====================================================================================================
+1. COMPLETE LISTING - ALL 748 OPERATIONAL STRATEGIES
+====================================================================================================
+
+
+====================================================================================================
+FAIXA 1 (50-500) - 140 strategies
+====================================================================================================
+
+#    Strategy Name                                                  Sharpe     PF      WR   Trades
+----------------------------------------------------------------------------------------------------
+1    MeanReverter_L5_T1.8_SL30_TP50                                  3.400  1.633   40.9%       66
+2    MeanReverterV2_L30_T1.5_SL20_TP40                               3.129  1.539   44.4%       63
+3    MeanReverter_L5_T1.8_SL10_TP50                                  2.960  1.707   22.1%       68
+4    MeanReverter_L5_T1.8_SL20_TP50                                  2.753  1.523   31.3%       67
+5    MeanReverter_L5_T1.8_SL10_TP40                                  2.364  1.490   23.5%       68
+6    MeanReverter_L5_T1.8_SL15_TP50                                  2.248  1.442   25.4%       67
+7    MeanReverter_L5_T1.8_SL20_TP30                                  1.993  1.323   38.8%       67
+8    MeanReverter_L5_T1.8_SL20_TP40                                  1.867  1.315   32.8%       67
+9    MeanReverterV2_L30_T1.2_SL20_TP40                               1.846  1.294   41.0%       83
+10   MeanReverter_L5_T1.8_SL10_TP30                                  1.775  1.319   26.5%       68
+11   MeanReverterV2_L30_T1.5_SL20_TP30                               1.717  1.256   46.0%       63
+12   MeanReverterV2_L30_T1.2_SL20_TP30                               1.517  1.225   45.8%       83
+13   MeanReverter_L5_T1.8_SL15_TP40                                  1.465  1.253   26.9%       67
+14   MeanReverterV2_L30_T0.5_SL20_TP40                               1.311  1.207   36.3%      113
+15   MeanReverterV2_L30_T1.0_SL20_TP40                               1.265  1.193   38.9%       90
+16   MeanReverter_L5_T1.8_SL15_TP30                                  1.197  1.190   31.3%       67
+17   MeanReverterV2_L30_T3.0_SL10_TP40                               1.115  1.195   25.8%       97
+18   MeanReverterV2_L30_T1.8_SL30_TP50_RSI35-80                      1.074  1.152   40.7%      484
+19   MeanReverterV2_L30_T1.5_SL30_TP50_RSI35-80                      1.073  1.154   40.5%      489
+20   MeanReverterV2_L30_T2.5_SL30_TP50_RSI35-80                      1.067  1.150   40.7%      442
+21   MeanReverterV2_L30_T2.0_SL30_TP50_RSI35-80                      1.050  1.148   40.4%      478
+22   MeanReverterV2_L30_T1.5_SL20_TP50                               1.031  1.162   34.9%       63
+23   MeanReverterV2_L30_T0.5_SL20_TP50                               0.976  1.158   32.4%      111
+24   MeanReverterV2_L30_T3.0_SL10_TP20                               0.917  1.133   37.4%       99
+25   MeanReverterV2_L30_T1.2_SL20_TP50                               0.832  1.129   35.4%       82
+26   MeanReverterV2_L30_T3.0_SL10_TP30                               0.830  1.131   29.6%       98
+27   MeanReverterV2_L30_T1.0_SL20_TP30                               0.801  1.113   43.3%       90
+28   MeanReverterV2_L30_T2.5_SL15_TP40_RSI25-70                      0.740  1.111   29.6%      152
+29   MeanReverterV2_L30_T0.5_SL30_TP50                               0.673  1.101   38.7%      111
+30   MeanReverterV2_L30_T1.5_SL20_TP30_RSI30-75                      0.641  1.090   43.5%      278
+31   MeanReverterV2_L30_T1.5_SL20_TP40_RSI30-75                      0.597  1.087   37.9%      264
+32   MeanReverterV2_L30_T1.2_SL30_TP50                               0.587  1.085   42.0%       81
+33   MeanReverterV2_L30_T0.5_SL20_TP30                               0.511  1.073   39.1%      115
+34   MeanReverterV2_L30_T1.8_SL20_TP40_RSI30-75                      0.508  1.073   36.4%      239
+35   MeanReverterV2_L30_T0.8_SL20_TP40                               0.487  1.072   35.4%       99
+36   MeanReverterV2_L30_T1.0_SL20_TP50                               0.413  1.062   33.7%       89
+37   MeanReverterV2_L30_T1.0_SL30_TP50                               0.389  1.055   40.9%       88
+38   MeanReverterV2_L30_T2.0_SL20_TP40_RSI30-75                      0.360  1.051   36.6%      213
+39   MeanReverterV2_L30_T1.8_SL20_TP30_RSI30-75                      0.320  1.043   41.8%      249
+40   MeanReverterV2_L30_T1.0_SL10_TP50                               0.257  1.045   20.2%       94
+41   MeanReverterV2_L30_T1.0_SL20_TP30_RSI30-75                      0.233  1.032   41.4%      324
+42   MeanReverterV2_L30_T1.8_SL20_TP50_RSI25-70                      0.232  1.033   30.7%      225
+43   MeanReverterV2_L30_T2.5_SL10_TP40_RSI25-70                      0.227  1.037   20.9%      163
+44   MeanReverter_L5_T1.8_SL10_TP20                                  0.187  1.027   29.4%       68
+45   MeanReverterV2_L30_T2.5_SL15_TP30_RSI25-70                      0.174  1.024   34.0%      159
+46   MeanReverterV2_L30_T1.2_SL20_TP50_RSI25-70                      0.165  1.024   30.8%      276
+47   MeanReverterV2_L30_T1.2_SL20_TP30_RSI30-75                      0.161  1.022   41.1%      309
+48   MeanReverterV2_L30_T1.8_SL20_TP50_RSI30-75                      0.153  1.022   31.9%      226
+49   MeanReverterV2_L30_T1.2_SL15_TP30                               0.147  1.020   34.5%       84
+50   MeanReverterV2_L30_T1.5_SL20_TP50_RSI25-70                      0.135  1.020   31.0%      248
+51   MeanReverterV2_L30_T1.5_SL20_TP50_RSI30-75                      0.116  1.017   33.2%      253
+52   MeanReverterV2_L30_T0.8_SL20_TP30_RSI30-75                      0.115  1.016   40.2%      336
+53   MeanReverterV2_L30_T1.8_SL10_TP50_RSI25-70                      0.088  1.015   17.8%      270
+54   MeanReverterV2_L30_T1.2_SL30_TP50_RSI30-75                      0.057  1.008   39.0%      251
+55   MeanReverterV2_L30_T1.2_SL10_TP50                               0.046  1.008   20.0%       85
+56   MeanReverterV2_L30_T1.8_SL10_TP40_RSI25-70                      0.032  1.005   20.6%      282
+57   MeanReverterV2_L30_T1.8_SL20_TP40_RSI25-70                      0.023  1.003   34.2%      234
+58   MeanReverterV2_L30_T0.8_SL30_TP50_RSI30-75                      0.000  1.000   38.0%      271
+59   MeanReverterV2_L30_T1.0_SL20_TP50_RSI25-70                     -0.011  0.998   29.9%      288
+60   MeanReverterV2_L30_T0.5_SL30_TP50_RSI30-75                     -0.022  0.997   38.2%      293
+61   MeanReverterV2_L30_T1.8_SL15_TP50_RSI25-70                     -0.027  0.996   23.7%      245
+62   MeanReverterV2_L30_T1.5_SL30_TP50                              -0.033  0.996   39.7%       63
+63   MeanReverterV2_L30_T1.2_SL20_TP40_RSI30-75                     -0.034  0.995   35.3%      292
+64   MeanReverterV2_L30_T1.8_SL30_TP50_RSI30-75                     -0.040  0.995   39.4%      198
+65   MeanReverterV2_L30_T1.0_SL30_TP50_RSI30-75                     -0.070  0.990   38.8%      260
+66   MeanReverterV2_L30_T0.8_SL20_TP30                              -0.070  0.990   39.4%       99
+67   MeanReverterV2_L30_T1.0_SL15_TP30                              -0.080  0.989   33.7%       92
+68   MeanReverterV2_L30_T1.0_SL20_TP40_RSI30-75                     -0.082  0.988   35.3%      306
+69   MeanReverterV2_L30_T0.5_SL10_TP50                              -0.101  0.982   17.4%      121
+70   MeanReverterV2_L30_T2.0_SL10_TP50_RSI25-70                     -0.105  0.982   17.1%      245
+71   MeanReverterV2_L30_T0.5_SL20_TP30_RSI30-75                     -0.115  0.984   39.4%      358
+72   MeanReverterV2_L30_T1.0_SL10_TP40                              -0.119  0.981   21.1%       95
+73   MeanReverterV2_L30_T1.2_SL10_TP30                              -0.125  0.982   25.6%       86
+74   MeanReverterV2_L30_T1.8_SL20_TP30_RSI25-70                     -0.132  0.983   39.7%      252
+75   MeanReverterV2_L30_T2.5_SL20_TP40_RSI25-70                     -0.135  0.982   33.1%      148
+76   MeanReverterV2_L30_T0.5_SL20_TP40_RSI30-75                     -0.136  0.980   34.3%      338
+77   MeanReverterV2_L30_T0.8_SL20_TP40_RSI30-75                     -0.144  0.980   34.3%      318
+78   MeanReverterV2_L30_T1.2_SL20_TP50_RSI30-75                     -0.144  0.979   31.6%      282
+79   MeanReverterV2_L30_T2.0_SL10_TP40_RSI25-70                     -0.181  0.972   19.8%      257
+80   MeanReverterV2_L30_T0.5_SL20_TP50_RSI30-75                     -0.185  0.972   31.1%      325
+81   MeanReverterV2_L30_T0.8_SL20_TP50_RSI30-75                     -0.194  0.971   30.8%      305
+82   MeanReverterV2_L30_T1.8_SL15_TP40_RSI25-70                     -0.201  0.972   27.0%      256
+83   MeanReverterV2_L30_T2.0_SL20_TP50_RSI25-70                     -0.204  0.971   29.1%      206
+84   MeanReverterV2_L30_T1.2_SL10_TP40                              -0.206  0.968   20.9%       86
+85   MeanReverterV2_L30_T1.5_SL20_TP30_RSI25-70                     -0.212  0.973   39.8%      279
+86   MeanReverterV2_L30_T1.0_SL20_TP50_RSI30-75                     -0.215  0.968   31.6%      294
+87   MeanReverterV2_L30_T2.0_SL20_TP40_RSI25-70                     -0.224  0.970   33.2%      214
+88   MeanReverterV2_L30_T1.5_SL30_TP50_RSI30-75                     -0.228  0.969   39.3%      224
+89   MeanReverterV2_L30_T2.5_SL10_TP50_RSI25-70                     -0.234  0.961   17.0%      159
+90   MeanReverterV2_L30_T1.0_SL10_TP30                              -0.237  0.966   25.3%       95
+91   MeanReverterV2_L30_T2.0_SL20_TP30_RSI25-70                     -0.239  0.969   39.4%      231
+92   MeanReverterV2_L30_T0.8_SL20_TP50_RSI25-70                     -0.240  0.965   28.6%      304
+93   MeanReverterV2_L30_T3.0_SL20_TP40                              -0.242  0.967   35.1%       97
+94   MeanReverterV2_L30_T0.8_SL20_TP50                              -0.265  0.961   30.6%       98
+95   MeanReverterV2_L30_T1.2_SL20_TP30_RSI25-70                     -0.288  0.962   38.8%      309
+96   MeanReverterV2_L30_T0.5_SL10_TP40                              -0.296  0.952   18.9%      122
+97   MeanReverterV2_L30_T1.5_SL20_TP40_RSI25-70                     -0.315  0.958   33.7%      258
+98   MeanReverterV2_L30_T1.5_SL10_TP50                              -0.331  0.945   20.0%       65
+99   MeanReverterV2_L30_T1.2_SL20_TP40_RSI25-70                     -0.339  0.954   32.9%      286
+100  MeanReverterV2_L30_T2.0_SL15_TP40_RSI25-70                     -0.345  0.952   26.4%      235
+101  MeanReverterV2_L30_T2.0_SL15_TP50_RSI25-70                     -0.347  0.949   22.7%      225
+102  MeanReverterV2_L30_T2.5_SL20_TP30_RSI25-70                     -0.362  0.954   39.0%      154
+103  MeanReverterV2_L30_T0.8_SL10_TP50                              -0.363  0.938   18.3%      104
+104  MeanReverterV2_L30_T0.8_SL10_TP40                              -0.366  0.942   20.0%      105
+105  MeanReverterV2_L30_T0.8_SL30_TP50                              -0.369  0.949   37.1%       97
+106  MeanReverterV2_L30_T1.5_SL15_TP40                              -0.402  0.944   28.1%       64
+107  MeanReverterV2_L30_T1.5_SL10_TP40                              -0.403  0.938   21.5%       65
+108  MeanReverterV2_L30_T2.5_SL15_TP50_RSI25-70                     -0.403  0.941   22.8%      149
+109  MeanReverterV2_L30_T2.5_SL20_TP50_RSI25-70                     -0.409  0.944   28.2%      142
+110  MeanReverterV2_L30_T1.5_SL10_TP50_RSI25-70                     -0.413  0.932   17.3%      300
+111  MeanReverterV2_L30_T1.0_SL10_TP50_RSI25-70                     -0.437  0.928   17.0%      348
+112  MeanReverterV2_L30_T0.5_SL20_TP50_RSI25-70                     -0.437  0.938   28.2%      319
+113  MeanReverterV2_L30_T1.5_SL10_TP40_RSI25-70                     -0.442  0.932   20.0%      315
+114  MeanReverterV2_L30_T1.2_SL15_TP50_RSI25-70                     -0.469  0.931   23.7%      295
+115  MeanReverterV2_L30_T1.2_SL10_TP50_RSI25-70                     -0.480  0.921   17.1%      333
+116  MeanReverterV2_L30_T1.0_SL20_TP30_RSI25-70                     -0.516  0.934   37.8%      323
+117  MeanReverterV2_L30_T1.0_SL15_TP50_RSI25-70                     -0.520  0.923   23.2%      310
+118  MeanReverterV2_L30_T1.5_SL15_TP50_RSI25-70                     -0.533  0.922   23.2%      267
+119  MeanReverterV2_L30_T3.0_SL15_TP40                              -0.537  0.925   28.9%       97
+120  MeanReverterV2_L30_T3.0_SL10_TP50                              -0.564  0.908   18.8%       96
+121  MeanReverterV2_L30_T1.0_SL10_TP40_RSI25-70                     -0.582  0.911   19.1%      361
+122  MeanReverterV2_L30_T1.0_SL20_TP40_RSI25-70                     -0.613  0.918   31.7%      300
+123  SessionBreakout_L30_T0.5_SL20_TP50                             -0.775  0.898   26.4%      454
+124  SessionBreakout_L30_T0.8_SL20_TP50                             -0.775  0.898   26.4%      454
+125  MeanReverterV2_L30_T3.0_SL20_TP30                              -0.837  0.895   39.2%       97
+126  MeanReverterV2_L30_T3.0_SL30_TP50                              -0.897  0.886   38.0%       92
+127  SessionBreakout_L10_T0.5_SL30_TP50                             -0.917  0.887   34.8%      328
+128  SessionBreakout_L15_T0.8_SL30_TP50                             -0.917  0.887   34.8%      328
+129  MeanReverterV2_L30_T3.0_SL15_TP30                              -1.055  0.866   32.7%       98
+130  BreakoutTrader_L5_T1.8_SL20_TP40                               -3.281  0.621   19.7%       66
+131  BreakoutTrader_L5_T1.8_SL20_TP50                               -3.862  0.558   15.4%       65
+132  BreakoutTrader_L5_T1.8_SL30_TP50                               -4.171  0.551   21.9%       64
+133  BreakoutTrader_L5_T1.8_SL20_TP30                               -4.992  0.502   20.9%       67
+134  BreakoutTrader_L5_T1.8_SL15_TP50                               -6.189  0.380    9.0%       67
+135  BreakoutTrader_L5_T1.8_SL15_TP40                               -7.853  0.315    9.0%       67
+136  BreakoutTrader_L5_T1.8_SL15_TP30                               -8.011  0.328   11.9%       67
+137  BreakoutTrader_L5_T1.8_SL10_TP20                               -8.535  0.314   11.9%       67
+138  BreakoutTrader_L5_T1.8_SL10_TP30                              -13.124  0.161    4.5%       67
+139  BreakoutTrader_L5_T1.8_SL10_TP50                              -16.435  0.086    1.5%       67
+140  BreakoutTrader_L5_T1.8_SL10_TP40                              -19.679  0.069    1.5%       67
+
+====================================================================================================
+FAIXA 2 (500-5K) - 201 strategies
+====================================================================================================
+
+#    Strategy Name                                                  Sharpe     PF      WR   Trades
+----------------------------------------------------------------------------------------------------
+1    MeanReverterV2_L30_T1.2_SL30_TP50_RSI35-80                      1.107  1.160   41.0%      502
+2    MeanReverterV2_L30_T2.5_SL10_TP50_RSI35-80                      1.083  1.201   19.5%    1,096
+3    MeanReverterV2_L30_T1.0_SL30_TP50_RSI35-80                      1.025  1.148   41.0%      515
+4    MeanReverterV2_L30_T2.0_SL15_TP50_RSI35-80                      0.984  1.159   26.1%      912
+5    MeanReverterV2_L30_T0.8_SL30_TP50_RSI35-80                      0.969  1.140   39.9%      524
+6    MeanReverterV2_L30_T1.8_SL15_TP50_RSI35-80                      0.934  1.150   26.1%      954
+7    MeanReverterV2_L30_T1.5_SL15_TP50_RSI35-80                      0.932  1.151   26.5%      979
+8    MeanReverterV2_L30_T0.5_SL30_TP50_RSI35-80                      0.916  1.134   40.1%      534
+9    MeanReverterV2_L30_T2.5_SL10_TP40_RSI35-80                      0.895  1.151   22.5%    1,369
+10   MeanReverterV2_L30_T2.5_SL15_TP40_RSI35-80                      0.859  1.129   29.9%    1,008
+11   MeanReverterV2_L30_T2.0_SL20_TP40_RSI35-80                      0.845  1.120   35.8%      849
+12   MeanReverterV2_L30_T1.8_SL20_TP30_RSI35-80                      0.836  1.114   42.6%    1,200
+13   MeanReverterV2_L30_T1.0_SL15_TP50_RSI35-80                      0.829  1.134   26.5%    1,009
+14   MeanReverterV2_L30_T1.2_SL15_TP50_RSI35-80                      0.828  1.133   26.3%    1,002
+15   MeanReverterV2_L30_T2.5_SL20_TP30_RSI35-80                      0.826  1.112   42.6%      984
+16   MeanReverterV2_L30_T1.8_SL20_TP40_RSI35-80                      0.817  1.116   36.0%      865
+17   MeanReverterV2_L30_T2.0_SL20_TP30_RSI35-80                      0.817  1.111   42.5%    1,167
+18   MeanReverterV2_L30_T2.5_SL15_TP50_RSI35-80                      0.815  1.130   25.5%      833
+19   MeanReverterV2_L30_T1.5_SL20_TP50_RSI35-80                      0.800  1.120   31.4%      723
+20   MeanReverterV2_L30_T2.0_SL15_TP40_RSI35-80                      0.792  1.119   29.8%    1,152
+21   MeanReverterV2_L30_T2.0_SL20_TP50_RSI35-80                      0.792  1.118   30.8%      710
+22   MeanReverterV2_L30_T1.5_SL20_TP40_RSI35-80                      0.791  1.113   36.0%      895
+23   MeanReverterV2_L30_T1.8_SL10_TP50_RSI35-80                      0.790  1.143   19.1%    1,356
+24   MeanReverterV2_L30_T2.5_SL20_TP50_RSI35-80                      0.787  1.117   30.9%      644
+25   MeanReverterV2_L30_T1.0_SL20_TP50_RSI35-80                      0.785  1.118   31.4%      751
+26   MeanReverterV2_L30_T1.8_SL20_TP50_RSI35-80                      0.783  1.116   31.2%      724
+27   MeanReverterV2_L30_T0.8_SL15_TP50_RSI35-80                      0.782  1.126   26.1%    1,020
+28   MeanReverterV2_L30_T1.5_SL15_TP30_RSI35-80                      0.776  1.110   35.8%    1,567
+29   MeanReverterV2_L30_T0.8_SL20_TP50_RSI35-80                      0.764  1.115   31.0%      759
+30   MeanReverterV2_L30_T1.2_SL20_TP50_RSI35-80                      0.764  1.115   31.4%      740
+31   MeanReverterV2_L30_T1.5_SL10_TP50_RSI35-80                      0.763  1.138   19.3%    1,383
+32   MeanReverterV2_L30_T2.0_SL10_TP50_RSI35-80                      0.761  1.137   18.9%    1,354
+33   MeanReverterV2_L30_T2.5_SL20_TP40_RSI35-80                      0.755  1.106   35.7%      782
+34   MeanReverterV2_L30_T2.0_SL15_TP30_RSI35-80                      0.751  1.106   35.6%    1,539
+35   MeanReverterV2_L30_T1.8_SL15_TP30_RSI35-80                      0.749  1.106   35.7%    1,551
+36   MeanReverterV2_L30_T1.5_SL20_TP30_RSI35-80                      0.746  1.102   42.2%    1,201
+37   MeanReverterV2_L30_T1.8_SL15_TP40_RSI35-80                      0.743  1.111   29.7%    1,183
+38   MeanReverterV2_L30_T0.5_SL15_TP50_RSI35-80                      0.739  1.119   26.2%    1,035
+39   MeanReverterV2_L30_T0.5_SL20_TP50_RSI35-80                      0.739  1.112   31.1%      772
+40   MeanReverterV2_L30_T1.2_SL20_TP30_RSI35-80                      0.731  1.100   42.3%    1,221
+41   MeanReverterV2_L30_T1.0_SL15_TP30_RSI35-80                      0.717  1.102   35.8%    1,604
+42   MeanReverterV2_L30_T1.2_SL15_TP30_RSI35-80                      0.709  1.100   35.7%    1,604
+43   MeanReverterV2_L30_T1.0_SL20_TP30_RSI35-80                      0.708  1.097   42.3%    1,227
+44   MeanReverterV2_L30_T1.5_SL15_TP40_RSI35-80                      0.707  1.106   29.8%    1,185
+45   MeanReverterV2_L30_T0.8_SL20_TP30_RSI35-80                      0.692  1.095   41.9%    1,237
+46   MeanReverterV2_L30_T0.5_SL20_TP30_RSI35-80                      0.688  1.094   41.8%    1,254
+47   MeanReverterV2_L30_T0.8_SL15_TP30_RSI35-80                      0.671  1.095   35.4%    1,608
+48   MeanReverterV2_L30_T1.0_SL15_TP40_RSI35-80                      0.654  1.098   29.9%    1,214
+49   MeanReverterV2_L30_T1.2_SL20_TP40_RSI35-80                      0.653  1.093   35.8%      917
+50   MeanReverterV2_L30_T1.8_SL10_TP40_RSI35-80                      0.651  1.108   22.1%    1,705
+51   MeanReverterV2_L30_T0.8_SL15_TP40_RSI35-80                      0.645  1.097   29.7%    1,224
+52   MeanReverterV2_L30_T1.8_SL10_TP30_RSI35-80                      0.641  1.098   27.0%    2,234
+53   MeanReverterV2_L30_T0.5_SL15_TP30_RSI35-80                      0.640  1.091   35.4%    1,619
+54   MeanReverterV2_L30_T1.0_SL20_TP40_RSI35-80                      0.640  1.091   35.7%      920
+55   MeanReverterV2_L30_T1.2_SL15_TP40_RSI35-80                      0.639  1.096   29.8%    1,211
+56   MeanReverterV2_L30_T1.5_SL10_TP30_RSI35-80                      0.637  1.097   27.1%    2,268
+57   MeanReverterV2_L30_T1.2_SL10_TP50_RSI35-80                      0.636  1.114   19.1%    1,371
+58   MeanReverterV2_L30_T0.5_SL20_TP40_RSI35-80                      0.625  1.089   35.1%      939
+59   MeanReverterV2_L30_T2.5_SL10_TP30_RSI35-80                      0.625  1.095   26.8%    1,700
+60   MeanReverterV2_L30_T0.5_SL15_TP40_RSI35-80                      0.615  1.093   29.7%    1,237
+61   MeanReverterV2_L30_T1.5_SL10_TP40_RSI35-80                      0.609  1.101   22.1%    1,733
+62   MeanReverterV2_L30_T0.8_SL20_TP40_RSI35-80                      0.608  1.087   35.1%      931
+63   MeanReverterV2_L30_T1.2_SL10_TP40_RSI35-80                      0.594  1.098   22.2%    1,737
+64   MeanReverterV2_L30_T1.0_SL10_TP40_RSI35-80                      0.593  1.098   22.2%    1,752
+65   MeanReverterV2_L30_T2.5_SL15_TP30_RSI35-80                      0.592  1.082   35.2%    1,263
+66   MeanReverterV2_L30_T1.0_SL10_TP50_RSI35-80                      0.590  1.105   19.1%    1,394
+67   MeanReverterV2_L30_T0.8_SL10_TP40_RSI35-80                      0.582  1.097   22.1%    1,767
+68   MeanReverterV2_L30_T1.2_SL10_TP30_RSI35-80                      0.569  1.087   27.0%    2,300
+69   MeanReverterV2_L30_T2.0_SL10_TP30_RSI35-80                      0.551  1.084   26.7%    2,197
+70   MeanReverterV2_L30_T1.0_SL10_TP30_RSI35-80                      0.551  1.084   27.0%    2,309
+71   MeanReverterV2_L30_T0.8_SL10_TP50_RSI35-80                      0.537  1.096   18.8%    1,403
+72   MeanReverterV2_L30_T2.0_SL10_TP40_RSI35-80                      0.532  1.088   21.7%    1,694
+73   MeanReverterV2_L30_T0.5_SL10_TP40_RSI35-80                      0.532  1.088   22.0%    1,787
+74   MeanReverterV2_L30_T0.8_SL10_TP30_RSI35-80                      0.510  1.077   26.8%    2,312
+75   MeanReverterV2_L30_T0.5_SL10_TP50_RSI35-80                      0.496  1.088   18.9%    1,420
+76   MeanReverterV2_L30_T0.5_SL10_TP30_RSI35-80                      0.459  1.070   26.7%    2,330
+77   MeanReverterV2_L30_T1.5_SL10_TP20_RSI35-80                      0.398  1.055   34.7%    3,238
+78   MeanReverterV2_L30_T2.0_SL10_TP20_RSI35-80                      0.394  1.054   34.6%    3,088
+79   MeanReverterV2_L30_T1.8_SL10_TP20_RSI35-80                      0.384  1.053   34.6%    3,181
+80   MeanReverterV2_L30_T2.5_SL10_TP20_RSI35-80                      0.347  1.047   34.4%    2,212
+81   MeanReverterV2_L30_T1.0_SL10_TP20_RSI35-80                      0.306  1.042   34.4%    3,275
+82   MeanReverterV2_L30_T1.2_SL10_TP20_RSI35-80                      0.305  1.042   34.4%    3,262
+83   MeanReverterV2_L30_T0.8_SL10_TP20_RSI35-80                      0.299  1.041   34.3%    3,290
+84   MeanReverterV2_L30_T0.5_SL10_TP20_RSI35-80                      0.251  1.034   34.2%    3,312
+85   MeanReverterV2_L20_T2.5_SL15_TP50                               0.179  1.031   45.1%    1,704
+86   MeanReverterV2_L20_T2.5_SL30_TP50                               0.161  1.029   49.7%    1,562
+87   MeanReverterV2_L20_T2.5_SL15_TP40                               0.140  1.024   45.4%    1,720
+88   MeanReverterV2_L20_T2.5_SL15_TP30                               0.115  1.019   46.1%    1,753
+89   MeanReverterV2_L20_T2.5_SL15_TP30_RSI30-75                      0.108  1.018   47.5%    3,272
+90   MeanReverterV2_L20_T2.5_SL20_TP30_RSI30-75                      0.104  1.018   49.6%    3,097
+91   MeanReverterV2_L20_T2.5_SL30_TP50_RSI30-75                      0.067  1.013   50.3%    2,732
+92   MeanReverterV2_L20_T2.5_SL20_TP50                               0.063  1.011   47.6%    1,650
+93   MeanReverterV2_L20_T2.5_SL20_TP40                               0.021  1.004   47.8%    1,665
+94   MeanReverterV2_L20_T2.5_SL20_TP40_RSI30-75                      0.004  1.001   49.1%    2,969
+95   MeanReverterV2_L20_T2.5_SL20_TP30                              -0.003  0.999   48.6%    1,699
+96   MeanReverterV2_L20_T2.5_SL20_TP50_RSI30-75                     -0.005  0.999   48.9%    2,920
+97   MeanReverterV2_L20_T2.5_SL15_TP50_RSI30-75                     -0.005  0.999   46.6%    3,098
+98   MeanReverterV2_L20_T2.5_SL15_TP40_RSI30-75                     -0.006  0.999   46.7%    3,147
+99   MeanReverterV2_L20_T2.5_SL10_TP30                              -0.116  0.982   40.7%    1,905
+100  MeanReverterV2_L20_T2.5_SL10_TP40                              -0.124  0.979   40.0%    1,873
+101  MeanReverterV2_L20_T2.5_SL10_TP50                              -0.130  0.978   39.6%    1,859
+102  MeanReverterV2_L20_T2.5_SL10_TP30_RSI30-75                     -0.140  0.977   42.6%    3,693
+103  MeanReverterV2_L20_T2.5_SL10_TP50_RSI30-75                     -0.199  0.965   41.9%    3,494
+104  MeanReverterV2_L20_T2.5_SL10_TP40_RSI30-75                     -0.234  0.960   42.0%    3,551
+105  MeanReverterV2_L20_T2.5_SL10_TP20_RSI30-75                     -0.276  0.958   43.8%    3,975
+106  MeanReverterV2_L30_T1.8_SL10_TP20_RSI20-65                     -0.332  0.957   32.4%    3,211
+107  MeanReverterV2_L30_T1.5_SL10_TP20_RSI20-65                     -0.437  0.943   32.1%    3,281
+108  BreakoutTrader_L30_T3.0_SL30_TP50                              -0.451  0.912   38.4%    4,964
+109  MeanReverterV2_L30_T2.0_SL10_TP20_RSI20-65                     -0.456  0.941   32.0%    3,117
+110  MeanReverterV2_L20_T2.5_SL10_TP20_RSI25-70                     -0.471  0.930   43.4%    3,926
+111  MeanReverterV2_L30_T1.8_SL10_TP30_RSI20-65                     -0.482  0.932   23.8%    2,300
+112  MeanReverterV2_L30_T1.8_SL10_TP40_RSI20-65                     -0.488  0.926   18.9%    1,738
+113  MeanReverterV2_L20_T2.5_SL10_TP30_RSI25-70                     -0.488  0.922   41.8%    3,675
+114  MeanReverterV2_L30_T2.5_SL10_TP20_RSI20-65                     -0.491  0.936   31.9%    2,265
+115  MeanReverterV2_L30_T1.2_SL10_TP20_RSI20-65                     -0.514  0.934   31.9%    3,313
+116  MeanReverterV2_L20_T2.5_SL30_TP50_RSI25-70                     -0.520  0.905   49.9%    2,641
+117  MeanReverterV2_L30_T1.5_SL10_TP40_RSI20-65                     -0.535  0.919   18.8%    1,756
+118  MeanReverterV2_L30_T2.0_SL10_TP50_RSI20-65                     -0.537  0.913   15.6%    1,438
+119  MeanReverterV2_L30_T1.0_SL10_TP20_RSI20-65                     -0.537  0.931   31.9%    3,312
+120  SessionBreakout_L10_T0.5_SL10_TP40                             -0.543  0.918   18.7%      883
+121  SessionBreakout_L10_T0.8_SL10_TP40                             -0.543  0.918   18.7%      883
+122  MeanReverterV2_L30_T1.8_SL10_TP50_RSI20-65                     -0.552  0.911   15.6%    1,446
+123  MeanReverterV2_L30_T0.8_SL10_TP20_RSI20-65                     -0.558  0.928   31.8%    3,319
+124  MeanReverterV2_L30_T0.5_SL10_TP20_RSI20-65                     -0.579  0.925   31.7%    3,326
+125  MeanReverterV2_L30_T1.5_SL10_TP30_RSI20-65                     -0.592  0.917   23.5%    2,340
+126  MeanReverterV2_L30_T1.2_SL10_TP40_RSI20-65                     -0.592  0.911   18.8%    1,782
+127  MeanReverterV2_L30_T1.0_SL10_TP40_RSI20-65                     -0.600  0.910   18.8%    1,780
+128  MeanReverterV2_L30_T1.0_SL10_TP30_RSI20-65                     -0.607  0.915   23.6%    2,375
+129  MeanReverterV2_L30_T0.8_SL10_TP40_RSI20-65                     -0.608  0.909   18.8%    1,785
+130  MeanReverterV2_L30_T0.8_SL10_TP30_RSI20-65                     -0.625  0.913   23.5%    2,376
+131  MeanReverterV2_L30_T1.2_SL10_TP30_RSI20-65                     -0.627  0.913   23.5%    2,370
+132  MeanReverterV2_L30_T0.5_SL10_TP40_RSI20-65                     -0.627  0.906   18.8%    1,795
+133  MeanReverterV2_L30_T1.5_SL10_TP50_RSI20-65                     -0.656  0.895   15.3%    1,455
+134  MeanReverterV2_L30_T0.5_SL10_TP30_RSI20-65                     -0.657  0.909   23.4%    2,398
+135  MeanReverterV2_L30_T2.5_SL10_TP40_RSI20-65                     -0.688  0.897   18.3%    1,423
+136  MeanReverterV2_L30_T1.2_SL15_TP30_RSI20-65                     -0.690  0.912   31.3%    1,662
+137  MeanReverterV2_L30_T1.0_SL10_TP50_RSI20-65                     -0.694  0.889   15.4%    1,478
+138  SessionBreakout_L15_T0.5_SL10_TP50                             -0.697  0.889   15.1%      781
+139  SessionBreakout_L15_T0.8_SL10_TP50                             -0.697  0.889   15.1%      781
+140  SessionBreakout_L50_T0.5_SL20_TP30                             -0.698  0.914   37.9%      615
+141  SessionBreakout_L50_T0.8_SL20_TP30                             -0.698  0.914   37.9%      615
+142  MeanReverterV2_L30_T0.8_SL10_TP50_RSI20-65                     -0.705  0.888   15.4%    1,484
+143  MeanReverterV2_L30_T1.2_SL10_TP50_RSI20-65                     -0.707  0.887   15.3%    1,473
+144  MeanReverterV2_L30_T2.5_SL10_TP50_RSI20-65                     -0.717  0.886   15.2%    1,201
+145  MeanReverterV2_L30_T1.5_SL15_TP30_RSI20-65                     -0.719  0.908   31.2%    1,643
+146  SessionBreakout_L10_T0.5_SL10_TP30                             -0.722  0.900   23.1%    1,004
+147  SessionBreakout_L50_T0.8_SL10_TP30                             -0.722  0.900   23.1%    1,004
+148  MeanReverterV2_L30_T0.5_SL10_TP50_RSI20-65                     -0.728  0.884   15.3%    1,496
+149  MeanReverterV2_L30_T0.8_SL15_TP30_RSI20-65                     -0.729  0.907   31.2%    1,653
+150  MeanReverterV2_L30_T1.2_SL15_TP40_RSI20-65                     -0.729  0.902   25.3%    1,255
+151  MeanReverterV2_L30_T1.0_SL15_TP30_RSI20-65                     -0.737  0.906   31.2%    1,652
+152  MeanReverterV2_L30_T0.5_SL15_TP30_RSI20-65                     -0.746  0.905   31.1%    1,654
+153  MeanReverterV2_L15_T2.5_SL30_TP50_RSI20-65                     -0.752  0.862   47.8%    2,928
+154  MeanReverterV2_L30_T0.8_SL15_TP40_RSI20-65                     -0.756  0.898   25.3%    1,267
+155  MeanReverterV2_L30_T0.5_SL15_TP40_RSI20-65                     -0.765  0.897   25.3%    1,272
+156  MeanReverterV2_L30_T1.5_SL15_TP40_RSI20-65                     -0.765  0.897   25.3%    1,226
+157  MeanReverterV2_L15_T2.5_SL10_TP30_RSI20-65                     -0.765  0.879   40.6%    3,937
+158  MeanReverterV2_L30_T1.0_SL15_TP40_RSI20-65                     -0.767  0.897   25.3%    1,266
+159  MeanReverterV2_L15_T2.5_SL15_TP40_RSI20-65                     -0.777  0.870   44.2%    3,379
+160  MeanReverterV2_L15_T2.5_SL15_TP30_RSI20-65                     -0.781  0.875   44.8%    3,486
+161  MeanReverterV2_L15_T2.5_SL15_TP50_RSI20-65                     -0.788  0.865   44.1%    3,330
+162  MeanReverterV2_L15_T2.5_SL20_TP50_RSI20-65                     -0.805  0.860   46.4%    3,135
+163  MeanReverterV2_L15_T2.5_SL20_TP40_RSI20-65                     -0.812  0.862   46.6%    3,176
+164  MeanReverterV2_L30_T1.0_SL15_TP50_RSI20-65                     -0.813  0.885   21.1%      997
+165  MeanReverterV2_L15_T2.5_SL20_TP30_RSI20-65                     -0.825  0.865   47.2%    3,264
+166  MeanReverterV2_L30_T1.2_SL15_TP50_RSI20-65                     -0.833  0.882   21.0%    1,006
+167  MeanReverterV2_L30_T1.5_SL15_TP50_RSI20-65                     -0.843  0.881   21.0%    1,024
+168  MeanReverterV2_L30_T0.8_SL15_TP50_RSI20-65                     -0.849  0.880   21.0%    1,000
+169  MeanReverterV2_L30_T1.5_SL20_TP30_RSI20-65                     -0.856  0.895   37.3%    1,218
+170  MeanReverterV2_L30_T0.5_SL15_TP50_RSI20-65                     -0.861  0.878   20.9%    1,012
+171  SessionBreakout_L30_T0.5_SL15_TP50                             -0.900  0.874   20.8%      582
+172  SessionBreakout_L5_T0.8_SL15_TP50                              -0.900  0.874   20.8%      582
+173  SessionBreakout_L15_T0.5_SL10_TP20                             -0.917  0.885   30.7%    1,228
+174  SessionBreakout_L20_T0.8_SL10_TP20                             -0.917  0.885   30.7%    1,228
+175  MeanReverterV2_L30_T1.2_SL20_TP30_RSI20-65                     -0.931  0.887   37.0%    1,226
+176  MeanReverterV2_L20_T1.5_SL20_TP50_RSI20-65                     -0.952  0.848   38.9%    1,649
+177  MeanReverterV2_L30_T1.0_SL20_TP30_RSI20-65                     -0.954  0.884   37.0%    1,228
+178  MeanReverterV2_L20_T1.5_SL20_TP40_RSI20-65                     -0.954  0.856   40.5%    1,791
+179  MeanReverterV2_L20_T1.2_SL20_TP50_RSI20-65                     -0.978  0.842   39.2%    1,806
+180  MeanReverterV2_L30_T0.5_SL20_TP30_RSI20-65                     -0.980  0.881   36.7%    1,241
+181  MeanReverterV2_L30_T0.8_SL20_TP30_RSI20-65                     -0.990  0.880   36.8%    1,230
+182  SessionBreakout_L20_T0.5_SL20_TP40                             -0.990  0.876   30.5%      525
+183  SessionBreakout_L30_T0.8_SL20_TP40                             -0.990  0.876   30.5%      525
+184  MeanReverterV2_L20_T1.2_SL20_TP40_RSI20-65                     -1.001  0.847   40.5%    1,933
+185  SessionBreakout_L10_T0.5_SL15_TP30                             -1.007  0.874   30.4%      736
+186  SessionBreakout_L20_T0.8_SL15_TP30                             -1.007  0.874   30.4%      736
+187  MeanReverterV2_L20_T1.0_SL20_TP50_RSI20-65                     -1.029  0.833   38.8%    1,882
+188  MeanReverterV2_L20_T1.0_SL20_TP40_RSI20-65                     -1.043  0.839   39.7%    2,018
+189  MeanReverterV2_L20_T1.5_SL30_TP50_RSI20-65                     -1.046  0.831   43.8%    1,358
+190  MeanReverterV2_L20_T0.8_SL20_TP50_RSI20-65                     -1.056  0.828   38.8%    1,938
+191  MeanReverterV2_L20_T0.8_SL20_TP40_RSI20-65                     -1.076  0.833   39.8%    2,068
+192  MeanReverterV2_L30_T0.5_SL20_TP40_RSI20-65                     -1.104  0.862   30.3%      977
+193  MeanReverterV2_L20_T1.2_SL30_TP50_RSI20-65                     -1.104  0.819   43.8%    1,497
+194  MeanReverterV2_L30_T0.5_SL20_TP50_RSI20-65                     -1.117  0.854   25.5%      788
+195  MeanReverterV2_L20_T1.0_SL30_TP50_RSI20-65                     -1.146  0.810   42.8%    1,584
+196  MeanReverterV2_L20_T3.0_SL20_TP50                              -1.153  0.821   33.6%      827
+197  SessionBreakout_L5_T0.5_SL15_TP40                              -1.165  0.848   24.1%      646
+198  SessionBreakout_L10_T0.8_SL15_TP40                             -1.165  0.848   24.1%      646
+199  MeanReverterV2_L20_T0.8_SL30_TP50_RSI20-65                     -1.175  0.804   42.7%    1,636
+200  MeanReverterV2_L20_T3.0_SL15_TP50                              -1.183  0.815   30.6%      865
+201  MeanReverterV2_L20_T0.5_SL30_TP50_RSI20-65                     -1.203  0.797   41.7%    1,749
+
+====================================================================================================
+FAIXA 3 (5K-50K) - 407 strategies
+====================================================================================================
+
+#    Strategy Name                                                  Sharpe     PF      WR   Trades
+----------------------------------------------------------------------------------------------------
+1    MomentumBurst_L10_T1.5_SL10_TP50_CD240                          0.390  1.069   48.8%   29,716
+2    MomentumBurst_L10_T1.5_SL10_TP40_CD240                          0.385  1.068   48.8%   29,718
+3    MomentumBurst_L10_T1.5_SL10_TP30_CD240                          0.377  1.066   48.8%   29,733
+4    MomentumBurst_L10_T1.5_SL10_TP20_CD240                          0.369  1.064   48.8%   29,823
+5    MomentumBurst_L10_T1.5_SL15_TP50_CD240                          0.366  1.065   48.9%   29,253
+6    MomentumBurst_L10_T1.5_SL15_TP40_CD240                          0.362  1.064   48.9%   29,254
+7    MomentumBurst_L10_T1.5_SL15_TP30_CD240                          0.352  1.062   48.9%   29,269
+8    MomentumBurst_L10_T1.5_SL20_TP50_CD240                          0.335  1.060   48.9%   29,182
+9    MomentumBurst_L10_T1.5_SL20_TP40_CD240                          0.331  1.059   48.9%   29,183
+10   MomentumBurst_L10_T1.5_SL30_TP50_CD240                          0.328  1.059   48.9%   29,146
+11   MomentumBurst_L10_T1.2_SL10_TP50_CD240                          0.325  1.057   48.7%   30,761
+12   MomentumBurst_L10_T1.5_SL20_TP30_CD240                          0.321  1.057   48.9%   29,198
+13   MomentumBurst_L10_T1.2_SL10_TP40_CD240                          0.320  1.056   48.7%   30,767
+14   MomentumBurst_L10_T1.2_SL20_TP50_CD240                          0.317  1.057   48.8%   30,161
+15   MomentumBurst_L10_T1.2_SL20_TP40_CD240                          0.312  1.056   48.8%   30,166
+16   MomentumBurst_L10_T1.2_SL15_TP50_CD240                          0.311  1.055   48.8%   30,270
+17   MomentumBurst_L10_T1.2_SL15_TP40_CD240                          0.307  1.054   48.8%   30,275
+18   MomentumBurst_L10_T1.2_SL10_TP30_CD240                          0.304  1.053   48.7%   30,776
+19   MomentumBurst_L10_T1.2_SL30_TP50_CD240                          0.302  1.054   48.8%   30,131
+20   MomentumBurst_L10_T1.2_SL20_TP30_CD240                          0.298  1.053   48.8%   30,173
+21   MomentumBurst_L15_T1.0_SL10_TP50_CD240                          0.293  1.051   48.5%   30,774
+22   MomentumBurst_L15_T1.0_SL10_TP30_CD240                          0.292  1.051   48.5%   30,785
+23   MomentumBurst_L15_T1.0_SL10_TP40_CD240                          0.292  1.051   48.5%   30,774
+24   MomentumBurst_L10_T1.2_SL15_TP30_CD240                          0.291  1.051   48.8%   30,283
+25   MomentumBurst_L10_T1.2_SL10_TP20_CD240                          0.289  1.050   48.7%   30,850
+26   MomentumBurst_L15_T1.0_SL10_TP20_CD240                          0.283  1.049   48.6%   30,858
+27   MomentumBurst_L15_T1.0_SL15_TP50_CD240                          0.271  1.048   48.6%   30,287
+28   MomentumBurst_L15_T1.0_SL15_TP30_CD240                          0.270  1.047   48.6%   30,296
+29   MomentumBurst_L15_T1.0_SL15_TP40_CD240                          0.270  1.047   48.6%   30,288
+30   MomentumBurst_L15_T1.0_SL20_TP50_CD240                          0.263  1.047   48.6%   30,198
+31   MomentumBurst_L15_T1.0_SL20_TP40_CD240                          0.262  1.046   48.6%   30,199
+32   MomentumBurst_L15_T1.0_SL20_TP30_CD240                          0.261  1.046   48.6%   30,207
+33   MomentumBurst_L20_T0.8_SL10_TP50_CD240                          0.255  1.044   48.9%   30,869
+34   MomentumBurst_L20_T0.8_SL10_TP40_CD240                          0.252  1.044   48.9%   30,878
+35   MomentumBurst_L20_T0.8_SL15_TP50_CD240                          0.244  1.043   49.0%   30,360
+36   MomentumBurst_L20_T0.8_SL10_TP30_CD240                          0.244  1.042   48.9%   30,886
+37   MomentumBurst_L15_T1.0_SL30_TP50_CD240                          0.244  1.043   48.6%   30,167
+38   MomentumBurst_L20_T1.8_SL10_TP50_CD120                          0.243  1.042   49.1%   44,641
+39   MomentumBurst_L15_T0.5_SL10_TP50_CD240                          0.241  1.042   48.9%   31,081
+40   MomentumBurst_L20_T0.8_SL15_TP40_CD240                          0.241  1.042   49.0%   30,369
+41   MomentumBurst_L20_T1.8_SL10_TP40_CD120                          0.240  1.042   49.1%   44,648
+42   MomentumBurst_L15_T0.5_SL10_TP40_CD240                          0.239  1.042   48.9%   31,083
+43   MomentumBurst_L20_T0.8_SL20_TP50_CD240                          0.238  1.042   49.0%   30,269
+44   MomentumBurst_L20_T1.8_SL10_TP30_CD120                          0.238  1.041   49.1%   44,654
+45   MomentumBurst_L20_T1.8_SL10_TP20_CD120                          0.234  1.040   49.1%   44,712
+46   MomentumBurst_L20_T0.8_SL10_TP20_CD240                          0.234  1.040   48.9%   30,949
+47   MomentumBurst_L20_T0.8_SL20_TP40_CD240                          0.234  1.041   49.0%   30,278
+48   MomentumBurst_L20_T1.8_SL15_TP50_CD120                          0.233  1.041   49.2%   44,276
+49   MomentumBurst_L20_T0.8_SL15_TP30_CD240                          0.231  1.040   49.0%   30,377
+50   MomentumBurst_L20_T1.8_SL15_TP40_CD120                          0.229  1.040   49.2%   44,283
+51   MomentumBurst_L20_T1.8_SL15_TP30_CD120                          0.227  1.040   49.2%   44,290
+52   MomentumBurst_L15_T0.5_SL15_TP50_CD240                          0.227  1.040   49.1%   30,572
+53   MomentumBurst_L15_T0.5_SL10_TP30_CD240                          0.227  1.039   48.9%   31,102
+54   MomentumBurst_L20_T0.8_SL30_TP50_CD240                          0.225  1.040   49.0%   30,241
+55   MomentumBurst_L15_T0.5_SL15_TP40_CD240                          0.224  1.039   49.1%   30,574
+56   MomentumBurst_L20_T0.8_SL20_TP30_CD240                          0.224  1.039   49.0%   30,286
+57   MomentumBurst_L20_T1.8_SL20_TP50_CD120                          0.219  1.039   49.2%   44,232
+58   MomentumBurst_L30_T1.8_SL10_TP50_CD240                          0.218  1.037   49.4%   25,569
+59   MomentumBurst_L10_T3.0_SL10_TP50                                0.217  1.040   41.6%   38,082
+60   MomentumBurst_L20_T1.8_SL20_TP40_CD120                          0.216  1.038   49.2%   44,238
+61   MomentumBurst_L15_T0.5_SL20_TP50_CD240                          0.216  1.038   49.1%   30,471
+62   MomentumBurst_L15_T0.5_SL20_TP40_CD240                          0.215  1.038   49.1%   30,473
+63   MomentumBurst_L10_T3.0_SL10_TP40                                0.215  1.040   41.6%   38,091
+64   MomentumBurst_L20_T1.8_SL20_TP30_CD120                          0.214  1.038   49.2%   44,244
+65   MomentumBurst_L30_T1.8_SL10_TP40_CD240                          0.213  1.036   49.4%   25,572
+66   MomentumBurst_L10_T3.0_SL15_TP50                                0.210  1.039   41.6%   37,792
+67   MomentumBurst_L15_T0.5_SL15_TP30_CD240                          0.209  1.037   49.1%   30,592
+68   MomentumBurst_L10_T3.0_SL20_TP50                                0.209  1.039   41.6%   37,734
+69   MomentumBurst_L10_T3.0_SL15_TP40                                0.208  1.039   41.6%   37,800
+70   MomentumBurst_L10_T3.0_SL10_TP30                                0.208  1.038   41.6%   38,110
+71   MomentumBurst_L15_T0.5_SL30_TP50_CD240                          0.207  1.037   49.1%   30,439
+72   MomentumBurst_L15_T0.5_SL10_TP20_CD240                          0.207  1.035   48.9%   31,173
+73   MomentumBurst_L10_T3.0_SL20_TP40                                0.206  1.039   41.6%   37,742
+74   MomentumBurst_L30_T1.8_SL10_TP30_CD240                          0.204  1.035   49.4%   25,588
+75   MomentumBurst_L30_T1.8_SL10_TP20_CD240                          0.202  1.034   49.3%   25,667
+76   MomentumBurst_L20_T1.8_SL30_TP50_CD120                          0.202  1.036   49.2%   44,224
+77   MomentumBurst_L10_T3.0_SL15_TP30                                0.201  1.037   41.6%   37,819
+78   MomentumBurst_L15_T0.5_SL20_TP30_CD240                          0.200  1.035   49.1%   30,489
+79   MomentumBurst_L10_T3.0_SL20_TP30                                0.199  1.037   41.6%   37,761
+80   MomentumBurst_L10_T3.0_SL30_TP50                                0.196  1.037   41.6%   37,722
+81   MomentumBurst_L10_T3.0_SL10_TP20                                0.195  1.035   41.6%   38,229
+82   MomentumBurst_L30_T1.8_SL15_TP50_CD240                          0.188  1.033   49.6%   25,024
+83   MomentumBurst_L30_T1.8_SL15_TP40_CD240                          0.183  1.032   49.6%   25,027
+84   MomentumBurst_L30_T1.8_SL15_TP30_CD240                          0.172  1.030   49.6%   25,042
+85   MomentumBurst_L30_T1.8_SL20_TP50_CD240                          0.171  1.030   49.6%   24,887
+86   MomentumBurst_L20_T2.5_SL15_TP50_CD240                          0.170  1.029   46.0%    7,036
+87   MomentumBurst_L30_T1.8_SL20_TP40_CD240                          0.165  1.029   49.6%   24,890
+88   MomentumBurst_L20_T2.5_SL30_TP50_CD240                          0.159  1.028   46.7%    6,781
+89   MomentumBurst_L20_T2.5_SL15_TP40_CD240                          0.158  1.027   46.0%    7,061
+90   MomentumBurst_L30_T1.8_SL20_TP30_CD240                          0.155  1.027   49.6%   24,904
+91   MomentumBurst_L30_T1.8_SL30_TP50_CD240                          0.151  1.026   49.6%   24,844
+92   MomentumBurst_L20_T2.5_SL20_TP50_CD240                          0.144  1.025   46.4%    6,872
+93   MomentumBurst_L20_T2.5_SL10_TP50_CD240                          0.141  1.024   43.7%    7,492
+94   MomentumBurst_L20_T2.5_SL20_TP40_CD240                          0.124  1.021   46.4%    6,896
+95   MomentumBurst_L20_T2.5_SL10_TP40_CD240                          0.123  1.021   43.7%    7,520
+96   MomentumBurst_L30_T2.0_SL15_TP50_CD240                          0.100  1.017   49.0%   19,385
+97   MomentumBurst_L20_T2.5_SL15_TP30_CD240                          0.100  1.017   46.1%    7,148
+98   MomentumBurst_L30_T2.0_SL15_TP40_CD240                          0.092  1.016   49.0%   19,391
+99   MomentumBurst_L30_T2.0_SL20_TP50_CD240                          0.092  1.016   49.0%   19,248
+100  MomentumBurst_L30_T2.0_SL30_TP50_CD240                          0.086  1.015   49.0%   19,198
+101  MomentumBurst_L30_T2.0_SL20_TP40_CD240                          0.084  1.015   49.0%   19,254
+102  MomentumBurst_L30_T2.0_SL15_TP30_CD240                          0.076  1.013   49.0%   19,410
+103  MomentumBurst_L20_T2.5_SL20_TP30_CD240                          0.075  1.013   46.5%    6,977
+104  MomentumBurst_L30_T2.0_SL10_TP50_CD240                          0.069  1.012   48.7%   20,026
+105  MomentumBurst_L30_T2.0_SL20_TP30_CD240                          0.066  1.011   49.0%   19,272
+106  MomentumBurst_L20_T2.5_SL10_TP30_CD240                          0.064  1.010   43.7%    7,619
+107  MomentumBurst_L30_T2.0_SL10_TP40_CD240                          0.061  1.010   48.7%   20,032
+108  MomentumBurst_L30_T2.0_SL10_TP30_CD240                          0.045  1.007   48.6%   20,057
+109  MomentumBurst_L10_T2.0_SL10_TP50_CD120                          0.037  1.006   45.3%   40,440
+110  MeanReverterV2_L20_T2.0_SL10_TP50_RSI30-75                      0.033  1.006   51.3%   12,155
+111  MomentumBurst_L10_T2.0_SL15_TP50_CD120                          0.033  1.006   45.3%   40,289
+112  MomentumBurst_L10_T2.0_SL10_TP40_CD120                          0.032  1.005   45.3%   40,446
+113  MomentumBurst_L30_T2.0_SL10_TP20_CD240                          0.029  1.005   48.7%   20,185
+114  MomentumBurst_L10_T2.0_SL15_TP40_CD120                          0.028  1.005   45.3%   40,294
+115  MeanReverterV2_L20_T2.0_SL10_TP30_RSI30-75                      0.027  1.005   51.2%   12,448
+116  MomentumBurst_L10_T2.0_SL10_TP30_CD120                          0.026  1.004   45.3%   40,465
+117  MomentumBurst_L10_T2.0_SL20_TP50_CD120                          0.025  1.004   45.3%   40,274
+118  MomentumBurst_L10_T2.0_SL15_TP30_CD120                          0.022  1.004   45.3%   40,311
+119  MomentumBurst_L10_T2.0_SL20_TP40_CD120                          0.021  1.004   45.3%   40,278
+120  MomentumBurst_L10_T2.0_SL30_TP50_CD120                          0.020  1.004   45.3%   40,266
+121  MomentumBurst_L10_T2.0_SL20_TP30_CD120                          0.015  1.003   45.3%   40,295
+122  MomentumBurst_L20_T2.5_SL10_TP20_CD240                          0.015  1.002   43.9%    7,947
+123  MeanReverterV2_L20_T2.0_SL20_TP50                               0.014  1.003   52.4%    5,922
+124  MeanReverterV2_L20_T2.0_SL10_TP40_RSI30-75                      0.009  1.002   51.2%   12,241
+125  MeanReverterV2_L20_T2.0_SL30_TP50                               0.004  1.001   52.9%    5,771
+126  MomentumBurst_L10_T2.0_SL10_TP20_CD120                          0.004  1.001   45.3%   40,549
+127  MeanReverterV2_L20_T2.0_SL20_TP40                              -0.003  0.999   52.5%    5,949
+128  MeanReverterV2_L20_T2.0_SL20_TP30                              -0.004  0.999   52.5%    5,995
+129  TrendFollower_L20_T3.0_SL15_TP50                               -0.009  0.998   36.5%   38,248
+130  TrendFollower_L15_T3.0_SL15_TP40                               -0.011  0.998   36.5%   38,258
+131  TrendFollower_L30_T3.0_SL20_TP50                               -0.012  0.998   36.5%   38,246
+132  TrendFollower_L10_T3.0_SL20_TP40                               -0.015  0.997   36.5%   38,256
+133  TrendFollower_L5_T3.0_SL15_TP30                                -0.016  0.997   36.5%   38,303
+134  TrendFollower_L20_T3.0_SL30_TP50                               -0.018  0.997   36.5%   38,246
+135  TrendFollower_L30_T3.0_SL20_TP30                               -0.019  0.997   36.5%   38,299
+136  MeanReverterV2_L20_T2.0_SL15_TP50_RSI30-75                     -0.021  0.996   53.2%   11,196
+137  MeanReverterV2_L20_T2.0_SL15_TP30                              -0.021  0.996   51.8%    6,191
+138  MeanReverterV2_L20_T2.0_SL15_TP50                              -0.023  0.996   51.7%    6,125
+139  MomentumBurst_L10_T2.5_SL15_TP50                               -0.025  0.996   43.6%   34,520
+140  MomentumBurst_L10_T2.5_SL15_TP50_CD60                          -0.025  0.996   43.6%   34,520
+141  MomentumBurst_L20_T2.5_SL15_TP50_CD120                         -0.027  0.995   44.6%    8,617
+142  MomentumBurst_L10_T2.5_SL20_TP50                               -0.029  0.995   43.6%   34,489
+143  MomentumBurst_L10_T2.5_SL20_TP50_CD60                          -0.029  0.995   43.6%   34,489
+144  MeanReverterV2_L20_T2.0_SL15_TP40_RSI30-75                     -0.029  0.994   53.2%   11,271
+145  MeanReverterV2_L20_T2.0_SL15_TP40                              -0.030  0.995   51.7%    6,147
+146  MomentumBurst_L20_T2.5_SL30_TP50_CD120                         -0.031  0.995   45.2%    8,380
+147  MomentumBurst_L10_T2.5_SL15_TP40                               -0.032  0.994   43.6%   34,529
+148  MomentumBurst_L10_T2.5_SL15_TP40_CD60                          -0.032  0.994   43.6%   34,529
+149  MomentumBurst_L10_T2.5_SL10_TP50                               -0.032  0.994   43.5%   34,737
+150  MomentumBurst_L10_T2.5_SL10_TP50_CD60                          -0.032  0.994   43.5%   34,737
+151  MomentumBurst_L10_T2.5_SL20_TP40                               -0.036  0.994   43.6%   34,498
+152  MomentumBurst_L10_T2.5_SL20_TP40_CD60                          -0.036  0.994   43.6%   34,498
+153  MeanReverterV2_L20_T2.0_SL20_TP50_RSI30-75                     -0.036  0.992   53.7%   10,770
+154  MomentumBurst_L20_T2.5_SL10_TP50_CD120                         -0.038  0.994   43.0%    9,066
+155  MomentumBurst_L10_T2.5_SL10_TP40                               -0.039  0.993   43.5%   34,746
+156  MomentumBurst_L10_T2.5_SL10_TP40_CD60                          -0.039  0.993   43.5%   34,746
+157  MomentumBurst_L10_T2.5_SL30_TP50                               -0.040  0.993   43.6%   34,485
+158  MomentumBurst_L10_T2.5_SL30_TP50_CD60                          -0.040  0.993   43.6%   34,485
+159  MeanReverterV2_L20_T2.0_SL20_TP30_RSI30-75                     -0.042  0.992   53.8%   10,945
+160  MomentumBurst_L20_T2.5_SL20_TP50_CD120                         -0.043  0.993   45.0%    8,463
+161  MomentumBurst_L20_T2.5_SL15_TP40_CD120                         -0.043  0.993   44.8%    8,636
+162  MeanReverterV2_L20_T2.0_SL30_TP50_RSI30-75                     -0.043  0.991   54.1%   10,438
+163  MeanReverterV2_L20_T2.0_SL15_TP30_RSI30-75                     -0.045  0.991   53.2%   11,401
+164  MomentumBurst_L10_T2.5_SL15_TP30                               -0.045  0.992   43.6%   34,541
+165  MomentumBurst_L10_T2.5_SL15_TP30_CD60                          -0.045  0.992   43.6%   34,541
+166  MomentumBurst_L10_T2.5_SL20_TP30                               -0.049  0.992   43.6%   34,510
+167  MomentumBurst_L10_T2.5_SL20_TP30_CD60                          -0.049  0.992   43.6%   34,510
+168  MomentumBurst_L10_T2.5_SL10_TP30                               -0.052  0.991   43.5%   34,759
+169  MomentumBurst_L10_T2.5_SL10_TP30_CD60                          -0.052  0.991   43.5%   34,759
+170  MomentumBurst_L20_T2.5_SL10_TP40_CD120                         -0.054  0.991   43.1%    9,091
+171  MomentumBurst_L20_T2.5_SL20_TP40_CD120                         -0.056  0.990   45.1%    8,482
+172  MeanReverterV2_L20_T2.0_SL10_TP20_RSI30-75                     -0.060  0.990   51.2%   13,005
+173  MomentumBurst_L10_T2.5_SL15_TP50_CD30                          -0.070  0.988   42.2%   42,757
+174  MomentumBurst_L10_T2.5_SL20_TP50_CD30                          -0.072  0.987   42.2%   42,730
+175  MomentumBurst_L10_T2.5_SL10_TP20                               -0.073  0.988   43.5%   34,869
+176  MomentumBurst_L10_T2.5_SL10_TP20_CD60                          -0.073  0.988   43.5%   34,869
+177  MomentumBurst_L10_T2.5_SL15_TP40_CD30                          -0.075  0.987   42.2%   42,768
+178  TrendFollower_L5_T3.0_SL10_TP50                                -0.076  0.987   36.4%   38,334
+179  MomentumBurst_L20_T2.5_SL15_TP30_CD120                         -0.077  0.987   44.8%    8,700
+180  MomentumBurst_L10_T2.5_SL20_TP40_CD30                          -0.078  0.986   42.2%   42,741
+181  MomentumBurst_L10_T2.5_SL10_TP50_CD30                          -0.078  0.986   42.1%   42,954
+182  TrendFollower_L10_T3.0_SL10_TP40                               -0.079  0.986   36.4%   38,347
+183  MomentumBurst_L10_T2.5_SL30_TP50_CD30                          -0.080  0.986   42.2%   42,728
+184  MomentumBurst_L10_T2.5_SL10_TP40_CD30                          -0.083  0.985   42.1%   42,965
+185  TrendFollower_L10_T3.0_SL10_TP30                               -0.084  0.986   36.5%   38,391
+186  MomentumBurst_L10_T2.5_SL15_TP30_CD30                          -0.087  0.985   42.2%   42,776
+187  MomentumBurst_L10_T2.5_SL20_TP30_CD30                          -0.090  0.984   42.2%   42,749
+188  MomentumBurst_L20_T2.5_SL10_TP30_CD120                         -0.091  0.985   43.1%    9,164
+189  MomentumBurst_L20_T2.5_SL20_TP30_CD120                         -0.091  0.985   45.1%    8,542
+190  MomentumBurst_L10_T2.5_SL10_TP30_CD30                          -0.095  0.983   42.1%   42,975
+191  TrendFollower_L5_T3.0_SL10_TP20                                -0.097  0.983   36.5%   38,752
+192  MomentumBurst_L10_T2.5_SL10_TP20_CD30                          -0.109  0.981   42.2%   43,068
+193  MomentumBurst_L20_T2.5_SL10_TP20_CD120                         -0.116  0.982   43.1%    9,479
+194  MeanReverterV2_L20_T1.8_SL10_TP50_RSI30-75                     -0.145  0.972   51.9%   14,904
+195  MeanReverterV2_L20_T1.8_SL15_TP50_RSI30-75                     -0.145  0.971   53.5%   13,837
+196  MeanReverterV2_L20_T1.8_SL15_TP40_RSI30-75                     -0.150  0.970   53.5%   13,894
+197  MomentumBurst_L20_T2.0_SL15_TP40                               -0.154  0.974   47.7%   41,359
+198  MomentumBurst_L20_T2.0_SL15_TP40_CD60                          -0.154  0.974   47.7%   41,359
+199  MomentumBurst_L20_T2.0_SL15_TP50                               -0.154  0.974   47.7%   41,355
+200  MomentumBurst_L20_T2.0_SL15_TP50_CD60                          -0.154  0.974   47.7%   41,355
+201  MomentumBurst_L20_T2.0_SL10_TP40                               -0.155  0.974   47.6%   41,731
+202  MomentumBurst_L20_T2.0_SL10_TP40_CD60                          -0.155  0.974   47.6%   41,731
+203  MomentumBurst_L20_T2.0_SL10_TP50                               -0.155  0.974   47.6%   41,727
+204  MomentumBurst_L20_T2.0_SL10_TP50_CD60                          -0.155  0.974   47.6%   41,727
+205  MomentumBurst_L20_T2.0_SL20_TP40                               -0.159  0.973   47.7%   41,317
+206  MomentumBurst_L20_T2.0_SL20_TP40_CD60                          -0.159  0.973   47.7%   41,317
+207  MomentumBurst_L20_T2.0_SL15_TP30                               -0.160  0.973   47.7%   41,369
+208  MomentumBurst_L20_T2.0_SL15_TP30_CD60                          -0.160  0.973   47.7%   41,369
+209  MomentumBurst_L20_T2.0_SL10_TP30                               -0.160  0.973   47.6%   41,742
+210  MomentumBurst_L20_T2.0_SL10_TP30_CD60                          -0.160  0.973   47.6%   41,742
+211  MomentumBurst_L20_T2.0_SL20_TP50                               -0.161  0.973   47.7%   41,313
+212  MomentumBurst_L20_T2.0_SL20_TP50_CD60                          -0.161  0.973   47.7%   41,313
+213  MomentumBurst_L20_T2.0_SL20_TP30                               -0.165  0.972   47.7%   41,326
+214  MomentumBurst_L20_T2.0_SL20_TP30_CD60                          -0.165  0.972   47.7%   41,326
+215  MeanReverterV2_L20_T1.8_SL10_TP40_RSI30-75                     -0.165  0.969   51.8%   14,990
+216  MeanReverterV2_L20_T2.0_SL10_TP30                              -0.166  0.973   49.1%    6,628
+217  MeanReverterV2_L20_T1.8_SL15_TP30_RSI30-75                     -0.166  0.968   53.5%   14,030
+218  MeanReverterV2_L20_T1.8_SL10_TP30_RSI30-75                     -0.167  0.969   51.8%   15,166
+219  MeanReverterV2_L20_T2.0_SL10_TP50                              -0.169  0.971   49.0%    6,565
+220  MeanReverterV2_L20_T1.5_SL10_TP50_RSI30-75                     -0.170  0.967   52.7%   17,384
+221  MomentumBurst_L20_T2.0_SL10_TP20                               -0.170  0.972   47.6%   41,811
+222  MomentumBurst_L20_T2.0_SL10_TP20_CD60                          -0.170  0.972   47.6%   41,811
+223  MomentumBurst_L20_T2.0_SL30_TP50                               -0.172  0.971   47.7%   41,303
+224  MomentumBurst_L20_T2.0_SL30_TP50_CD60                          -0.172  0.971   47.7%   41,303
+225  MeanReverterV2_L20_T1.5_SL15_TP50_RSI30-75                     -0.178  0.964   54.1%   16,231
+226  MeanReverterV2_L20_T2.0_SL10_TP40                              -0.186  0.969   49.1%    6,584
+227  MeanReverterV2_L20_T1.5_SL15_TP40_RSI30-75                     -0.189  0.962   54.1%   16,279
+228  MeanReverterV2_L20_T1.5_SL15_TP30_RSI30-75                     -0.191  0.963   54.1%   16,406
+229  MeanReverterV2_L20_T2.0_SL10_TP20                              -0.192  0.969   49.5%    6,742
+230  MeanReverterV2_L20_T1.5_SL10_TP40_RSI30-75                     -0.194  0.963   52.6%   17,449
+231  MeanReverterV2_L20_T2.5_SL10_TP20                              -0.199  0.967   50.1%    9,319
+232  MeanReverterV2_L20_T1.5_SL10_TP30_RSI30-75                     -0.201  0.963   52.6%   17,634
+233  MeanReverterV2_L20_T1.8_SL10_TP20_RSI30-75                     -0.203  0.964   51.8%   15,690
+234  MeanReverterV2_L20_T1.2_SL10_TP50_RSI30-75                     -0.225  0.957   52.6%   18,678
+235  MeanReverterV2_L20_T1.5_SL10_TP20_RSI30-75                     -0.232  0.959   52.6%   18,111
+236  MeanReverterV2_L20_T1.2_SL15_TP50_RSI30-75                     -0.235  0.953   53.8%   17,478
+237  MeanReverterV2_L20_T1.2_SL15_TP40_RSI30-75                     -0.245  0.951   53.8%   17,521
+238  MeanReverterV2_L20_T1.2_SL10_TP40_RSI30-75                     -0.246  0.953   52.5%   18,735
+239  MeanReverterV2_L20_T1.2_SL10_TP30_RSI30-75                     -0.253  0.953   52.5%   18,896
+240  MeanReverterV2_L20_T1.2_SL15_TP30_RSI30-75                     -0.255  0.950   53.8%   17,639
+241  MeanReverterV2_L20_T1.8_SL15_TP50                              -0.278  0.951   51.2%    7,594
+242  MeanReverterV2_L20_T1.8_SL20_TP50                              -0.281  0.949   51.6%    7,366
+243  MeanReverterV2_L20_T1.0_SL15_TP50_RSI30-75                     -0.284  0.943   53.5%   18,044
+244  MeanReverterV2_L20_T1.0_SL10_TP50_RSI30-75                     -0.288  0.945   52.3%   19,249
+245  MeanReverterV2_L20_T1.0_SL15_TP40_RSI30-75                     -0.292  0.942   53.5%   18,086
+246  MeanReverterV2_L20_T1.2_SL10_TP20_RSI30-75                     -0.293  0.948   52.6%   19,357
+247  MeanReverterV2_L20_T1.8_SL15_TP30                              -0.295  0.950   51.3%    7,657
+248  MeanReverterV2_L20_T1.8_SL20_TP30                              -0.302  0.947   51.7%    7,425
+249  MeanReverterV2_L20_T0.8_SL10_TP50_RSI30-75                     -0.306  0.941   52.3%   19,556
+250  MeanReverterV2_L20_T1.0_SL10_TP40_RSI30-75                     -0.306  0.942   52.3%   19,309
+251  MeanReverterV2_L20_T0.8_SL15_TP50_RSI30-75                     -0.308  0.938   53.4%   18,346
+252  MeanReverterV2_L20_T1.0_SL15_TP30_RSI30-75                     -0.308  0.940   53.5%   18,199
+253  MeanReverterV2_L20_T0.8_SL15_TP40_RSI30-75                     -0.313  0.938   53.4%   18,388
+254  MeanReverterV2_L20_T1.0_SL10_TP30_RSI30-75                     -0.315  0.941   52.2%   19,473
+255  MeanReverterV2_L20_T1.8_SL15_TP40                              -0.316  0.945   51.2%    7,609
+256  MeanReverterV2_L20_T1.8_SL20_TP40                              -0.319  0.943   51.6%    7,381
+257  MeanReverterV2_L20_T0.8_SL10_TP40_RSI30-75                     -0.321  0.939   52.2%   19,617
+258  MeanReverterV2_L20_T1.8_SL30_TP50                              -0.328  0.939   52.1%    7,204
+259  MeanReverterV2_L20_T0.8_SL15_TP30_RSI30-75                     -0.331  0.935   53.4%   18,500
+260  MeanReverterV2_L20_T0.8_SL10_TP30_RSI30-75                     -0.335  0.938   52.2%   19,771
+261  MeanReverterV2_L20_T1.8_SL10_TP50                              -0.349  0.942   49.0%    8,102
+262  MeanReverterV2_L20_T1.8_SL10_TP30                              -0.351  0.942   49.1%    8,167
+263  MomentumBurst_L30_T2.0_SL15_TP50_CD30                          -0.353  0.941   47.7%   46,552
+264  MomentumBurst_L30_T2.0_SL15_TP40_CD30                          -0.354  0.941   47.7%   46,554
+265  MeanReverterV2_L20_T0.5_SL15_TP50_RSI30-75                     -0.355  0.929   53.1%   18,621
+266  MeanReverterV2_L20_T0.5_SL10_TP50_RSI30-75                     -0.356  0.932   52.0%   19,832
+267  MeanReverterV2_L20_T1.0_SL10_TP20_RSI30-75                     -0.356  0.936   52.3%   19,923
+268  MomentumBurst_L30_T2.0_SL15_TP30_CD30                          -0.358  0.940   47.7%   46,562
+269  MomentumBurst_L30_T2.0_SL20_TP50_CD30                          -0.359  0.940   47.7%   46,494
+270  MomentumBurst_L30_T2.0_SL20_TP40_CD30                          -0.360  0.940   47.7%   46,496
+271  MomentumBurst_L30_T2.0_SL10_TP50_CD30                          -0.360  0.941   47.6%   46,989
+272  MomentumBurst_L30_T2.0_SL10_TP40_CD30                          -0.361  0.940   47.6%   46,991
+273  MeanReverterV2_L20_T0.5_SL15_TP40_RSI30-75                     -0.362  0.928   53.1%   18,663
+274  MomentumBurst_L30_T2.0_SL20_TP30_CD30                          -0.364  0.939   47.7%   46,504
+275  MomentumBurst_L30_T2.0_SL10_TP30_CD30                          -0.364  0.940   47.6%   46,999
+276  BreakoutTrader_L20_T2.5_SL20_TP50                              -0.367  0.928   41.0%   32,482
+277  MomentumBurst_L30_T2.0_SL30_TP50_CD30                          -0.369  0.938   47.7%   46,479
+278  MeanReverterV2_L20_T0.8_SL10_TP20_RSI30-75                     -0.369  0.934   52.3%   20,223
+279  BreakoutTrader_L20_T2.5_SL20_TP40                              -0.370  0.928   41.0%   32,500
+280  BreakoutTrader_L20_T2.5_SL10_TP50                              -0.371  0.929   40.8%   32,863
+281  MeanReverterV2_L20_T0.5_SL10_TP40_RSI30-75                     -0.372  0.930   51.9%   19,891
+282  BreakoutTrader_L20_T2.5_SL20_TP30                              -0.374  0.928   41.1%   32,544
+283  MomentumBurst_L30_T2.0_SL10_TP20_CD30                          -0.376  0.938   47.6%   47,047
+284  MeanReverterV2_L20_T0.5_SL15_TP30_RSI30-75                     -0.377  0.927   53.1%   18,773
+285  MeanReverterV2_L20_T1.8_SL10_TP40                              -0.380  0.937   49.0%    8,114
+286  MeanReverterV2_L20_T0.5_SL10_TP30_RSI30-75                     -0.381  0.929   51.9%   20,045
+287  BreakoutTrader_L20_T2.5_SL30_TP50                              -0.383  0.924   41.0%   32,433
+288  BreakoutTrader_L20_T2.5_SL10_TP40                              -0.392  0.926   40.8%   32,881
+289  BreakoutTrader_L20_T2.5_SL15_TP50                              -0.394  0.923   41.0%   32,590
+290  MeanReverterV2_L20_T1.2_SL15_TP50                              -0.396  0.930   50.9%    9,620
+291  BreakoutTrader_L20_T2.5_SL10_TP30                              -0.398  0.925   40.8%   32,928
+292  MeanReverterV2_L20_T2.0_SL10_TP30_RSI25-70                     -0.399  0.929   50.7%   12,419
+293  BreakoutTrader_L20_T2.5_SL15_TP30                              -0.399  0.924   41.0%   32,652
+294  BreakoutTrader_L20_T2.5_SL15_TP40                              -0.400  0.923   41.0%   32,606
+295  MeanReverterV2_L20_T1.8_SL10_TP20                              -0.411  0.935   49.4%    8,282
+296  MeanReverterV2_L20_T0.5_SL10_TP20_RSI30-75                     -0.416  0.926   52.0%   20,499
+297  BreakoutTrader_L20_T2.5_SL10_TP20                              -0.419  0.924   40.9%   33,106
+298  MeanReverterV2_L20_T1.5_SL15_TP50                              -0.423  0.926   51.1%    8,878
+299  MeanReverterV2_L20_T2.0_SL15_TP30_RSI25-70                     -0.424  0.922   53.0%   11,389
+300  MeanReverterV2_L20_T1.0_SL15_TP50                              -0.426  0.925   50.7%    9,882
+301  MeanReverterV2_L20_T1.2_SL15_TP40                              -0.427  0.926   50.9%    9,633
+302  MeanReverterV2_L20_T2.0_SL10_TP20_RSI25-70                     -0.437  0.927   50.7%   12,963
+303  MeanReverterV2_L20_T2.0_SL30_TP50_RSI25-70                     -0.446  0.908   54.0%   10,386
+304  MeanReverterV2_L20_T1.8_SL10_TP30_RSI25-70                     -0.454  0.919   51.9%   15,130
+305  MeanReverterV2_L20_T1.0_SL15_TP40                              -0.458  0.920   50.7%    9,894
+306  MeanReverterV2_L20_T1.5_SL15_TP30                              -0.470  0.920   51.1%    8,938
+307  MeanReverterV2_L20_T0.8_SL15_TP50                              -0.474  0.917   50.6%   10,041
+308  MeanReverterV2_L20_T1.8_SL10_TP20_RSI25-70                     -0.476  0.919   51.8%   15,641
+309  MeanReverterV2_L20_T1.8_SL15_TP30_RSI25-70                     -0.478  0.911   53.6%   13,995
+310  BreakoutTrader_L30_T3.0_SL20_TP30                              -0.481  0.914   38.4%    5,173
+311  MeanReverterV2_L20_T1.5_SL10_TP30                              -0.483  0.921   49.3%    9,480
+312  MeanReverterV2_L20_T1.8_SL30_TP50_RSI25-70                     -0.485  0.901   54.3%   12,981
+313  MeanReverterV2_L20_T0.8_SL10_TP30                              -0.505  0.917   49.1%   10,656
+314  MeanReverterV2_L20_T0.8_SL15_TP40                              -0.505  0.912   50.6%   10,054
+315  BreakoutTrader_L30_T3.0_SL20_TP40                              -0.506  0.907   38.0%    5,097
+316  BreakoutTrader_L30_T3.0_SL20_TP50                              -0.507  0.905   38.0%    5,058
+317  MeanReverterV2_L20_T0.8_SL15_TP30                              -0.514  0.912   50.6%   10,095
+318  MeanReverterV2_L15_T2.0_SL15_TP50_RSI20-65                     -0.546  0.891   54.4%   28,976
+319  MeanReverterV2_L20_T1.2_SL10_TP20                              -0.547  0.913   49.4%   10,325
+320  MeanReverterV2_L20_T1.5_SL10_TP20                              -0.553  0.913   49.5%    9,587
+321  MeanReverterV2_L20_T1.5_SL15_TP40_RSI25-70                     -0.555  0.894   53.4%   16,177
+322  BreakoutTrader_L30_T3.0_SL15_TP30                              -0.555  0.904   37.7%    5,270
+323  MeanReverterV2_L20_T0.5_SL15_TP50                              -0.556  0.903   50.2%   10,238
+324  BreakoutTrader_L30_T3.0_SL15_TP50                              -0.557  0.898   37.4%    5,155
+325  MeanReverterV2_L15_T2.0_SL15_TP40_RSI20-65                     -0.558  0.890   54.4%   29,003
+326  MeanReverterV2_L15_T2.0_SL30_TP50_RSI20-65                     -0.560  0.883   54.7%   28,142
+327  MeanReverterV2_L20_T1.5_SL10_TP30_RSI25-70                     -0.562  0.900   51.9%   17,477
+328  BreakoutTrader_L30_T3.0_SL15_TP40                              -0.563  0.899   37.4%    5,194
+329  MeanReverterV2_L15_T2.0_SL10_TP40_RSI20-65                     -0.564  0.894   53.8%   30,359
+330  MeanReverterV2_L20_T1.0_SL10_TP20                              -0.567  0.910   49.4%   10,610
+331  MeanReverterV2_L20_T1.2_SL15_TP40_RSI25-70                     -0.568  0.891   53.2%   17,389
+332  MeanReverterV2_L20_T1.2_SL10_TP40_RSI25-70                     -0.573  0.895   51.8%   18,603
+333  MeanReverterV2_L20_T0.8_SL10_TP20                              -0.574  0.909   49.3%   10,773
+334  MeanReverterV2_L15_T2.0_SL20_TP50_RSI20-65                     -0.578  0.882   54.6%   28,471
+335  MeanReverterV2_L15_T2.0_SL15_TP30_RSI20-65                     -0.578  0.887   54.4%   29,066
+336  MeanReverterV2_L20_T0.5_SL10_TP30                              -0.581  0.905   48.8%   10,862
+337  MeanReverterV2_L15_T2.0_SL20_TP40_RSI20-65                     -0.582  0.882   54.6%   28,495
+338  MeanReverterV2_L20_T1.5_SL30_TP50_RSI25-70                     -0.583  0.881   54.0%   15,291
+339  MeanReverterV2_L20_T1.5_SL10_TP20_RSI25-70                     -0.583  0.900   51.8%   17,957
+340  MeanReverterV2_L20_T1.5_SL15_TP30_RSI25-70                     -0.583  0.891   53.4%   16,283
+341  MeanReverterV2_L20_T0.5_SL15_TP40                              -0.586  0.899   50.3%   10,251
+342  MeanReverterV2_L15_T2.0_SL10_TP30_RSI20-65                     -0.588  0.890   53.7%   30,449
+343  MeanReverterV2_L20_T0.8_SL15_TP50_RSI25-70                     -0.593  0.886   53.0%   18,115
+344  MeanReverterV2_L20_T0.5_SL15_TP30                              -0.594  0.899   50.3%   10,291
+345  MeanReverterV2_L20_T1.0_SL15_TP40_RSI25-70                     -0.594  0.886   53.1%   17,841
+346  MeanReverterV2_L20_T1.2_SL10_TP30_RSI25-70                     -0.597  0.893   51.8%   18,721
+347  MeanReverterV2_L20_T0.8_SL10_TP50_RSI25-70                     -0.599  0.890   51.6%   19,323
+348  MeanReverterV2_L20_T1.2_SL15_TP30_RSI25-70                     -0.601  0.887   53.2%   17,474
+349  MeanReverterV2_L20_T0.8_SL15_TP40_RSI25-70                     -0.602  0.885   53.0%   18,156
+350  MeanReverterV2_L15_T2.0_SL20_TP30_RSI20-65                     -0.603  0.879   54.6%   28,558
+351  MeanReverterV2_L20_T1.2_SL10_TP20_RSI25-70                     -0.608  0.895   51.7%   19,216
+352  BreakoutTrader_L30_T3.0_SL10_TP30                              -0.610  0.897   35.9%    5,461
+353  MeanReverterV2_L20_T0.8_SL10_TP40_RSI25-70                     -0.612  0.888   51.6%   19,377
+354  MeanReverterV2_L20_T1.2_SL30_TP50_RSI25-70                     -0.616  0.874   53.8%   16,507
+355  MeanReverterV2_L15_T1.8_SL30_TP50_RSI20-65                     -0.622  0.872   55.7%   43,243
+356  MeanReverterV2_L15_T1.8_SL15_TP50_RSI20-65                     -0.623  0.876   55.6%   44,079
+357  MeanReverterV2_L20_T1.0_SL10_TP30_RSI25-70                     -0.626  0.888   51.6%   19,174
+358  MeanReverterV2_L15_T1.8_SL20_TP50_RSI20-65                     -0.627  0.873   55.7%   43,535
+359  MeanReverterV2_L20_T1.0_SL15_TP30_RSI25-70                     -0.629  0.882   53.1%   17,925
+360  MeanReverterV2_L15_T1.8_SL15_TP40_RSI20-65                     -0.629  0.876   55.6%   44,087
+361  MeanReverterV2_L20_T0.5_SL15_TP50_RSI25-70                     -0.632  0.879   52.8%   18,432
+362  MeanReverterV2_L15_T1.8_SL20_TP40_RSI20-65                     -0.633  0.873   55.7%   43,542
+363  MeanReverterV2_L20_T1.0_SL30_TP50_RSI25-70                     -0.634  0.870   53.6%   16,965
+364  BreakoutTrader_L30_T3.0_SL10_TP40                              -0.635  0.889   35.5%    5,389
+365  MeanReverterV2_L20_T0.8_SL10_TP30_RSI25-70                     -0.636  0.886   51.6%   19,493
+366  MeanReverterV2_L20_T0.8_SL15_TP30_RSI25-70                     -0.636  0.880   53.0%   18,238
+367  MeanReverterV2_L20_T0.5_SL10_TP50_RSI25-70                     -0.638  0.883   51.5%   19,653
+368  MeanReverterV2_L20_T0.5_SL15_TP40_RSI25-70                     -0.640  0.878   52.8%   18,473
+369  MeanReverterV2_L20_T1.0_SL10_TP20_RSI25-70                     -0.641  0.889   51.6%   19,661
+370  MeanReverterV2_L15_T1.8_SL15_TP30_RSI20-65                     -0.642  0.874   55.6%   44,113
+371  MeanReverterV2_L20_T0.5_SL10_TP20                              -0.646  0.898   49.0%   10,981
+372  MeanReverterV2_L15_T1.8_SL20_TP30_RSI20-65                     -0.646  0.871   55.7%   43,569
+373  MeanReverterV2_L20_T0.8_SL30_TP50_RSI25-70                     -0.648  0.867   53.5%   17,280
+374  MeanReverterV2_L20_T0.8_SL10_TP20_RSI25-70                     -0.648  0.887   51.5%   19,981
+375  BreakoutTrader_L30_T3.0_SL10_TP50                              -0.650  0.884   35.5%    5,348
+376  MeanReverterV2_L20_T0.5_SL10_TP40_RSI25-70                     -0.650  0.882   51.5%   19,709
+377  MeanReverterV2_L20_T0.8_SL20_TP40_RSI25-70                     -0.658  0.871   53.3%   17,673
+378  MeanReverterV2_L20_T0.5_SL15_TP30_RSI25-70                     -0.674  0.874   52.8%   18,551
+379  MeanReverterV2_L20_T0.5_SL10_TP20_RSI25-70                     -0.675  0.883   51.4%   20,310
+380  MeanReverterV2_L20_T0.5_SL10_TP30_RSI25-70                     -0.676  0.879   51.4%   19,818
+381  MeanReverterV2_L20_T0.5_SL30_TP50_RSI25-70                     -0.683  0.861   53.3%   17,599
+382  MeanReverterV2_L20_T0.8_SL20_TP30_RSI25-70                     -0.689  0.867   53.3%   17,739
+383  MeanReverterV2_L20_T0.5_SL20_TP40_RSI25-70                     -0.694  0.864   53.1%   17,997
+384  MeanReverterV2_L20_T0.5_SL20_TP30_RSI25-70                     -0.724  0.861   53.1%   18,062
+385  BreakoutTrader_L30_T3.0_SL10_TP20                              -0.734  0.885   36.7%    5,601
+386  MeanReverter_L20_T2.5_SL30_TP50                                -0.975  0.818   51.8%   32,485
+387  MeanReverter_L20_T2.5_SL20_TP50                                -0.992  0.819   51.7%   32,652
+388  MeanReverter_L20_T2.5_SL20_TP40                                -0.994  0.819   51.7%   32,655
+389  MeanReverter_L20_T2.5_SL20_TP30                                -0.996  0.820   51.7%   32,666
+390  MeanReverter_L20_T2.5_SL15_TP50                                -1.017  0.819   51.6%   32,914
+391  MeanReverter_L20_T2.5_SL15_TP40                                -1.021  0.819   51.6%   32,917
+392  MeanReverter_L20_T2.5_SL15_TP30                                -1.022  0.819   51.6%   32,928
+393  MeanReverter_L30_T3.0_SL10_TP50                                -1.040  0.827   42.3%    5,692
+394  MeanReverter_L20_T2.5_SL10_TP50                                -1.071  0.817   51.1%   33,726
+395  MeanReverter_L20_T2.5_SL10_TP40                                -1.076  0.817   51.1%   33,730
+396  MeanReverter_L20_T2.5_SL10_TP30                                -1.083  0.817   51.1%   33,740
+397  MeanReverter_L30_T3.0_SL10_TP40                                -1.099  0.822   42.3%    5,710
+398  MeanReverter_L20_T2.5_SL10_TP20                                -1.103  0.816   51.1%   33,801
+399  MeanReverter_L30_T3.0_SL15_TP50                                -1.130  0.810   44.3%    5,350
+400  MeanReverter_L30_T3.0_SL20_TP50                                -1.143  0.802   45.2%    5,163
+401  MeanReverter_L30_T3.0_SL15_TP40                                -1.155  0.809   44.4%    5,366
+402  MeanReverter_L30_T3.0_SL20_TP40                                -1.159  0.802   45.2%    5,180
+403  MeanReverter_L30_T3.0_SL30_TP50                                -1.162  0.790   45.9%    5,031
+404  MeanReverter_L30_T3.0_SL10_TP30                                -1.187  0.814   42.4%    5,743
+405  MeanReverter_L30_T3.0_SL15_TP30                                -1.270  0.797   44.4%    5,398
+406  MeanReverter_L30_T3.0_SL10_TP20                                -1.273  0.811   43.0%    5,837
+407  MeanReverter_L30_T3.0_SL20_TP30                                -1.307  0.785   45.2%    5,214
+
+
+====================================================================================================
+2. ANALYSIS BY TEMPLATE
+====================================================================================================
+
+
+====================================================================================================
+TEMPLATE: BreakoutTrader
+====================================================================================================
+Total Strategies: 33
+Distribution: FAIXA1=11, FAIXA2=1, FAIXA3=21
+
+Sharpe Ratio:   Mean= -3.232  Median= -0.557  Max= -0.367  Min=-19.679
+Profit Factor:  Mean=  0.726  Median=  0.899
+Win Rate:       Mean=  29.9%  Median=  37.4%
+N Trades:       Mean=  12,667  Median=   5,194
+
+Best Configuration: BreakoutTrader_L20_T2.5_SL20_TP50
+Best Sharpe: -0.367
+
+====================================================================================================
+TEMPLATE: MeanReverter
+====================================================================================================
+Total Strategies: 33
+Distribution: FAIXA1=11, FAIXA2=0, FAIXA3=22
+
+Sharpe Ratio:   Mean= -0.063  Median= -1.021  Max=  3.400  Min= -1.307
+Profit Factor:  Mean=  1.003  Median=  0.819
+Win Rate:       Mean=  41.8%  Median=  44.4%
+N Trades:       Mean=  12,868  Median=   5,366
+
+Best Configuration: MeanReverter_L5_T1.8_SL30_TP50
+Best Sharpe: 3.400
+
+====================================================================================================
+TEMPLATE: MeanReverterV2
+====================================================================================================
+Total Strategies: 451
+Distribution: FAIXA1=114, FAIXA2=182, FAIXA3=155
+
+Sharpe Ratio:   Mean= -0.119  Median= -0.246  Max=  3.129  Min= -1.203
+Profit Factor:  Mean=  0.978  Median=  0.958
+Win Rate:       Mean=  39.1%  Median=  39.7%
+N Trades:       Mean=   6,456  Median=   1,749
+
+Best Configuration: MeanReverterV2_L30_T1.5_SL20_TP40
+Best Sharpe: 3.129
+
+====================================================================================================
+TEMPLATE: MomentumBurst
+====================================================================================================
+Total Strategies: 198
+Distribution: FAIXA1=0, FAIXA2=0, FAIXA3=198
+
+Sharpe Ratio:   Mean=  0.073  Median=  0.089  Max=  0.390  Min= -0.376
+Profit Factor:  Mean=  1.013  Median=  1.015
+Win Rate:       Mean=  46.7%  Median=  47.7%
+N Trades:       Mean=  32,037  Median=  32,829
+
+Best Configuration: MomentumBurst_L10_T1.5_SL10_TP50_CD240
+Best Sharpe: 0.390
+
+====================================================================================================
+TEMPLATE: SessionBreakout
+====================================================================================================
+Total Strategies: 22
+Distribution: FAIXA1=4, FAIXA2=18, FAIXA3=0
+
+Sharpe Ratio:   Mean= -0.848  Median= -0.900  Max= -0.543  Min= -1.165
+Profit Factor:  Mean=  0.888  Median=  0.887
+Win Rate:       Mean=  26.6%  Median=  26.4%
+N Trades:       Mean=     707  Median=     646
+
+Best Configuration: SessionBreakout_L10_T0.5_SL10_TP40
+Best Sharpe: -0.543
+
+====================================================================================================
+TEMPLATE: TrendFollower
+====================================================================================================
+Total Strategies: 11
+Distribution: FAIXA1=0, FAIXA2=0, FAIXA3=11
+
+Sharpe Ratio:   Mean= -0.040  Median= -0.018  Max= -0.009  Min= -0.097
+Profit Factor:  Mean=  0.993  Median=  0.997
+Win Rate:       Mean=  36.5%  Median=  36.5%
+N Trades:       Mean=  38,335  Median=  38,299
+
+Best Configuration: TrendFollower_L20_T3.0_SL15_TP50
+Best Sharpe: -0.009
+
+
+====================================================================================================
+3. PARAMETER ANALYSIS
+====================================================================================================
+
+
+====================================================================================================
+TEMPLATE: BreakoutTrader
+====================================================================================================
+
+Parameter: L
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+20             11   -0.388  0.925   40.9%
+30             11   -0.568  0.899   37.2%
+5              11   -8.739  0.353   11.6%
+
+Parameter: SL
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+20              9   -1.638  0.799   32.6%
+30              3   -1.668  0.796   33.8%
+15              9   -2.769  0.722   29.5%
+10             12   -5.165  0.657   27.2%
+
+Parameter: T
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+2.5            11   -0.388  0.925   40.9%
+3.0            11   -0.568  0.899   37.2%
+1.8            11   -8.739  0.353   11.6%
+
+Parameter: TP
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+50             12   -2.861  0.740   30.1%
+30              9   -3.216  0.720   30.2%
+20              3   -3.230  0.707   29.8%
+40              9   -3.742  0.720   29.3%
+
+====================================================================================================
+TEMPLATE: MeanReverter
+====================================================================================================
+
+Parameter: L
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+5              11    2.019  1.384   29.9%
+20             11   -1.032  0.818   51.5%
+30             11   -1.175  0.806   44.1%
+
+Parameter: SL
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+30              3    0.421  1.080   46.2%
+20              9    0.002  1.001   43.8%
+10             12   -0.137  1.007   39.7%
+15              9   -0.189  0.973   41.3%
+
+Parameter: T
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+1.8            11    2.019  1.384   29.9%
+2.5            11   -1.032  0.818   51.5%
+3.0            11   -1.175  0.806   44.1%
+
+Parameter: TP
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+50             12    0.236  1.067   42.0%
+40              9   -0.090  0.994   41.1%
+30              9   -0.211  0.965   42.6%
+20              3   -0.730  0.885   41.2%
+
+====================================================================================================
+TEMPLATE: MeanReverterV2
+====================================================================================================
+
+Parameter: L
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+30            249    0.132  1.023   30.1%
+20            178   -0.395  0.930   50.1%
+15             24   -0.662  0.876   51.7%
+
+Parameter: RSI
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+35-80          88    0.707  1.107   31.2%
+30-75          88   -0.119  0.977   47.4%
+25-70          88   -0.412  0.928   40.6%
+20-65          88   -0.740  0.885   34.7%
+
+Parameter: SL
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+20            123    0.036  1.004   39.6%
+30             41   -0.098  0.974   45.2%
+10            164   -0.184  0.970   35.6%
+15            123   -0.193  0.966   41.4%
+
+Parameter: T
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+2.0            55   -0.034  0.989   43.7%
+2.5            55   -0.035  0.993   38.9%
+1.5            55   -0.040  0.993   37.6%
+1.8            55   -0.065  0.983   41.9%
+1.2            55   -0.083  0.984   37.6%
+1.0            55   -0.152  0.974   36.7%
+0.5            55   -0.232  0.960   38.8%
+0.8            55   -0.266  0.954   39.3%
+3.0            11   -0.328  0.958   31.8%
+
+Parameter: TP
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+40            123   -0.071  0.986   37.5%
+50            164   -0.112  0.979   36.8%
+30            123   -0.128  0.977   42.5%
+20             41   -0.262  0.957   43.3%
+
+Parameter: V
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+2             451   -0.119  0.978   39.1%
+
+====================================================================================================
+TEMPLATE: MomentumBurst
+====================================================================================================
+
+Parameter: CD
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+240            88    0.221  1.039   48.5%
+120            33    0.063  1.011   46.3%
+60             22   -0.101  0.983   45.6%
+30             22   -0.222  0.963   44.9%
+
+Parameter: L
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+15             22    0.246  1.043   48.8%
+10             77    0.104  1.019   44.8%
+20             66    0.033  1.006   47.2%
+30             33   -0.035  0.995   48.7%
+
+Parameter: SL
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+15             54    0.078  1.014   46.8%
+10             72    0.074  1.013   46.5%
+20             54    0.069  1.013   46.8%
+30             18    0.068  1.012   46.9%
+
+Parameter: T
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+1.5            11    0.356  1.063   48.9%
+1.2            11    0.307  1.054   48.8%
+1.0            11    0.273  1.048   48.6%
+0.8            11    0.238  1.042   49.0%
+0.5            11    0.219  1.038   49.0%
+3.0            11    0.206  1.038   41.6%
+1.8            22    0.205  1.036   49.3%
+2.5            55   -0.022  0.996   43.8%
+2.0            55   -0.117  0.980   47.4%
+
+Parameter: TP
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+50             72    0.079  1.014   46.7%
+40             54    0.078  1.014   46.7%
+30             54    0.065  1.012   46.7%
+20             18    0.054  1.010   46.5%
+
+====================================================================================================
+TEMPLATE: SessionBreakout
+====================================================================================================
+
+Parameter: L
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+50              3   -0.706  0.910   33.0%
+15              4   -0.807  0.887   23.9%
+10              6   -0.816  0.891   25.0%
+30              4   -0.860  0.886   26.0%
+20              3   -0.971  0.878   30.5%
+5               2   -1.032  0.861   22.5%
+
+Parameter: SL
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+10              8   -0.720  0.898   21.9%
+20              6   -0.821  0.896   31.6%
+30              2   -0.917  0.887   34.8%
+15              6   -1.024  0.865   25.1%
+
+Parameter: T
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+0.5            11   -0.848  0.888   26.6%
+0.8            11   -0.848  0.888   26.6%
+
+Parameter: TP
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+30              6   -0.809  0.896   30.5%
+50              8   -0.822  0.887   24.3%
+40              6   -0.899  0.881   24.4%
+20              2   -0.917  0.885   30.7%
+
+====================================================================================================
+TEMPLATE: TrendFollower
+====================================================================================================
+
+Parameter: L
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+15              1   -0.011  0.998   36.5%
+20              2   -0.013  0.998   36.5%
+30              2   -0.016  0.997   36.5%
+10              3   -0.059  0.990   36.5%
+5               3   -0.063  0.989   36.5%
+
+Parameter: SL
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+15              3   -0.012  0.998   36.5%
+20              3   -0.016  0.997   36.5%
+30              1   -0.018  0.997   36.5%
+10              4   -0.084  0.986   36.5%
+
+Parameter: T
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+3.0            11   -0.040  0.993   36.5%
+
+Parameter: TP
+Value       Count   Sharpe     PF      WR
+---------------------------------------------
+50              4   -0.029  0.995   36.5%
+40              3   -0.035  0.994   36.5%
+30              3   -0.040  0.993   36.5%
+20              1   -0.097  0.983   36.5%
+
+
+====================================================================================================
+4. PARAMETER HEATMAPS
+====================================================================================================
+
+================================================================================
+HEATMAP: T (Threshold) vs SL (Stop Loss) → Average Sharpe Ratio
+================================================================================
+
+       SL 10  SL 15  SL 20  SL 30 
+T0.5    -0.31  -0.36  -0.12  -0.15 
+T0.8    -0.29  -0.33  -0.21  -0.27 
+T1.0    -0.14  -0.16   0.06  -0.03 
+T1.2    -0.13  -0.12   0.22   0.06 
+T1.5    -0.12  -0.13   0.41  -0.08 
+T1.8    -1.42  -0.65  -0.14  -0.09 
+T2.0    -0.10  -0.07  -0.05  -0.06 
+T2.5    -0.18  -0.10  -0.14  -0.11 
+T3.0    -0.22  -0.49  -0.45  -0.47 
+
+================================================================================
+HEATMAP: T (Threshold) vs TP (Take Profit) → Average Sharpe Ratio
+================================================================================
+
+       TP 20  TP 30  TP 40  TP 50 
+T0.5    -0.40  -0.29  -0.25  -0.20 
+T0.8    -0.36  -0.28  -0.27  -0.26 
+T1.0    -0.25  -0.07  -0.08  -0.05 
+T1.2    -0.23   0.02  -0.02   0.00 
+T1.5    -0.17   0.04   0.12  -0.00 
+T1.8    -0.99  -0.80  -0.90  -0.50 
+T2.0    -0.14  -0.09  -0.06  -0.06 
+T2.5    -0.25  -0.16  -0.10  -0.13 
+T3.0    -0.20  -0.40  -0.28  -0.49 
+
+================================================================================
+HEATMAP: SL (Stop Loss) vs TP (Take Profit) → Average Win Rate (%)
+================================================================================
+
+       TP 20  TP 30  TP 40  TP 50 
+SL10    43.0   40.4   35.2   32.9 
+SL15     -     43.9   41.7   39.6 
+SL20     -     43.7   41.0   38.6 
+SL30     -      -      -     44.7 
+
+
+
+====================================================================================================
+5. QUALITY TIER FILTERS
+====================================================================================================
+
+
+----------------------------------------------------------------------------------------------------
+TIER 1
+----------------------------------------------------------------------------------------------------
+Total: 9 strategies
+
+#    Strategy Name                                                  Sharpe     PF      WR   Trades
+----------------------------------------------------------------------------------------------------
+1    MeanReverter_L5_T1.8_SL30_TP50                                  3.400  1.633   40.9%       66
+2    MeanReverterV2_L30_T1.5_SL20_TP40                               3.129  1.539   44.4%       63
+3    MeanReverter_L5_T1.8_SL20_TP50                                  2.753  1.523   31.3%       67
+4    MeanReverter_L5_T1.8_SL20_TP30                                  1.993  1.323   38.8%       67
+5    MeanReverter_L5_T1.8_SL20_TP40                                  1.867  1.315   32.8%       67
+6    MeanReverterV2_L30_T1.2_SL20_TP40                               1.846  1.294   41.0%       83
+7    MeanReverterV2_L30_T1.5_SL20_TP30                               1.717  1.256   46.0%       63
+8    MeanReverterV2_L30_T1.2_SL20_TP30                               1.517  1.225   45.8%       83
+9    MeanReverterV2_L30_T0.5_SL20_TP40                               1.311  1.207   36.3%      113
+
+----------------------------------------------------------------------------------------------------
+TIER 2
+----------------------------------------------------------------------------------------------------
+Total: 64 strategies
+
+#    Strategy Name                                                  Sharpe     PF      WR   Trades
+----------------------------------------------------------------------------------------------------
+1    MeanReverter_L5_T1.8_SL30_TP50                                  3.400  1.633   40.9%       66
+2    MeanReverterV2_L30_T1.5_SL20_TP40                               3.129  1.539   44.4%       63
+3    MeanReverter_L5_T1.8_SL20_TP50                                  2.753  1.523   31.3%       67
+4    MeanReverter_L5_T1.8_SL15_TP50                                  2.248  1.442   25.4%       67
+5    MeanReverter_L5_T1.8_SL20_TP30                                  1.993  1.323   38.8%       67
+6    MeanReverter_L5_T1.8_SL20_TP40                                  1.867  1.315   32.8%       67
+7    MeanReverterV2_L30_T1.2_SL20_TP40                               1.846  1.294   41.0%       83
+8    MeanReverter_L5_T1.8_SL10_TP30                                  1.775  1.319   26.5%       68
+9    MeanReverterV2_L30_T1.5_SL20_TP30                               1.717  1.256   46.0%       63
+10   MeanReverterV2_L30_T1.2_SL20_TP30                               1.517  1.225   45.8%       83
+11   MeanReverter_L5_T1.8_SL15_TP40                                  1.465  1.253   26.9%       67
+12   MeanReverterV2_L30_T0.5_SL20_TP40                               1.311  1.207   36.3%      113
+13   MeanReverterV2_L30_T1.0_SL20_TP40                               1.265  1.193   38.9%       90
+14   MeanReverter_L5_T1.8_SL15_TP30                                  1.197  1.190   31.3%       67
+15   MeanReverterV2_L30_T3.0_SL10_TP40                               1.115  1.195   25.8%       97
+16   MeanReverterV2_L30_T1.2_SL30_TP50_RSI35-80                      1.107  1.160   41.0%      502
+17   MeanReverterV2_L30_T1.8_SL30_TP50_RSI35-80                      1.074  1.152   40.7%      484
+18   MeanReverterV2_L30_T1.5_SL30_TP50_RSI35-80                      1.073  1.154   40.5%      489
+19   MeanReverterV2_L30_T2.5_SL30_TP50_RSI35-80                      1.067  1.150   40.7%      442
+20   MeanReverterV2_L30_T2.0_SL30_TP50_RSI35-80                      1.050  1.148   40.4%      478
+
+----------------------------------------------------------------------------------------------------
+TIER 3
+----------------------------------------------------------------------------------------------------
+Total: 278 strategies
+
+#    Strategy Name                                                  Sharpe     PF      WR   Trades
+----------------------------------------------------------------------------------------------------
+1    MeanReverter_L5_T1.8_SL30_TP50                                  3.400  1.633   40.9%       66
+2    MeanReverterV2_L30_T1.5_SL20_TP40                               3.129  1.539   44.4%       63
+3    MeanReverter_L5_T1.8_SL10_TP50                                  2.960  1.707   22.1%       68
+4    MeanReverter_L5_T1.8_SL20_TP50                                  2.753  1.523   31.3%       67
+5    MeanReverter_L5_T1.8_SL10_TP40                                  2.364  1.490   23.5%       68
+6    MeanReverter_L5_T1.8_SL15_TP50                                  2.248  1.442   25.4%       67
+7    MeanReverter_L5_T1.8_SL20_TP30                                  1.993  1.323   38.8%       67
+8    MeanReverter_L5_T1.8_SL20_TP40                                  1.867  1.315   32.8%       67
+9    MeanReverterV2_L30_T1.2_SL20_TP40                               1.846  1.294   41.0%       83
+10   MeanReverter_L5_T1.8_SL10_TP30                                  1.775  1.319   26.5%       68
+11   MeanReverterV2_L30_T1.5_SL20_TP30                               1.717  1.256   46.0%       63
+12   MeanReverterV2_L30_T1.2_SL20_TP30                               1.517  1.225   45.8%       83
+13   MeanReverter_L5_T1.8_SL15_TP40                                  1.465  1.253   26.9%       67
+14   MeanReverterV2_L30_T0.5_SL20_TP40                               1.311  1.207   36.3%      113
+15   MeanReverterV2_L30_T1.0_SL20_TP40                               1.265  1.193   38.9%       90
+16   MeanReverter_L5_T1.8_SL15_TP30                                  1.197  1.190   31.3%       67
+17   MeanReverterV2_L30_T3.0_SL10_TP40                               1.115  1.195   25.8%       97
+18   MeanReverterV2_L30_T1.2_SL30_TP50_RSI35-80                      1.107  1.160   41.0%      502
+19   MeanReverterV2_L30_T2.5_SL10_TP50_RSI35-80                      1.083  1.201   19.5%    1,096
+20   MeanReverterV2_L30_T1.8_SL30_TP50_RSI35-80                      1.074  1.152   40.7%      484
+
+
+====================================================================================================
+6. WEIGHTED RANKING - TOP 50
+====================================================================================================
+
+Score = (Sharpe_norm × 0.4) + (PF_norm × 0.3) + (WR_norm × 0.3)
+
+#    Strategy Name                                             Score   Sharpe     PF      WR Band           
+--------------------------------------------------------------------------------------------------------------
+1    MeanReverter_L5_T1.8_SL30_TP50                           0.9046    3.400  1.633   40.9% FAIXA 1 (50-500)
+2    MeanReverterV2_L30_T1.5_SL20_TP40                        0.9022    3.129  1.539   44.4% FAIXA 1 (50-500)
+3    MeanReverterV2_L30_T1.5_SL20_TP30                        0.8347    1.717  1.256   46.0% FAIXA 1 (50-500)
+4    MeanReverterV2_L30_T1.2_SL20_TP30                        0.8242    1.517  1.225   45.8% FAIXA 1 (50-500)
+5    MeanReverter_L5_T1.8_SL20_TP50                           0.8203    2.753  1.523   31.3% FAIXA 1 (50-500)
+6    MeanReverterV2_L30_T1.2_SL20_TP40                        0.8158    1.846  1.294   41.0% FAIXA 1 (50-500)
+7    MeanReverter_L5_T1.8_SL20_TP30                           0.8118    1.993  1.323   38.8% FAIXA 1 (50-500)
+8    MeanReverter_L5_T1.8_SL10_TP50                           0.8062    2.960  1.707   22.1% FAIXA 1 (50-500)
+9    MeanReverterV2_L20_T2.0_SL30_TP50_RSI30-75               0.8002   -0.043  0.991   54.1% FAIXA 3 (5K-50K)
+10   MeanReverterV2_L20_T2.0_SL20_TP30_RSI30-75               0.7986   -0.042  0.992   53.8% FAIXA 3 (5K-50K)
+11   MeanReverterV2_L20_T2.0_SL20_TP50_RSI30-75               0.7984   -0.036  0.992   53.7% FAIXA 3 (5K-50K)
+12   MeanReverterV2_L20_T2.0_SL15_TP50_RSI30-75               0.7967   -0.021  0.996   53.2% FAIXA 3 (5K-50K)
+13   MeanReverterV2_L20_T2.0_SL30_TP50                        0.7964    0.004  1.001   52.9% FAIXA 3 (5K-50K)
+14   MeanReverterV2_L20_T2.0_SL15_TP40_RSI30-75               0.7961   -0.029  0.994   53.2% FAIXA 3 (5K-50K)
+15   MeanReverterV2_L20_T2.0_SL15_TP30_RSI30-75               0.7956   -0.045  0.991   53.2% FAIXA 3 (5K-50K)
+16   MeanReverterV2_L20_T2.0_SL20_TP50                        0.7942    0.014  1.003   52.4% FAIXA 3 (5K-50K)
+17   MeanReverterV2_L20_T2.0_SL20_TP30                        0.7938   -0.004  0.999   52.5% FAIXA 3 (5K-50K)
+18   MeanReverterV2_L20_T2.0_SL20_TP40                        0.7934   -0.003  0.999   52.5% FAIXA 3 (5K-50K)
+19   MeanReverterV2_L20_T1.5_SL15_TP50_RSI30-75               0.7932   -0.178  0.964   54.1% FAIXA 3 (5K-50K)
+20   MomentumBurst_L10_T1.5_SL10_TP50_CD240                   0.7928    0.390  1.069   48.8% FAIXA 3 (5K-50K)
+21   MeanReverterV2_L20_T1.5_SL15_TP30_RSI30-75               0.7926   -0.191  0.963   54.1% FAIXA 3 (5K-50K)
+22   MomentumBurst_L10_T1.5_SL10_TP40_CD240                   0.7925    0.385  1.068   48.8% FAIXA 3 (5K-50K)
+23   MomentumBurst_L10_T1.5_SL15_TP50_CD240                   0.7924    0.366  1.065   48.9% FAIXA 3 (5K-50K)
+24   MeanReverterV2_L20_T1.5_SL15_TP40_RSI30-75               0.7923   -0.189  0.962   54.1% FAIXA 3 (5K-50K)
+25   MomentumBurst_L10_T1.5_SL15_TP40_CD240                   0.7921    0.362  1.064   48.9% FAIXA 3 (5K-50K)
+26   MomentumBurst_L10_T1.5_SL10_TP30_CD240                   0.7920    0.377  1.066   48.8% FAIXA 3 (5K-50K)
+27   MomentumBurst_L10_T1.5_SL15_TP30_CD240                   0.7916    0.352  1.062   48.9% FAIXA 3 (5K-50K)
+28   MomentumBurst_L10_T1.5_SL10_TP20_CD240                   0.7915    0.369  1.064   48.8% FAIXA 3 (5K-50K)
+29   MeanReverterV2_L20_T1.8_SL15_TP50_RSI30-75               0.7915   -0.145  0.971   53.5% FAIXA 3 (5K-50K)
+30   MeanReverterV2_L20_T1.8_SL15_TP40_RSI30-75               0.7911   -0.150  0.970   53.5% FAIXA 3 (5K-50K)
+31   MomentumBurst_L10_T1.5_SL20_TP50_CD240                   0.7909    0.335  1.060   48.9% FAIXA 3 (5K-50K)
+32   MomentumBurst_L10_T1.5_SL20_TP40_CD240                   0.7906    0.331  1.059   48.9% FAIXA 3 (5K-50K)
+33   MomentumBurst_L10_T1.5_SL30_TP50_CD240                   0.7906    0.328  1.059   48.9% FAIXA 3 (5K-50K)
+34   MeanReverterV2_L20_T1.8_SL15_TP30_RSI30-75               0.7904   -0.166  0.968   53.5% FAIXA 3 (5K-50K)
+35   MomentumBurst_L10_T1.5_SL20_TP30_CD240                   0.7901    0.321  1.057   48.9% FAIXA 3 (5K-50K)
+36   MomentumBurst_L10_T1.2_SL20_TP50_CD240                   0.7894    0.317  1.057   48.8% FAIXA 3 (5K-50K)
+37   MomentumBurst_L10_T1.2_SL20_TP40_CD240                   0.7892    0.312  1.056   48.8% FAIXA 3 (5K-50K)
+38   MeanReverterV2_L20_T2.0_SL10_TP50_RSI30-75               0.7891    0.033  1.006   51.3% FAIXA 3 (5K-50K)
+39   MomentumBurst_L10_T1.2_SL15_TP50_CD240                   0.7890    0.311  1.055   48.8% FAIXA 3 (5K-50K)
+40   MeanReverterV2_L20_T2.0_SL15_TP30                        0.7888   -0.021  0.996   51.8% FAIXA 3 (5K-50K)
+41   MomentumBurst_L10_T1.2_SL15_TP40_CD240                   0.7888    0.307  1.054   48.8% FAIXA 3 (5K-50K)
+42   MomentumBurst_L10_T1.2_SL10_TP50_CD240                   0.7887    0.325  1.057   48.7% FAIXA 3 (5K-50K)
+43   MomentumBurst_L10_T1.2_SL30_TP50_CD240                   0.7887    0.302  1.054   48.8% FAIXA 3 (5K-50K)
+44   MomentumBurst_L10_T1.2_SL10_TP40_CD240                   0.7884    0.320  1.056   48.7% FAIXA 3 (5K-50K)
+45   MomentumBurst_L10_T1.2_SL20_TP30_CD240                   0.7884    0.298  1.053   48.8% FAIXA 3 (5K-50K)
+46   MeanReverterV2_L20_T1.2_SL15_TP50_RSI30-75               0.7883   -0.235  0.953   53.8% FAIXA 3 (5K-50K)
+47   MeanReverterV2_L20_T2.0_SL10_TP30_RSI30-75               0.7882    0.027  1.005   51.2% FAIXA 3 (5K-50K)
+48   MeanReverterV2_L20_T2.0_SL15_TP50                        0.7880   -0.023  0.996   51.7% FAIXA 3 (5K-50K)
+49   MeanReverterV2_L20_T2.0_SL15_TP40                        0.7880   -0.030  0.995   51.7% FAIXA 3 (5K-50K)
+50   MomentumBurst_L10_T1.2_SL15_TP30_CD240                   0.7879    0.291  1.051   48.8% FAIXA 3 (5K-50K)
+
+
+====================================================================================================
+7. FINAL RECOMMENDATIONS - TOP 10 FOR GBPUSD
+====================================================================================================
+
+Selected for diversity across templates and frequency bands
+
+#    Strategy Name                                             Score   Sharpe     PF      WR   Trades Template            
+------------------------------------------------------------------------------------------------------------------------
+1    MeanReverter_L5_T1.8_SL30_TP50                           0.9046    3.400  1.633   40.9%       66 MeanReverter        
+2    MeanReverterV2_L30_T1.5_SL20_TP40                        0.9022    3.129  1.539   44.4%       63 MeanReverterV2      
+3    MeanReverterV2_L30_T1.5_SL20_TP30                        0.8347    1.717  1.256   46.0%       63 MeanReverterV2      
+4    MeanReverterV2_L30_T1.2_SL20_TP30                        0.8242    1.517  1.225   45.8%       83 MeanReverterV2      
+5    MeanReverter_L5_T1.8_SL20_TP50                           0.8203    2.753  1.523   31.3%       67 MeanReverter        
+6    MeanReverterV2_L30_T1.2_SL20_TP40                        0.8158    1.846  1.294   41.0%       83 MeanReverterV2      
+7    MeanReverter_L5_T1.8_SL20_TP30                           0.8118    1.993  1.323   38.8%       67 MeanReverter        
+8    MeanReverter_L5_T1.8_SL10_TP50                           0.8062    2.960  1.707   22.1%       68 MeanReverter        
+9    MeanReverterV2_L20_T2.0_SL30_TP50_RSI30-75               0.8002   -0.043  0.991   54.1%   10,438 MeanReverterV2      
+10   MeanReverterV2_L20_T2.0_SL20_TP30_RSI30-75               0.7986   -0.042  0.992   53.8%   10,945 MeanReverterV2      
+
+
+====================================================================================================
+END OF REPORT
+====================================================================================================
