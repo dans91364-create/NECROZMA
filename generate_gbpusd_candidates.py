@@ -31,7 +31,7 @@ def load_screening_results(screening_dir="screening_results"):
 def filter_candidates(df, min_sharpe=0, min_pf=1.0, min_trades=50, max_trades=50000):
     """Filter candidates based on criteria."""
     
-    # Remove templates ruins (caso ainda existam nos CSVs antigos)
+    # Remove bad templates (in case they still exist in old CSV files)
     bad_templates = ['BreakoutTrader', 'SessionBreakout', 'ScalpingStrategy', 'PatternRecognition',
                      'CorrelationTrader', 'PairDivergence', 'LeadLagStrategy', 
                      'RiskSentiment', 'USDStrength', 'RegimeAdapter']
@@ -39,7 +39,7 @@ def filter_candidates(df, min_sharpe=0, min_pf=1.0, min_trades=50, max_trades=50
     filtered = df[~df['template'].isin(bad_templates)].copy()
     print(f"   After removing bad templates: {len(filtered):,}")
     
-    # Filtrar por métricas
+    # Filter by metrics
     filtered = filtered[
         (filtered['sharpe_ratio'] > min_sharpe) &
         (filtered['profit_factor'] > min_pf) &
@@ -76,17 +76,17 @@ def select_portfolio_mix(df, swing_count=5, day_count=10, scalp_count=10):
     
     selected = []
     
-    # Top Swing (baixa frequência, alto Sharpe)
+    # Top Swing (low frequency, high Sharpe)
     swing = df[df['frequency_band'] == 'SWING'].nlargest(swing_count, 'sharpe_ratio')
     selected.append(swing)
     print(f"   SWING: {len(swing)} strategies (Sharpe: {swing['sharpe_ratio'].mean():.2f})")
     
-    # Top Day Trade (média frequência)
+    # Top Day Trade (medium frequency)
     day = df[df['frequency_band'] == 'DAY_TRADE'].nlargest(day_count, 'sharpe_ratio')
     selected.append(day)
     print(f"   DAY_TRADE: {len(day)} strategies (Sharpe: {day['sharpe_ratio'].mean():.2f})")
     
-    # Top Scalping (alta frequência)
+    # Top Scalping (high frequency)
     scalp = df[df['frequency_band'] == 'SCALPING'].nlargest(scalp_count, 'sharpe_ratio')
     selected.append(scalp)
     print(f"   SCALPING: {len(scalp)} strategies (Sharpe: {scalp['sharpe_ratio'].mean():.2f})")
