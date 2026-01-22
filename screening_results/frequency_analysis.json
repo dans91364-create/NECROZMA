@@ -481,18 +481,18 @@
           "std": 125.56699597714125
         },
         "total_return": {
-          "mean": -0.0019177416666666125,
+          "mean": -0.007088222916666598,
           "median": -7.549999999991996e-05,
           "max": 0.0260530000000011,
-          "min": -0.0723279999999997,
-          "std": 0.01592968587965909
+          "min": -0.2506899999999992,
+          "std": 0.039283623158659686
         },
         "max_drawdown": {
-          "mean": 0.011509569135798106,
+          "mean": 0.025416310705959812,
           "median": 0.003483135312407,
-          "max": 0.1135233977905177,
+          "max": 0.6750875816760395,
           "min": 0.0010631381613163,
-          "std": 0.02382680985250937
+          "std": 0.0986849517246766
         }
       }
     },
@@ -784,7 +784,7 @@
       ],
       "top_10_win_rate": [
         {
-          "strategy_name": "SessionBreakout_L5_T0.5_SL20_TP30",
+          "strategy_name": "SessionBreakout_L10_T0.5_SL20_TP30",
           "base_strategy": "SessionBreakout_T0.5_SL20_TP30",
           "template": "SessionBreakout",
           "lot_size": 0.01,
@@ -798,7 +798,7 @@
           "net_pnl": -65.615
         },
         {
-          "strategy_name": "SessionBreakout_L5_T0.8_SL20_TP30",
+          "strategy_name": "SessionBreakout_L50_T0.8_SL20_TP30",
           "base_strategy": "SessionBreakout_T0.8_SL20_TP30",
           "template": "SessionBreakout",
           "lot_size": 0.01,
@@ -1495,18 +1495,18 @@
           "std": 930637.2708358209
         },
         "total_return": {
-          "mean": 0.9558028511803347,
-          "median": 0.23371149999997232,
+          "mean": 0.9904921380047519,
+          "median": 0.2350854999999952,
           "max": 22.807636000052348,
           "min": -6.791838000006934,
-          "std": 3.644884917100904
+          "std": 3.754004650602336
         },
         "max_drawdown": {
-          "mean": 0.5285478437803407,
-          "median": 0.12887182930555535,
+          "mean": 0.5311919166571765,
+          "median": 0.12980762648512784,
           "max": 6.8114640000068425,
           "min": 0.0055367595071969,
-          "std": 1.2758624823447307
+          "std": 1.2758688158999565
         }
       }
     }
@@ -1529,7 +1529,7 @@
         "FAIXA_3_HIGH": 0.4904358865277138
       },
       "total_return": {
-        "FAIXA_1_LOW": -0.0019177416666666125,
+        "FAIXA_1_LOW": -0.007088222916666598,
         "FAIXA_2_MEDIUM": -0.019496817307692666,
         "FAIXA_3_HIGH": -0.0026691543589747674
       }
@@ -1538,7 +1538,7 @@
       "sharpe_ratio": "FAIXA_1_LOW",
       "profit_factor": "FAIXA_1_LOW",
       "win_rate": "FAIXA_3_HIGH",
-      "total_return": "FAIXA_1_LOW"
+      "total_return": "FAIXA_3_HIGH"
     }
   },
   "final_candidates": {

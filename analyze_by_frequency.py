@@ -17,7 +17,9 @@ Frequency Bands:
 import pandas as pd
 import json
 import numpy as np
+import re
 from pathlib import Path
+from collections import Counter
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -79,7 +81,6 @@ def extract_base_strategy_name(strategy_name):
     Example: TrendFollower_L5_T0.5_SL10_TP20 -> TrendFollower_T0.5_SL10_TP20
     """
     # Remove lot_size pattern (e.g., _L5, _L10, etc.)
-    import re
     base_name = re.sub(r'_L\d+', '', strategy_name)
     return base_name
 
@@ -94,7 +95,8 @@ def group_by_base_strategy(df):
     df['base_strategy'] = df['strategy_name'].apply(extract_base_strategy_name)
     
     # For each base strategy, keep the one with highest Sharpe Ratio
-    grouped = df.loc[df.groupby('base_strategy')['sharpe_ratio'].idxmax()]
+    # Use sort_values + groupby.first() for more robust handling
+    grouped = df.sort_values('sharpe_ratio', ascending=False).groupby('base_strategy', as_index=False).first()
     
     print(f"   Original strategies: {len(df):,}")
     print(f"   Unique base strategies: {len(grouped):,}")
@@ -508,7 +510,6 @@ def generate_text_report(analysis, output_path):
     # Recommendation
     lines.append("💡 RECOMMENDATION:")
     # Find which band appears most in best_bands
-    from collections import Counter
     band_counts = Counter(comp['best_bands'].values())
     if band_counts:
         best_overall = band_counts.most_common(1)[0][0]

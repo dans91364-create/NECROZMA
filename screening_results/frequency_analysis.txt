@@ -31,8 +31,8 @@ Total Strategies: 48
   Profit Factor               1.078        0.998        1.707        0.887
   Win Rate                   31.0%       31.5%       43.3%       17.0%
   N Trades                      191          112          454           66
-  Total Return               -0.002       -0.000        0.026       -0.072
-  Max Drawdown                0.012        0.003        0.114        0.001
+  Total Return               -0.007       -0.000        0.026       -0.251
+  Max Drawdown                0.025        0.003        0.675        0.001
 
 🏆 Top 10 by Sharpe Ratio:
   #    Strategy                                                    Sharpe         PF    WinRate     Trades
@@ -224,13 +224,13 @@ Average Performance by Band:
   Sharpe Ratio                   0.384          -0.725          -0.079
   Profit Factor                  1.078           0.900           0.984
   Win Rate                      31.0%          24.8%          49.0%
-  Total Return                  -0.002          -0.019          -0.003
+  Total Return                  -0.007          -0.019          -0.003
 
 Best Band by Metric:
   Sharpe Ratio        : FAIXA 1 LOW
   Profit Factor       : FAIXA 1 LOW
   Win Rate            : FAIXA 3 HIGH
-  Total Return        : FAIXA 1 LOW
+  Total Return        : FAIXA 3 HIGH
 
 💡 RECOMMENDATION:
    Based on average performance, FAIXA 1 LOW shows the strongest overall metrics.
