@@ -440,30 +440,68 @@ METRIC_THRESHOLDS = {
 
 # Strategy templates to generate
 STRATEGY_TEMPLATES = [
-    "TrendFollower",
-    "MeanReverter",
-    "BreakoutTrader",
-    "MeanReverterV2",
-    "ScalpingStrategy",
-    "SessionBreakout",
-    "MomentumBurst",
-    "PatternRecognition",
-    # REMOVED: CorrelationTrader, PairDivergence, LeadLagStrategy, RiskSentiment, USDStrength, RegimeAdapter
+    'TrendFollower',
+    'MeanReverter', 
+    'MeanReverterV2',
+    'MomentumBurst',
 ]
 
-# Parameter ranges for strategy generation
+# Parameter ranges for strategy generation (Round 3: ~1000 combinations focused on FREQUENCY)
 STRATEGY_PARAMS = {
-    "lookback_periods": [5, 10, 15, 20, 30, 50],  # More variations
-    "thresholds": [0.5, 0.8, 1.0, 1.2, 1.5, 1.8, 2.0, 2.5],  # More variations for MeanReverter
-    "stop_loss_pips": [10, 15, 20, 30],
-    "take_profit_pips": [20, 30, 40, 50],
-    # NEW - MomentumBurst cooldown variations
-    "cooldown": [30, 60, 120, 240],
-    # NEW - RSI variations for MeanReverterV2
-    "rsi_oversold": [20, 25, 30, 35],
-    "rsi_overbought": [65, 70, 75, 80],
-    # NEW - PatternRecognition threshold variations
-    "pattern_threshold": [0.2, 0.3, 0.4, 0.5],
+    # ═══════════════════════════════════════════════════════════════
+    # CAMADA 1: MeanReverter - Base sólida (poucos trades, alto Sharpe)
+    # Mantido do Round 2 - funciona bem, não mexer muito
+    # ═══════════════════════════════════════════════════════════════
+    'MeanReverter': {
+        'lookback_periods': [5],  # L=5 é o único que funciona
+        'threshold_std': [1.5, 1.8, 2.0],
+        'stop_loss_pips': [20, 30],
+        'take_profit_pips': [40, 50],
+    },
+    # Total: 1 × 3 × 2 × 2 = 12 combinações
+    
+    # ═══════════════════════════════════════════════════════════════
+    # CAMADA 2: MeanReverterV2 - Frequência média (10-20 trades/dia)
+    # Foco: Sharpe > 0.8, mais trades que MeanReverter
+    # ═══════════════════════════════════════════════════════════════
+    'MeanReverterV2': {
+        'lookback_periods': [20, 30],
+        'threshold_std': [0.8, 1.0, 1.2, 1.5],  # Mais sensível!
+        'stop_loss_pips': [15, 20, 25],
+        'take_profit_pips': [30, 40, 50],
+        'rsi_oversold': [30, 35],
+        'rsi_overbought': [75, 80],
+        'volume_filter': [1.5, 2.0],
+    },
+    # Total: 2 × 4 × 3 × 3 × 2 × 2 × 2 = 576 combinações
+    
+    # ═══════════════════════════════════════════════════════════════
+    # CAMADA 3: MomentumBurst - Alta frequência (30-60 trades/dia)
+    # Foco: Volume de trades, Sharpe > 0.3
+    # MUDANÇA PRINCIPAL: Cooldowns mais baixos!
+    # ═══════════════════════════════════════════════════════════════
+    'MomentumBurst': {
+        'lookback_periods': [5, 10, 15],
+        'threshold_std': [0.5, 0.8, 1.0, 1.2, 1.5],  # Mais sensível!
+        'stop_loss_pips': [10, 15, 20],
+        'take_profit_pips': [20, 30, 40],
+        'cooldown_minutes': [30, 60, 90, 120, 180],  # Mais baixos!
+    },
+    # Total: 3 × 5 × 3 × 3 × 5 = 675 combinações
+    
+    # ═══════════════════════════════════════════════════════════════
+    # CAMADA 4: TrendFollower - Capturar tendências (10-20 trades/dia)
+    # Foco: Movimentos maiores, complementa reversão
+    # ═══════════════════════════════════════════════════════════════
+    'TrendFollower': {
+        'lookback_periods': [10, 20, 30],
+        'threshold_std': [0.5, 0.8, 1.0, 1.5],  # Mais sensível!
+        'stop_loss_pips': [20, 30, 40],
+        'take_profit_pips': [40, 60, 80],
+    },
+    # Total: 3 × 4 × 3 × 3 = 108 combinações
+    
+    # TOTAL ROUND 3: ~1000 combinações focadas em FREQUÊNCIA
 }
 
 
