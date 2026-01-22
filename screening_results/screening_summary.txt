@@ -1,0 +1,224 @@
+⚡🌟💎 ULTRA NECROZMA - SCREENING SUMMARY REPORT 💎🌟⚡
+================================================================================
+
+📊 GENERAL INFORMATION
+--------------------------------------------------------------------------------
+Total Results:      45,540
+Files Processed:    round2.csv, round1.csv
+Unique Templates:   14
+Templates:          TrendFollower, MeanReverter, BreakoutTrader, MeanReverterV2, ScalpingStrategy, SessionBreakout, MomentumBurst, PatternRecognition, RegimeAdapter, CorrelationTrader, PairDivergence, LeadLagStrategy, RiskSentiment, USDStrength
+
+🎯 STRATEGY TYPE STATISTICS
+--------------------------------------------------------------------------------
+Template                     Count     Sharpe    Sortino    WinRate         PF
+--------------------------------------------------------------------------------
+MeanReverterV2               8,910   4.72e+13   1.14e+15      44.7%      1.018
+MomentumBurst                8,910      0.150      0.206      46.7%      1.032
+PatternRecognition           8,910      0.000      0.000       0.0%      0.000
+TrendFollower                2,574     -0.021     -0.058      34.3%      0.996
+MeanReverter                 2,574     -1.313     -0.011      55.2%      0.791
+BreakoutTrader               2,574     -0.833     -2.785      33.0%      0.920
+ScalpingStrategy             2,574      0.000      0.000       0.0%      0.000
+SessionBreakout              2,574     -0.185  -1.14e+15       5.8%      0.193
+RegimeAdapter                  990      0.000      0.000       0.0%      0.000
+CorrelationTrader              990      0.000      0.000       0.0%      0.000
+PairDivergence                 990      0.000      0.000       0.0%      0.000
+LeadLagStrategy                990      0.000      0.000       0.0%      0.000
+RiskSentiment                  990      0.000      0.000       0.0%      0.000
+USDStrength                    990      0.000      0.000       0.0%      0.000
+
+🏆 TOP 20 STRATEGIES BY SHARPE RATIO
+--------------------------------------------------------------------------------
+Rank   Strategy Name                                           Value     Sharpe
+--------------------------------------------------------------------------------
+1      MeanReverterV2_L50_T2.0_SL20_TP50_RSI30-75           1.14e+17   1.14e+17
+2      MeanReverterV2_L50_T2.0_SL30_TP50_RSI30-75           1.14e+17   1.14e+17
+3      MeanReverterV2_L50_T2.0_SL20_TP30_RSI35-80           1.02e+17   1.02e+17
+4      MeanReverterV2_L50_T2.0_SL20_TP40_RSI30-75           9.12e+16   9.12e+16
+5      MeanReverterV2_L50_T2.0_SL20_TP50_RSI35-80             30.830     30.830
+6      MeanReverterV2_L50_T2.0_SL20_TP50_RSI35-80             30.830     30.830
+7      MeanReverterV2_L50_T2.0_SL20_TP50_RSI35-80             30.830     30.830
+8      MeanReverterV2_L50_T1.8_SL20_TP40_RSI35-80             30.305     30.305
+9      MeanReverterV2_L50_T1.8_SL20_TP40_RSI35-80             30.305     30.305
+10     MeanReverterV2_L50_T1.8_SL20_TP40_RSI35-80             30.305     30.305
+11     MeanReverterV2_L50_T1.8_SL20_TP30_RSI35-80             26.793     26.793
+12     MeanReverterV2_L50_T1.8_SL20_TP30_RSI35-80             26.793     26.793
+13     MeanReverterV2_L50_T1.8_SL20_TP30_RSI35-80             26.793     26.793
+14     MeanReverterV2_L50_T2.0_SL30_TP50_RSI35-80             26.349     26.349
+15     MeanReverterV2_L50_T2.0_SL30_TP50_RSI35-80             26.349     26.349
+16     MeanReverterV2_L50_T2.0_SL30_TP50_RSI35-80             26.349     26.349
+17     MeanReverterV2_L50_T1.5_SL20_TP40_RSI35-80             24.054     24.054
+18     MeanReverterV2_L50_T1.5_SL20_TP40_RSI35-80             24.054     24.054
+19     MeanReverterV2_L50_T1.5_SL20_TP40_RSI35-80             24.054     24.054
+20     MeanReverterV2_L50_T1.5_SL20_TP30_RSI35-80             21.045     21.045
+
+🏆 TOP 20 STRATEGIES BY SORTINO RATIO
+--------------------------------------------------------------------------------
+Rank   Strategy Name                                           Value     Sharpe
+--------------------------------------------------------------------------------
+1      MeanReverterV2_L50_T1.8_SL10_TP50_RSI35-80           2.04e+17     10.127
+2      MeanReverterV2_L50_T2.0_SL15_TP40_RSI35-80           1.37e+17     14.036
+3      MeanReverterV2_L50_T1.8_SL10_TP50_RSI35-80           1.30e+17     10.127
+4      MeanReverterV2_L50_T1.2_SL10_TP40_RSI35-80           1.26e+17      7.347
+5      MeanReverterV2_L50_T1.5_SL15_TP40_RSI35-80           1.19e+17      8.006
+6      MeanReverterV2_L50_T2.0_SL10_TP20_RSI35-80           1.08e+17     13.377
+7      MeanReverterV2_L50_T1.5_SL10_TP50_RSI35-80           1.06e+17      6.609
+8      MeanReverterV2_L50_T1.2_SL20_TP40_RSI35-80           1.03e+17     10.949
+9      MeanReverterV2_L50_T1.2_SL10_TP40_RSI35-80           1.01e+17      7.347
+10     MeanReverterV2_L50_T2.0_SL15_TP30_RSI35-80           9.63e+16     12.043
+11     MeanReverterV2_L50_T1.5_SL15_TP40_RSI35-80           9.48e+16      8.006
+12     MeanReverterV2_L50_T0.8_SL10_TP40_RSI35-80           9.05e+16      5.392
+13     MeanReverterV2_L50_T0.8_SL10_TP50_RSI35-80           8.71e+16      4.535
+14     MeanReverterV2_L50_T1.2_SL15_TP40_RSI35-80           8.55e+16      5.658
+15     MeanReverterV2_L50_T1.0_SL10_TP50_RSI35-80           8.45e+16      4.417
+16     MeanReverterV2_L50_T0.5_SL10_TP40_RSI35-80           8.42e+16      5.047
+17     MeanReverterV2_L50_T1.2_SL10_TP40_RSI35-80           8.06e+16      7.347
+18     MeanReverterV2_L50_T1.2_SL10_TP30_RSI35-80           7.92e+16      5.779
+19     MeanReverterV2_L50_T1.5_SL10_TP20_RSI35-80           7.90e+16      7.966
+20     MeanReverterV2_L50_T1.2_SL10_TP50_RSI35-80           7.50e+16      5.900
+
+🏆 TOP 20 STRATEGIES BY WIN RATE
+--------------------------------------------------------------------------------
+Rank   Strategy Name                                           Value     Sharpe
+--------------------------------------------------------------------------------
+1      MeanReverter_L50_T0.5_SL30_TP50                         69.0%     -1.567
+2      MeanReverter_L50_T0.5_SL30_TP50                         69.0%     -1.567
+3      MeanReverter_L50_T0.5_SL30_TP50                         69.0%     -1.567
+4      MeanReverter_L50_T0.5_SL20_TP30                         69.0%     -1.578
+5      MeanReverter_L50_T0.5_SL20_TP30                         69.0%     -1.578
+6      MeanReverter_L50_T0.5_SL20_TP30                         69.0%     -1.578
+7      MeanReverter_L50_T0.5_SL20_TP40                         69.0%     -1.576
+8      MeanReverter_L50_T0.5_SL20_TP40                         69.0%     -1.576
+9      MeanReverter_L50_T0.5_SL20_TP40                         69.0%     -1.576
+10     MeanReverter_L50_T0.5_SL20_TP50                         69.0%     -1.573
+11     MeanReverter_L50_T0.5_SL20_TP50                         69.0%     -1.573
+12     MeanReverter_L50_T0.5_SL20_TP50                         69.0%     -1.573
+13     MeanReverter_L50_T0.5_SL15_TP30                         69.0%     -1.585
+14     MeanReverter_L50_T0.5_SL15_TP30                         69.0%     -1.585
+15     MeanReverter_L50_T0.5_SL15_TP30                         69.0%     -1.585
+16     MeanReverter_L50_T0.5_SL15_TP40                         69.0%     -1.582
+17     MeanReverter_L50_T0.5_SL15_TP40                         69.0%     -1.582
+18     MeanReverter_L50_T0.5_SL15_TP40                         69.0%     -1.582
+19     MeanReverter_L50_T0.5_SL15_TP50                         69.0%     -1.580
+20     MeanReverter_L50_T0.5_SL15_TP50                         69.0%     -1.580
+
+🏆 TOP 20 STRATEGIES BY PROFIT FACTOR
+--------------------------------------------------------------------------------
+Rank   Strategy Name                                           Value     Sharpe
+--------------------------------------------------------------------------------
+1      MomentumBurst_L30_T1.0_SL10_TP50                        1.513      1.841
+2      MomentumBurst_L30_T1.0_SL10_TP50                        1.513      1.841
+3      MomentumBurst_L30_T1.0_SL10_TP50                        1.513      1.841
+4      MomentumBurst_L30_T1.0_SL15_TP50                        1.513      1.839
+5      MomentumBurst_L30_T1.0_SL15_TP50                        1.513      1.839
+6      MomentumBurst_L30_T1.0_SL15_TP50                        1.513      1.839
+7      MomentumBurst_L30_T1.0_SL10_TP40                        1.513      1.842
+8      MomentumBurst_L30_T1.0_SL10_TP40                        1.513      1.842
+9      MomentumBurst_L30_T1.0_SL10_TP40                        1.513      1.842
+10     MomentumBurst_L30_T1.0_SL15_TP40                        1.513      1.841
+11     MomentumBurst_L30_T1.0_SL15_TP40                        1.513      1.841
+12     MomentumBurst_L30_T1.0_SL15_TP40                        1.513      1.841
+13     MomentumBurst_L30_T1.0_SL20_TP50                        1.513      1.838
+14     MomentumBurst_L30_T1.0_SL20_TP50                        1.513      1.838
+15     MomentumBurst_L30_T1.0_SL20_TP50                        1.513      1.838
+16     MomentumBurst_L30_T1.0_SL10_TP30                        1.513      1.844
+17     MomentumBurst_L30_T1.0_SL10_TP30                        1.513      1.844
+18     MomentumBurst_L30_T1.0_SL10_TP30                        1.513      1.844
+19     MomentumBurst_L30_T1.0_SL20_TP40                        1.513      1.840
+20     MomentumBurst_L30_T1.0_SL20_TP40                        1.513      1.840
+
+📈 METRIC DISTRIBUTIONS
+--------------------------------------------------------------------------------
+Sharpe Ratio Distribution:
+  above_0        :   10,630 ( 23.3%)
+  above_0.5      :    2,431 (  5.3%)
+  above_1.0      :    1,474 (  3.2%)
+  above_1.5      :    1,249 (  2.7%)
+  above_2.0      :    1,021 (  2.2%)
+
+Win Rate Distribution:
+  above_40pct    :   16,584 ( 36.4%)
+  above_50pct    :    6,924 ( 15.2%)
+  above_60pct    :      918 (  2.0%)
+  above_70pct    :      186 (  0.4%)
+
+Profit Factor Distribution:
+  above_1.0      :   10,626 ( 23.3%)
+  above_1.5      :      963 (  2.1%)
+  above_2.0      :      501 (  1.1%)
+  above_2.5      :      216 (  0.5%)
+
+🔍 PARAMETER ANALYSIS
+--------------------------------------------------------------------------------
+
+Parameter: CD
+  Value              Count     Sharpe    Sortino    WinRate         PF
+  -------------------------------------------------------------------------
+  30                 1,584      0.182      0.287      46.7%      1.035
+  60                 1,584      0.136      0.211      47.3%      1.025
+  120                1,584      0.120      0.186      47.8%      1.022
+  240                1,584      0.088      0.138      48.2%      1.016
+
+Parameter: L
+  Value              Count     Sharpe    Sortino    WinRate         PF
+  -------------------------------------------------------------------------
+  5                  8,052     -0.231   8.70e+14      24.1%      0.564
+  10                 8,052     -0.382  -6.43e+13      26.1%      0.489
+  15                 8,052     -0.259  -6.43e+13      26.6%      0.519
+  20                 8,052     -0.165  -6.43e+13      25.1%      0.536
+  30                 8,052     -0.206  -7.15e+13      22.0%      0.536
+  50                 5,280   7.97e+13        nan      27.6%      0.842
+
+Parameter: PT
+  Value              Count     Sharpe    Sortino    WinRate         PF
+  -------------------------------------------------------------------------
+  0.2                1,584      0.000      0.000       0.0%      0.000
+  0.3                1,584      0.000      0.000       0.0%      0.000
+  0.4                1,584      0.000      0.000       0.0%      0.000
+  0.5                1,584      0.000      0.000       0.0%      0.000
+
+Parameter: RSI
+  Value              Count     Sharpe    Sortino    WinRate         PF
+  -------------------------------------------------------------------------
+  20                 1,584     -1.185  -8.98e+14      39.9%      0.841
+  25                 1,584     -0.949   4.33e+14      43.2%      0.860
+  30                 1,584   2.01e+14        nan      46.3%      1.040
+  35                 1,584   6.42e+13        nan      47.1%      1.488
+
+Parameter: SL
+  Value              Count     Sharpe    Sortino    WinRate         PF
+  -------------------------------------------------------------------------
+  10                16,560     -0.237        nan      24.4%      0.559
+  15                12,420     -0.262        nan      24.8%      0.547
+  20                12,420   2.47e+13        nan      26.1%      0.587
+  30                 4,140   2.75e+13        nan      26.4%      0.576
+
+Parameter: T
+  Value              Count     Sharpe    Sortino    WinRate         PF
+  -------------------------------------------------------------------------
+  0.5                6,270     -0.418  -2.56e+14      25.8%      0.539
+  1.0                6,270     -0.266   2.85e+13      24.6%      0.510
+  1.5                6,270     -0.086        nan      25.2%      0.553
+  2.0                6,270   6.71e+13        nan      24.2%      0.596
+  2.5                6,270     -0.179        nan      20.8%      0.535
+  0.8                3,960     -0.411  -1.20e+14      30.9%      0.643
+  1.2                3,960     -0.203   2.30e+14      30.1%      0.628
+  1.8                3,960      0.087        nan      29.1%      0.724
+  3.0                2,310     -0.220   2.51e+14      13.4%      0.300
+
+Parameter: TP
+  Value              Count     Sharpe    Sortino    WinRate         PF
+  -------------------------------------------------------------------------
+  50                16,560   1.38e+13        nan      25.1%      0.579
+  30                12,420   8.19e+12        nan      25.4%      0.555
+  40                12,420   7.34e+12        nan      24.9%      0.567
+  20                 4,140     -0.343        nan      25.0%      0.532
+
+Parameter: V
+  Value              Count     Sharpe    Sortino    WinRate         PF
+  -------------------------------------------------------------------------
+  2                  8,910   4.72e+13        nan      44.7%      1.018
+
+================================================================================
+END OF REPORT
+================================================================================

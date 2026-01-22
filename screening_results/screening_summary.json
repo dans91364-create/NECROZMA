@@ -1,0 +1,1460 @@
+{
+  "general_info": {
+    "total_results": 45540,
+    "files_processed": [
+      "round2.csv",
+      "round1.csv"
+    ],
+    "file_details": [
+      {
+        "filename": "round2.csv",
+        "rows": 31680,
+        "columns": [
+          "strategy_name",
+          "lot_size",
+          "sharpe_ratio",
+          "sortino_ratio",
+          "calmar_ratio",
+          "total_return",
+          "max_drawdown",
+          "win_rate",
+          "n_trades",
+          "profit_factor",
+          "avg_win",
+          "avg_loss",
+          "expectancy",
+          "gross_pnl",
+          "net_pnl",
+          "total_commission",
+          "template"
+        ]
+      },
+      {
+        "filename": "round1.csv",
+        "rows": 13860,
+        "columns": [
+          "strategy_name",
+          "lot_size",
+          "sharpe_ratio",
+          "sortino_ratio",
+          "calmar_ratio",
+          "total_return",
+          "max_drawdown",
+          "win_rate",
+          "n_trades",
+          "profit_factor",
+          "avg_win",
+          "avg_loss",
+          "expectancy",
+          "gross_pnl",
+          "net_pnl",
+          "total_commission",
+          "template"
+        ]
+      }
+    ],
+    "columns": [
+      "strategy_name",
+      "lot_size",
+      "sharpe_ratio",
+      "sortino_ratio",
+      "calmar_ratio",
+      "total_return",
+      "max_drawdown",
+      "win_rate",
+      "n_trades",
+      "profit_factor",
+      "avg_win",
+      "avg_loss",
+      "expectancy",
+      "gross_pnl",
+      "net_pnl",
+      "total_commission",
+      "template"
+    ],
+    "unique_templates": [
+      "TrendFollower",
+      "MeanReverter",
+      "BreakoutTrader",
+      "MeanReverterV2",
+      "ScalpingStrategy",
+      "SessionBreakout",
+      "MomentumBurst",
+      "PatternRecognition",
+      "RegimeAdapter",
+      "CorrelationTrader",
+      "PairDivergence",
+      "LeadLagStrategy",
+      "RiskSentiment",
+      "USDStrength"
+    ]
+  },
+  "strategy_type_stats": {
+    "TrendFollower": {
+      "count": 2574,
+      "sharpe_mean": -0.021057267305766573,
+      "sharpe_max": 0.039312180560922,
+      "sharpe_min": -0.1007632576059922,
+      "sortino_mean": -0.05831150627160439,
+      "sortino_max": 0.12108040707907,
+      "win_rate_mean": 0.3428327829740573,
+      "win_rate_max": 0.365428295433778,
+      "profit_factor_mean": 0.9959777410052811,
+      "profit_factor_max": 1.007105907852606,
+      "avg_trades": 97132.68531468531
+    },
+    "MeanReverter": {
+      "count": 2574,
+      "sharpe_mean": -1.3132839214117462,
+      "sharpe_max": 6.292661980030858,
+      "sharpe_min": -3.469285144856054,
+      "sortino_mean": -0.011088738961121211,
+      "sortino_max": 49.12325412417739,
+      "win_rate_mean": 0.5517942508606242,
+      "win_rate_max": 1.0,
+      "profit_factor_mean": 0.7906122168515044,
+      "profit_factor_max": 2.4248352803266977,
+      "avg_trades": 601765.2261072261
+    },
+    "BreakoutTrader": {
+      "count": 2574,
+      "sharpe_mean": -0.833102466930941,
+      "sharpe_max": 0.7513951718718144,
+      "sharpe_min": -19.67941585398963,
+      "sortino_mean": -2.7850637695684304,
+      "sortino_max": 1.0676072539150678,
+      "win_rate_mean": 0.33039374125053267,
+      "win_rate_max": 0.4309368828061977,
+      "profit_factor_mean": 0.9198037296375288,
+      "profit_factor_max": 1.166933254810818,
+      "avg_trades": 601501.5034965035
+    },
+    "MeanReverterV2": {
+      "count": 8910,
+      "sharpe_mean": 47234825935887.984,
+      "sharpe_max": 1.1398759399279517e+17,
+      "sharpe_min": -13.306318628454544,
+      "sortino_mean": 1142086047745529.5,
+      "sortino_max": 2.0384602260864723e+17,
+      "win_rate_mean": 0.44665447549373216,
+      "win_rate_max": 1.0,
+      "profit_factor_mean": 1.0178109156141661,
+      "profit_factor_max": 22.484257871064468,
+      "avg_trades": 195856.69124579124
+    },
+    "ScalpingStrategy": {
+      "count": 2574,
+      "sharpe_mean": 0.0,
+      "sharpe_max": 0.0,
+      "sharpe_min": 0.0,
+      "sortino_mean": 0.0,
+      "sortino_max": 0.0,
+      "win_rate_mean": 0.0,
+      "win_rate_max": 0.0,
+      "profit_factor_mean": 0.0,
+      "profit_factor_max": 0.0,
+      "avg_trades": 0.0
+    },
+    "SessionBreakout": {
+      "count": 2574,
+      "sharpe_mean": -0.1848702361464264,
+      "sharpe_max": 0.0,
+      "sharpe_min": -1.1646193672582057,
+      "sortino_mean": -1139984817980735.0,
+      "sortino_max": 0.0,
+      "win_rate_mean": 0.057959891020188156,
+      "win_rate_max": 0.3788617886178861,
+      "profit_factor_mean": 0.1934510484869174,
+      "profit_factor_max": 0.9180721785178616,
+      "avg_trades": 154.1888111888112
+    },
+    "MomentumBurst": {
+      "count": 8910,
+      "sharpe_mean": 0.14994705711202844,
+      "sharpe_max": 1.845576892413103,
+      "sharpe_min": -2.055607526531183,
+      "sortino_mean": 0.20603800106569142,
+      "sortino_max": 2.198011614659387,
+      "win_rate_mean": 0.46735490185745854,
+      "win_rate_max": 0.5065401203876412,
+      "profit_factor_mean": 1.0324573677719195,
+      "profit_factor_max": 1.513090495418283,
+      "avg_trades": 241057.99393939393
+    },
+    "PatternRecognition": {
+      "count": 8910,
+      "sharpe_mean": 0.0,
+      "sharpe_max": 0.0,
+      "sharpe_min": 0.0,
+      "sortino_mean": 0.0,
+      "sortino_max": 0.0,
+      "win_rate_mean": 0.0,
+      "win_rate_max": 0.0,
+      "profit_factor_mean": 0.0,
+      "profit_factor_max": 0.0,
+      "avg_trades": 0.0
+    },
+    "RegimeAdapter": {
+      "count": 990,
+      "sharpe_mean": 0.0,
+      "sharpe_max": 0.0,
+      "sharpe_min": 0.0,
+      "sortino_mean": 0.0,
+      "sortino_max": 0.0,
+      "win_rate_mean": 0.0,
+      "win_rate_max": 0.0,
+      "profit_factor_mean": 0.0,
+      "profit_factor_max": 0.0,
+      "avg_trades": 0.0
+    },
+    "CorrelationTrader": {
+      "count": 990,
+      "sharpe_mean": 0.0,
+      "sharpe_max": 0.0,
+      "sharpe_min": 0.0,
+      "sortino_mean": 0.0,
+      "sortino_max": 0.0,
+      "win_rate_mean": 0.0,
+      "win_rate_max": 0.0,
+      "profit_factor_mean": 0.0,
+      "profit_factor_max": 0.0,
+      "avg_trades": 0.0
+    },
+    "PairDivergence": {
+      "count": 990,
+      "sharpe_mean": 0.0,
+      "sharpe_max": 0.0,
+      "sharpe_min": 0.0,
+      "sortino_mean": 0.0,
+      "sortino_max": 0.0,
+      "win_rate_mean": 0.0,
+      "win_rate_max": 0.0,
+      "profit_factor_mean": 0.0,
+      "profit_factor_max": 0.0,
+      "avg_trades": 0.0
+    },
+    "LeadLagStrategy": {
+      "count": 990,
+      "sharpe_mean": 0.0,
+      "sharpe_max": 0.0,
+      "sharpe_min": 0.0,
+      "sortino_mean": 0.0,
+      "sortino_max": 0.0,
+      "win_rate_mean": 0.0,
+      "win_rate_max": 0.0,
+      "profit_factor_mean": 0.0,
+      "profit_factor_max": 0.0,
+      "avg_trades": 0.0
+    },
+    "RiskSentiment": {
+      "count": 990,
+      "sharpe_mean": 0.0,
+      "sharpe_max": 0.0,
+      "sharpe_min": 0.0,
+      "sortino_mean": 0.0,
+      "sortino_max": 0.0,
+      "win_rate_mean": 0.0,
+      "win_rate_max": 0.0,
+      "profit_factor_mean": 0.0,
+      "profit_factor_max": 0.0,
+      "avg_trades": 0.0
+    },
+    "USDStrength": {
+      "count": 990,
+      "sharpe_mean": 0.0,
+      "sharpe_max": 0.0,
+      "sharpe_min": 0.0,
+      "sortino_mean": 0.0,
+      "sortino_max": 0.0,
+      "win_rate_mean": 0.0,
+      "win_rate_max": 0.0,
+      "profit_factor_mean": 0.0,
+      "profit_factor_max": 0.0,
+      "avg_trades": 0.0
+    }
+  },
+  "top_strategies": {
+    "top_20_sharpe": [
+      {
+        "strategy_name": "MeanReverterV2_L50_T2.0_SL20_TP50_RSI30-75",
+        "template": "MeanReverterV2",
+        "lot_size": 1.0,
+        "sharpe_ratio": 1.1398759399279517e+17,
+        "sortino_ratio": 0.0,
+        "win_rate": 1.0,
+        "profit_factor": 0.0,
+        "n_trades": 3,
+        "net_pnl": 1499.7
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T2.0_SL30_TP50_RSI30-75",
+        "template": "MeanReverterV2",
+        "lot_size": 1.0,
+        "sharpe_ratio": 1.1398759399279517e+17,
+        "sortino_ratio": 0.0,
+        "win_rate": 1.0,
+        "profit_factor": 0.0,
+        "n_trades": 3,
+        "net_pnl": 1499.7
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T2.0_SL20_TP30_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 0.01,
+        "sharpe_ratio": 1.0170159632478195e+17,
+        "sortino_ratio": 0.0,
+        "win_rate": 1.0,
+        "profit_factor": 0.0,
+        "n_trades": 10,
+        "net_pnl": 29.99
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T2.0_SL20_TP40_RSI30-75",
+        "template": "MeanReverterV2",
+        "lot_size": 1.0,
+        "sharpe_ratio": 9.118551477839325e+16,
+        "sortino_ratio": 0.0,
+        "win_rate": 1.0,
+        "profit_factor": 0.0,
+        "n_trades": 3,
+        "net_pnl": 1199.7
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T2.0_SL20_TP50_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 0.1,
+        "sharpe_ratio": 30.829726749171357,
+        "sortino_ratio": null,
+        "win_rate": 0.9,
+        "profit_factor": 22.484257871064468,
+        "n_trades": 10,
+        "net_pnl": 429.9
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T2.0_SL20_TP50_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 1.0,
+        "sharpe_ratio": 30.82972674917135,
+        "sortino_ratio": null,
+        "win_rate": 0.9,
+        "profit_factor": 22.484257871064464,
+        "n_trades": 10,
+        "net_pnl": 4299.0
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T2.0_SL20_TP50_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 0.01,
+        "sharpe_ratio": 30.829726749171343,
+        "sortino_ratio": null,
+        "win_rate": 0.9,
+        "profit_factor": 22.484257871064468,
+        "n_trades": 10,
+        "net_pnl": 42.99
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.8_SL20_TP40_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 0.01,
+        "sharpe_ratio": 30.30473837387631,
+        "sortino_ratio": null,
+        "win_rate": 0.9090909090909092,
+        "profit_factor": 19.985007496251875,
+        "n_trades": 11,
+        "net_pnl": 37.989
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.8_SL20_TP40_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 0.1,
+        "sharpe_ratio": 30.304738373876308,
+        "sortino_ratio": null,
+        "win_rate": 0.9090909090909092,
+        "profit_factor": 19.985007496251875,
+        "n_trades": 11,
+        "net_pnl": 379.89
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.8_SL20_TP40_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 1.0,
+        "sharpe_ratio": 30.304738373876305,
+        "sortino_ratio": null,
+        "win_rate": 0.9090909090909092,
+        "profit_factor": 19.985007496251875,
+        "n_trades": 11,
+        "net_pnl": 3798.9
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.8_SL20_TP30_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 1.0,
+        "sharpe_ratio": 26.792997626041984,
+        "sortino_ratio": null,
+        "win_rate": 0.9090909090909092,
+        "profit_factor": 14.987506246876562,
+        "n_trades": 11,
+        "net_pnl": 2798.9
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.8_SL20_TP30_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 0.01,
+        "sharpe_ratio": 26.792997626041974,
+        "sortino_ratio": null,
+        "win_rate": 0.9090909090909092,
+        "profit_factor": 14.987506246876562,
+        "n_trades": 11,
+        "net_pnl": 27.989
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.8_SL20_TP30_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 0.1,
+        "sharpe_ratio": 26.792997626041974,
+        "sortino_ratio": null,
+        "win_rate": 0.9090909090909092,
+        "profit_factor": 14.98750624687656,
+        "n_trades": 11,
+        "net_pnl": 279.89
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T2.0_SL30_TP50_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 0.01,
+        "sharpe_ratio": 26.348515885624373,
+        "sortino_ratio": null,
+        "win_rate": 0.9,
+        "profit_factor": 14.992002665778074,
+        "n_trades": 10,
+        "net_pnl": 41.99
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T2.0_SL30_TP50_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 0.1,
+        "sharpe_ratio": 26.348515885624373,
+        "sortino_ratio": null,
+        "win_rate": 0.9,
+        "profit_factor": 14.992002665778074,
+        "n_trades": 10,
+        "net_pnl": 419.9
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T2.0_SL30_TP50_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 1.0,
+        "sharpe_ratio": 26.348515885624373,
+        "sortino_ratio": null,
+        "win_rate": 0.9,
+        "profit_factor": 14.99200266577807,
+        "n_trades": 10,
+        "net_pnl": 4199.0
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.5_SL20_TP40_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 0.01,
+        "sharpe_ratio": 24.05394056154753,
+        "sortino_ratio": 0.0,
+        "win_rate": 0.8666666666666667,
+        "profit_factor": 12.99025487256372,
+        "n_trades": 15,
+        "net_pnl": 47.985
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.5_SL20_TP40_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 0.1,
+        "sharpe_ratio": 24.05394056154753,
+        "sortino_ratio": 0.0,
+        "win_rate": 0.8666666666666667,
+        "profit_factor": 12.990254872563716,
+        "n_trades": 15,
+        "net_pnl": 479.85
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.5_SL20_TP40_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 1.0,
+        "sharpe_ratio": 24.05394056154753,
+        "sortino_ratio": 0.0,
+        "win_rate": 0.8666666666666667,
+        "profit_factor": 12.990254872563716,
+        "n_trades": 15,
+        "net_pnl": 4798.5
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.5_SL20_TP30_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 1.0,
+        "sharpe_ratio": 21.04475424934644,
+        "sortino_ratio": 0.0,
+        "win_rate": 0.8666666666666667,
+        "profit_factor": 9.741879060469769,
+        "n_trades": 15,
+        "net_pnl": 3498.5
+      }
+    ],
+    "top_20_sortino": [
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.8_SL10_TP50_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 1.0,
+        "sortino_ratio": 2.0384602260864723e+17,
+        "sharpe_ratio": 10.127389874329252,
+        "win_rate": 0.5,
+        "profit_factor": 4.9940059940059935,
+        "n_trades": 12,
+        "net_pnl": 2398.8
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T2.0_SL15_TP40_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 0.01,
+        "sortino_ratio": 1.3711893523105304e+17,
+        "sharpe_ratio": 14.035639500868747,
+        "win_rate": 0.7,
+        "profit_factor": 6.216522318454364,
+        "n_trades": 10,
+        "net_pnl": 23.49
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.8_SL10_TP50_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 0.01,
+        "sortino_ratio": 1.3046145446953422e+17,
+        "sharpe_ratio": 10.12738987432925,
+        "win_rate": 0.5,
+        "profit_factor": 4.994005994005994,
+        "n_trades": 12,
+        "net_pnl": 23.988
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.2_SL10_TP40_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 1.0,
+        "sortino_ratio": 1.258823476522938e+17,
+        "sharpe_ratio": 7.346824477055984,
+        "win_rate": 0.4347826086956521,
+        "profit_factor": 3.0730807653884584,
+        "n_trades": 23,
+        "net_pnl": 2697.7
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.5_SL15_TP40_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 0.1,
+        "sortino_ratio": 1.1850611533990006e+17,
+        "sharpe_ratio": 8.005663171150621,
+        "win_rate": 0.5333333333333333,
+        "profit_factor": 3.044827258018464,
+        "n_trades": 15,
+        "net_pnl": 214.85
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T2.0_SL10_TP20_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 1.0,
+        "sortino_ratio": 1.0770043887849693e+17,
+        "sharpe_ratio": 13.37681648384339,
+        "win_rate": 0.7272727272727273,
+        "profit_factor": 5.325341325341326,
+        "n_trades": 11,
+        "net_pnl": 1298.9
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.5_SL10_TP50_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 0.1,
+        "sortino_ratio": 1.0588970807740307e+17,
+        "sharpe_ratio": 6.609086775039349,
+        "win_rate": 0.375,
+        "profit_factor": 2.996403596403596,
+        "n_trades": 16,
+        "net_pnl": 199.84
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.2_SL20_TP40_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 1.0,
+        "sortino_ratio": 1.0336879999031011e+17,
+        "sharpe_ratio": 10.94897392452827,
+        "win_rate": 0.6666666666666666,
+        "profit_factor": 3.9970014992503744,
+        "n_trades": 21,
+        "net_pnl": 4197.9
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.2_SL10_TP40_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 0.1,
+        "sortino_ratio": 1.0070587812183507e+17,
+        "sharpe_ratio": 7.346824477055984,
+        "win_rate": 0.4347826086956521,
+        "profit_factor": 3.073080765388457,
+        "n_trades": 23,
+        "net_pnl": 269.77
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T2.0_SL15_TP30_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 0.01,
+        "sortino_ratio": 9.625760927884483e+16,
+        "sharpe_ratio": 12.042593297680254,
+        "win_rate": 0.7,
+        "profit_factor": 4.662003109038419,
+        "n_trades": 10,
+        "net_pnl": 16.49
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.5_SL15_TP40_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 0.01,
+        "sortino_ratio": 9.480489227191998e+16,
+        "sharpe_ratio": 8.005663171150616,
+        "win_rate": 0.5333333333333333,
+        "profit_factor": 3.0448272580184645,
+        "n_trades": 15,
+        "net_pnl": 21.485
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T0.8_SL10_TP40_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 1.0,
+        "sortino_ratio": 9.04975476532866e+16,
+        "sharpe_ratio": 5.39155496367382,
+        "win_rate": 0.3666666666666666,
+        "profit_factor": 2.312897628687103,
+        "n_trades": 30,
+        "net_pnl": 2497.0
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T0.8_SL10_TP50_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 1.0,
+        "sortino_ratio": 8.710281698424184e+16,
+        "sharpe_ratio": 4.535493235458399,
+        "win_rate": 0.3,
+        "profit_factor": 2.140288283145426,
+        "n_trades": 30,
+        "net_pnl": 2397.0
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.2_SL15_TP40_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 0.1,
+        "sortino_ratio": 8.547542437781525e+16,
+        "sharpe_ratio": 5.657615565846545,
+        "win_rate": 0.4545454545454545,
+        "profit_factor": 2.2201865423051306,
+        "n_trades": 22,
+        "net_pnl": 219.78
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.0_SL10_TP50_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 1.0,
+        "sortino_ratio": 8.445712930771947e+16,
+        "sharpe_ratio": 4.416645831298091,
+        "win_rate": 0.2962962962962963,
+        "profit_factor": 2.102739365897261,
+        "n_trades": 27,
+        "net_pnl": 2097.3
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T0.5_SL10_TP40_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 1.0,
+        "sortino_ratio": 8.418410423955754e+16,
+        "sharpe_ratio": 5.047178001424611,
+        "win_rate": 0.3548387096774194,
+        "profit_factor": 2.1972527472527474,
+        "n_trades": 31,
+        "net_pnl": 2396.9
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.2_SL10_TP40_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 0.01,
+        "sortino_ratio": 8.056470249746802e+16,
+        "sharpe_ratio": 7.346824477055979,
+        "win_rate": 0.4347826086956521,
+        "profit_factor": 3.073080765388459,
+        "n_trades": 23,
+        "net_pnl": 26.977
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.2_SL10_TP30_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 1.0,
+        "sortino_ratio": 7.92195061012341e+16,
+        "sharpe_ratio": 5.779323087582915,
+        "win_rate": 0.4347826086956521,
+        "profit_factor": 2.304618458464613,
+        "n_trades": 23,
+        "net_pnl": 1697.7
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.5_SL10_TP20_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 1.0,
+        "sortino_ratio": 7.89828520303797e+16,
+        "sharpe_ratio": 7.966005160164329,
+        "win_rate": 0.5882352941176471,
+        "profit_factor": 2.852861424289996,
+        "n_trades": 17,
+        "net_pnl": 1298.3
+      },
+      {
+        "strategy_name": "MeanReverterV2_L50_T1.2_SL10_TP50_RSI35-80",
+        "template": "MeanReverterV2",
+        "lot_size": 0.01,
+        "sortino_ratio": 7.50051132364212e+16,
+        "sharpe_ratio": 5.899919597401062,
+        "win_rate": 0.3478260869565217,
+        "profit_factor": 2.663469863469864,
+        "n_trades": 23,
+        "net_pnl": 24.977
+      }
+    ],
+    "top_20_win_rate": [
+      {
+        "strategy_name": "MeanReverter_L50_T0.5_SL30_TP50",
+        "template": "MeanReverter",
+        "lot_size": 0.01,
+        "win_rate": 0.6898218345334548,
+        "sharpe_ratio": -1.56743750280871,
+        "sortino_ratio": -1.248514864275418,
+        "profit_factor": 0.7186877547258423,
+        "n_trades": 499255,
+        "net_pnl": -6647.494999999877
+      },
+      {
+        "strategy_name": "MeanReverter_L50_T0.5_SL30_TP50",
+        "template": "MeanReverter",
+        "lot_size": 0.1,
+        "win_rate": 0.6898218345334548,
+        "sharpe_ratio": -1.5674375028087093,
+        "sortino_ratio": -1.2485148642754176,
+        "profit_factor": 0.7186877547258425,
+        "n_trades": 499255,
+        "net_pnl": -66474.94999999876
+      },
+      {
+        "strategy_name": "MeanReverter_L50_T0.5_SL30_TP50",
+        "template": "MeanReverter",
+        "lot_size": 1.0,
+        "win_rate": 0.6898218345334548,
+        "sharpe_ratio": -1.5674375028087104,
+        "sortino_ratio": -1.2485148642754182,
+        "profit_factor": 0.7186877547258421,
+        "n_trades": 499255,
+        "net_pnl": -664749.4999999875
+      },
+      {
+        "strategy_name": "MeanReverter_L50_T0.5_SL20_TP30",
+        "template": "MeanReverter",
+        "lot_size": 0.01,
+        "win_rate": 0.6897769944824409,
+        "sharpe_ratio": -1.5780867120620272,
+        "sortino_ratio": -1.2599369310505488,
+        "profit_factor": 0.7186539363836016,
+        "n_trades": 499315,
+        "net_pnl": -6648.164999999877
+      },
+      {
+        "strategy_name": "MeanReverter_L50_T0.5_SL20_TP30",
+        "template": "MeanReverter",
+        "lot_size": 0.1,
+        "win_rate": 0.6897769944824409,
+        "sharpe_ratio": -1.5780867120620266,
+        "sortino_ratio": -1.2599369310505486,
+        "profit_factor": 0.7186539363836015,
+        "n_trades": 499315,
+        "net_pnl": -66481.64999999877
+      },
+      {
+        "strategy_name": "MeanReverter_L50_T0.5_SL20_TP30",
+        "template": "MeanReverter",
+        "lot_size": 1.0,
+        "win_rate": 0.6897769944824409,
+        "sharpe_ratio": -1.5780867120620277,
+        "sortino_ratio": -1.2599369310505495,
+        "profit_factor": 0.7186539363836013,
+        "n_trades": 499315,
+        "net_pnl": -664816.4999999877
+      },
+      {
+        "strategy_name": "MeanReverter_L50_T0.5_SL20_TP40",
+        "template": "MeanReverter",
+        "lot_size": 0.01,
+        "win_rate": 0.6897769944824409,
+        "sharpe_ratio": -1.5755222738164636,
+        "sortino_ratio": -1.2593683815646153,
+        "profit_factor": 0.7187808944526101,
+        "n_trades": 499315,
+        "net_pnl": -6645.164999999877
+      },
+      {
+        "strategy_name": "MeanReverter_L50_T0.5_SL20_TP40",
+        "template": "MeanReverter",
+        "lot_size": 0.1,
+        "win_rate": 0.6897769944824409,
+        "sharpe_ratio": -1.5755222738164634,
+        "sortino_ratio": -1.259368381564615,
+        "profit_factor": 0.7187808944526098,
+        "n_trades": 499315,
+        "net_pnl": -66451.64999999877
+      },
+      {
+        "strategy_name": "MeanReverter_L50_T0.5_SL20_TP40",
+        "template": "MeanReverter",
+        "lot_size": 1.0,
+        "win_rate": 0.6897769944824409,
+        "sharpe_ratio": -1.575522273816464,
+        "sortino_ratio": -1.259368381564616,
+        "profit_factor": 0.7187808944526097,
+        "n_trades": 499315,
+        "net_pnl": -664516.4999999877
+      },
+      {
+        "strategy_name": "MeanReverter_L50_T0.5_SL20_TP50",
+        "template": "MeanReverter",
+        "lot_size": 0.01,
+        "win_rate": 0.6897769944824409,
+        "sharpe_ratio": -1.5730678449069062,
+        "sortino_ratio": -1.2589116468109154,
+        "profit_factor": 0.7188828841013799,
+        "n_trades": 499315,
+        "net_pnl": -6642.754999999877
+      },
+      {
+        "strategy_name": "MeanReverter_L50_T0.5_SL20_TP50",
+        "template": "MeanReverter",
+        "lot_size": 0.1,
+        "win_rate": 0.6897769944824409,
+        "sharpe_ratio": -1.5730678449069055,
+        "sortino_ratio": -1.2589116468109152,
+        "profit_factor": 0.7188828841013801,
+        "n_trades": 499315,
+        "net_pnl": -66427.54999999878
+      },
+      {
+        "strategy_name": "MeanReverter_L50_T0.5_SL20_TP50",
+        "template": "MeanReverter",
+        "lot_size": 1.0,
+        "win_rate": 0.6897769944824409,
+        "sharpe_ratio": -1.5730678449069069,
+        "sortino_ratio": -1.2589116468109165,
+        "profit_factor": 0.7188828841013798,
+        "n_trades": 499315,
+        "net_pnl": -664275.4999999877
+      },
+      {
+        "strategy_name": "MeanReverter_L50_T0.5_SL15_TP30",
+        "template": "MeanReverter",
+        "lot_size": 0.01,
+        "win_rate": 0.6897092331780922,
+        "sharpe_ratio": -1.5845892399787291,
+        "sortino_ratio": -1.271114119049471,
+        "profit_factor": 0.7186877295890154,
+        "n_trades": 499438,
+        "net_pnl": -6650.317999999874
+      },
+      {
+        "strategy_name": "MeanReverter_L50_T0.5_SL15_TP30",
+        "template": "MeanReverter",
+        "lot_size": 0.1,
+        "win_rate": 0.6897092331780922,
+        "sharpe_ratio": -1.5845892399787287,
+        "sortino_ratio": -1.2711141190494706,
+        "profit_factor": 0.7186877295890153,
+        "n_trades": 499438,
+        "net_pnl": -66503.17999999874
+      },
+      {
+        "strategy_name": "MeanReverter_L50_T0.5_SL15_TP30",
+        "template": "MeanReverter",
+        "lot_size": 1.0,
+        "win_rate": 0.6897092331780922,
+        "sharpe_ratio": -1.5845892399787296,
+        "sortino_ratio": -1.2711141190494712,
+        "profit_factor": 0.7186877295890151,
+        "n_trades": 499438,
+        "net_pnl": -665031.7999999875
+      },
+      {
+        "strategy_name": "MeanReverter_L50_T0.5_SL15_TP40",
+        "template": "MeanReverter",
+        "lot_size": 0.01,
+        "win_rate": 0.6897092331780922,
+        "sharpe_ratio": -1.581999884383952,
+        "sortino_ratio": -1.2705407115286351,
+        "profit_factor": 0.7188146313117951,
+        "n_trades": 499438,
+        "net_pnl": -6647.317999999874
+      },
+      {
+        "strategy_name": "MeanReverter_L50_T0.5_SL15_TP40",
+        "template": "MeanReverter",
+        "lot_size": 0.1,
+        "win_rate": 0.6897092331780922,
+        "sharpe_ratio": -1.5819998843839518,
+        "sortino_ratio": -1.270540711528635,
+        "profit_factor": 0.718814631311795,
+        "n_trades": 499438,
+        "net_pnl": -66473.17999999874
+      },
+      {
+        "strategy_name": "MeanReverter_L50_T0.5_SL15_TP40",
+        "template": "MeanReverter",
+        "lot_size": 1.0,
+        "win_rate": 0.6897092331780922,
+        "sharpe_ratio": -1.5819998843839524,
+        "sortino_ratio": -1.2705407115286356,
+        "profit_factor": 0.7188146313117948,
+        "n_trades": 499438,
+        "net_pnl": -664731.7999999875
+      },
+      {
+        "strategy_name": "MeanReverter_L50_T0.5_SL15_TP50",
+        "template": "MeanReverter",
+        "lot_size": 0.01,
+        "win_rate": 0.6897092331780922,
+        "sharpe_ratio": -1.5795207621910703,
+        "sortino_ratio": -1.270080074153564,
+        "profit_factor": 0.7189165756957615,
+        "n_trades": 499438,
+        "net_pnl": -6644.907999999874
+      },
+      {
+        "strategy_name": "MeanReverter_L50_T0.5_SL15_TP50",
+        "template": "MeanReverter",
+        "lot_size": 0.1,
+        "win_rate": 0.6897092331780922,
+        "sharpe_ratio": -1.5795207621910696,
+        "sortino_ratio": -1.2700800741535634,
+        "profit_factor": 0.7189165756957613,
+        "n_trades": 499438,
+        "net_pnl": -66449.07999999875
+      }
+    ],
+    "top_20_profit_factor": [
+      {
+        "strategy_name": "MomentumBurst_L30_T1.0_SL10_TP50",
+        "template": "MomentumBurst",
+        "lot_size": 0.1,
+        "profit_factor": 1.513090495418283,
+        "sharpe_ratio": 1.840883930073298,
+        "sortino_ratio": 2.198011614659387,
+        "win_rate": 0.4378179085685277,
+        "n_trades": 2789324,
+        "net_pnl": 228076.35999999935
+      },
+      {
+        "strategy_name": "MomentumBurst_L30_T1.0_SL10_TP50",
+        "template": "MomentumBurst",
+        "lot_size": 0.01,
+        "profit_factor": 1.5130904954182824,
+        "sharpe_ratio": 1.840883930073297,
+        "sortino_ratio": 2.198011614659386,
+        "win_rate": 0.4378179085685277,
+        "n_trades": 2789324,
+        "net_pnl": 22807.635999999937
+      },
+      {
+        "strategy_name": "MomentumBurst_L30_T1.0_SL10_TP50",
+        "template": "MomentumBurst",
+        "lot_size": 1.0,
+        "profit_factor": 1.5130904954182824,
+        "sharpe_ratio": 1.840883930073297,
+        "sortino_ratio": 2.198011614659386,
+        "win_rate": 0.4378179085685277,
+        "n_trades": 2789324,
+        "net_pnl": 2280763.5999999936
+      },
+      {
+        "strategy_name": "MomentumBurst_L30_T1.0_SL15_TP50",
+        "template": "MomentumBurst",
+        "lot_size": 0.1,
+        "profit_factor": 1.5130460416053908,
+        "sharpe_ratio": 1.839398759697876,
+        "sortino_ratio": 2.193723667157605,
+        "win_rate": 0.4378201060477322,
+        "n_trades": 2789310,
+        "net_pnl": 228063.29999999935
+      },
+      {
+        "strategy_name": "MomentumBurst_L30_T1.0_SL15_TP50",
+        "template": "MomentumBurst",
+        "lot_size": 0.01,
+        "profit_factor": 1.51304604160539,
+        "sharpe_ratio": 1.8393987596978756,
+        "sortino_ratio": 2.1937236671576046,
+        "win_rate": 0.4378201060477322,
+        "n_trades": 2789310,
+        "net_pnl": 22806.32999999994
+      },
+      {
+        "strategy_name": "MomentumBurst_L30_T1.0_SL15_TP50",
+        "template": "MomentumBurst",
+        "lot_size": 1.0,
+        "profit_factor": 1.51304604160539,
+        "sharpe_ratio": 1.839398759697875,
+        "sortino_ratio": 2.193723667157604,
+        "win_rate": 0.4378201060477322,
+        "n_trades": 2789310,
+        "net_pnl": 2280632.999999993
+      },
+      {
+        "strategy_name": "MomentumBurst_L30_T1.0_SL10_TP40",
+        "template": "MomentumBurst",
+        "lot_size": 0.1,
+        "profit_factor": 1.513002729003084,
+        "sharpe_ratio": 1.842286641293268,
+        "sortino_ratio": 2.1976034889495604,
+        "win_rate": 0.4378175946447278,
+        "n_trades": 2789326,
+        "net_pnl": 228040.63999999937
+      },
+      {
+        "strategy_name": "MomentumBurst_L30_T1.0_SL10_TP40",
+        "template": "MomentumBurst",
+        "lot_size": 0.01,
+        "profit_factor": 1.5130027290030836,
+        "sharpe_ratio": 1.8422866412932672,
+        "sortino_ratio": 2.19760348894956,
+        "win_rate": 0.4378175946447278,
+        "n_trades": 2789326,
+        "net_pnl": 22804.063999999937
+      },
+      {
+        "strategy_name": "MomentumBurst_L30_T1.0_SL10_TP40",
+        "template": "MomentumBurst",
+        "lot_size": 1.0,
+        "profit_factor": 1.5130027290030834,
+        "sharpe_ratio": 1.8422866412932677,
+        "sortino_ratio": 2.1976034889495604,
+        "win_rate": 0.4378175946447278,
+        "n_trades": 2789326,
+        "net_pnl": 2280406.3999999934
+      },
+      {
+        "strategy_name": "MomentumBurst_L30_T1.0_SL15_TP40",
+        "template": "MomentumBurst",
+        "lot_size": 0.1,
+        "profit_factor": 1.5129582784106916,
+        "sharpe_ratio": 1.8407977779629432,
+        "sortino_ratio": 2.193316558875866,
+        "win_rate": 0.437819792120781,
+        "n_trades": 2789312,
+        "net_pnl": 228027.5799999993
+      },
+      {
+        "strategy_name": "MomentumBurst_L30_T1.0_SL15_TP40",
+        "template": "MomentumBurst",
+        "lot_size": 0.01,
+        "profit_factor": 1.5129582784106912,
+        "sharpe_ratio": 1.840797777962943,
+        "sortino_ratio": 2.1933165588758654,
+        "win_rate": 0.437819792120781,
+        "n_trades": 2789312,
+        "net_pnl": 22802.757999999933
+      },
+      {
+        "strategy_name": "MomentumBurst_L30_T1.0_SL15_TP40",
+        "template": "MomentumBurst",
+        "lot_size": 1.0,
+        "profit_factor": 1.512958278410691,
+        "sharpe_ratio": 1.840797777962943,
+        "sortino_ratio": 2.1933165588758654,
+        "win_rate": 0.437819792120781,
+        "n_trades": 2789312,
+        "net_pnl": 2280275.7999999933
+      },
+      {
+        "strategy_name": "MomentumBurst_L30_T1.0_SL20_TP50",
+        "template": "MomentumBurst",
+        "lot_size": 0.1,
+        "profit_factor": 1.512923892166393,
+        "sharpe_ratio": 1.8382741057281624,
+        "sortino_ratio": 2.190912347155124,
+        "win_rate": 0.4378202630113766,
+        "n_trades": 2789309,
+        "net_pnl": 228027.40999999933
+      },
+      {
+        "strategy_name": "MomentumBurst_L30_T1.0_SL20_TP50",
+        "template": "MomentumBurst",
+        "lot_size": 0.01,
+        "profit_factor": 1.512923892166392,
+        "sharpe_ratio": 1.8382741057281624,
+        "sortino_ratio": 2.190912347155124,
+        "win_rate": 0.4378202630113766,
+        "n_trades": 2789309,
+        "net_pnl": 22802.740999999936
+      },
+      {
+        "strategy_name": "MomentumBurst_L30_T1.0_SL20_TP50",
+        "template": "MomentumBurst",
+        "lot_size": 1.0,
+        "profit_factor": 1.512923892166392,
+        "sharpe_ratio": 1.8382741057281624,
+        "sortino_ratio": 2.1909123471551237,
+        "win_rate": 0.4378202630113766,
+        "n_trades": 2789309,
+        "net_pnl": 2280274.0999999936
+      },
+      {
+        "strategy_name": "MomentumBurst_L30_T1.0_SL10_TP30",
+        "template": "MomentumBurst",
+        "lot_size": 0.1,
+        "profit_factor": 1.5128379609989022,
+        "sharpe_ratio": 1.8437723922732412,
+        "sortino_ratio": 2.196748726817806,
+        "win_rate": 0.4378173253075111,
+        "n_trades": 2789330,
+        "net_pnl": 227976.89999999932
+      },
+      {
+        "strategy_name": "MomentumBurst_L30_T1.0_SL10_TP30",
+        "template": "MomentumBurst",
+        "lot_size": 0.01,
+        "profit_factor": 1.5128379609989016,
+        "sharpe_ratio": 1.8437723922732412,
+        "sortino_ratio": 2.1967487268178054,
+        "win_rate": 0.4378173253075111,
+        "n_trades": 2789330,
+        "net_pnl": 22797.689999999937
+      },
+      {
+        "strategy_name": "MomentumBurst_L30_T1.0_SL10_TP30",
+        "template": "MomentumBurst",
+        "lot_size": 1.0,
+        "profit_factor": 1.5128379609989016,
+        "sharpe_ratio": 1.8437723922732407,
+        "sortino_ratio": 2.1967487268178054,
+        "win_rate": 0.4378173253075111,
+        "n_trades": 2789330,
+        "net_pnl": 2279768.999999994
+      },
+      {
+        "strategy_name": "MomentumBurst_L30_T1.0_SL20_TP40",
+        "template": "MomentumBurst",
+        "lot_size": 0.1,
+        "profit_factor": 1.512836137820735,
+        "sharpe_ratio": 1.8396706894985315,
+        "sortino_ratio": 2.190505849306272,
+        "win_rate": 0.4378199490842003,
+        "n_trades": 2789311,
+        "net_pnl": 227991.68999999936
+      },
+      {
+        "strategy_name": "MomentumBurst_L30_T1.0_SL20_TP40",
+        "template": "MomentumBurst",
+        "lot_size": 0.01,
+        "profit_factor": 1.5128361378207345,
+        "sharpe_ratio": 1.8396706894985315,
+        "sortino_ratio": 2.190505849306272,
+        "win_rate": 0.4378199490842003,
+        "n_trades": 2789311,
+        "net_pnl": 22799.168999999936
+      }
+    ]
+  },
+  "metric_distributions": {
+    "sharpe_ratio": {
+      "total": 45540,
+      "above_0": 10630,
+      "above_0.5": 2431,
+      "above_1.0": 1474,
+      "above_1.5": 1249,
+      "above_2.0": 1021
+    },
+    "win_rate": {
+      "total": 45540,
+      "above_40pct": 16584,
+      "above_50pct": 6924,
+      "above_60pct": 918,
+      "above_70pct": 186
+    },
+    "profit_factor": {
+      "total": 45540,
+      "above_1.0": 10626,
+      "above_1.5": 963,
+      "above_2.0": 501,
+      "above_2.5": 216
+    }
+  },
+  "parameter_analysis": {
+    "CD": {
+      "30": {
+        "count": 1584,
+        "avg_sharpe": 0.18232553806592003,
+        "avg_sortino": 0.28719003122132425,
+        "avg_win_rate": 0.4667168341159334,
+        "avg_profit_factor": 1.0346250749625088
+      },
+      "60": {
+        "count": 1584,
+        "avg_sharpe": 0.13587977980402072,
+        "avg_sortino": 0.2111091208037876,
+        "avg_win_rate": 0.4727427745633902,
+        "avg_profit_factor": 1.0248938277822326
+      },
+      "120": {
+        "count": 1584,
+        "avg_sharpe": 0.12032101139652891,
+        "avg_sortino": 0.18600700247058896,
+        "avg_win_rate": 0.4777604552943488,
+        "avg_profit_factor": 1.0215951714455982
+      },
+      "240": {
+        "count": 1584,
+        "avg_sharpe": 0.08812270429180454,
+        "avg_sortino": 0.1382852438138659,
+        "avg_win_rate": 0.4815967787173392,
+        "avg_profit_factor": 1.0155613900071607
+      }
+    },
+    "T": {
+      "0.5": {
+        "count": 6270,
+        "avg_sharpe": -0.4176880457890764,
+        "avg_sortino": -256440684976014.1,
+        "avg_win_rate": 0.2578737524980208,
+        "avg_profit_factor": 0.5394614841579481
+      },
+      "0.8": {
+        "count": 3960,
+        "avg_sharpe": -0.410632324939845,
+        "avg_sortino": -120483180372950.3,
+        "avg_win_rate": 0.30934534277217907,
+        "avg_profit_factor": 0.6431557429337599
+      },
+      "1.0": {
+        "count": 6270,
+        "avg_sharpe": -0.26608046155718795,
+        "avg_sortino": 28496038683489.312,
+        "avg_win_rate": 0.24634564484861446,
+        "avg_profit_factor": 0.5100739769791206
+      },
+      "1.2": {
+        "count": 3960,
+        "avg_sharpe": -0.20270172431783826,
+        "avg_sortino": 229822966343554.6,
+        "avg_win_rate": 0.3013126293262773,
+        "avg_profit_factor": 0.6280169326078098
+      },
+      "1.5": {
+        "count": 6270,
+        "avg_sharpe": -0.08638518494737266,
+        "avg_sortino": NaN,
+        "avg_win_rate": 0.2521084798230204,
+        "avg_profit_factor": 0.5528747325502977
+      },
+      "1.8": {
+        "count": 3960,
+        "avg_sharpe": 0.08708448300669928,
+        "avg_sortino": NaN,
+        "avg_win_rate": 0.2914636893744884,
+        "avg_profit_factor": 0.7241203631428191
+      },
+      "2.0": {
+        "count": 6270,
+        "avg_sharpe": 67123173698367.734,
+        "avg_sortino": NaN,
+        "avg_win_rate": 0.24231309052611835,
+        "avg_profit_factor": 0.5959490446556404
+      },
+      "2.5": {
+        "count": 6270,
+        "avg_sharpe": -0.17889792616098946,
+        "avg_sortino": NaN,
+        "avg_win_rate": 0.2079206917496204,
+        "avg_profit_factor": 0.5350707467653208
+      },
+      "3.0": {
+        "count": 2310,
+        "avg_sharpe": -0.22012332924167527,
+        "avg_sortino": 250551305426169.2,
+        "avg_win_rate": 0.1336244167094934,
+        "avg_profit_factor": 0.2996209158295758
+      }
+    },
+    "RSI": {
+      "20": {
+        "count": 1584,
+        "avg_sharpe": -1.1847313702695996,
+        "avg_sortino": -898319190814268.5,
+        "avg_win_rate": 0.39917129384024,
+        "avg_profit_factor": 0.8406413481403738
+      },
+      "25": {
+        "count": 1584,
+        "avg_sharpe": -0.9487595620979762,
+        "avg_sortino": 432740946744373.56,
+        "avg_win_rate": 0.43191370207096147,
+        "avg_profit_factor": 0.8602560995597112
+      },
+      "30": {
+        "count": 1584,
+        "avg_sharpe": 201490342654029.75,
+        "avg_sortino": NaN,
+        "avg_win_rate": 0.463212773283666,
+        "avg_profit_factor": 1.0402156307833879
+      },
+      "35": {
+        "count": 1584,
+        "avg_sharpe": 64205553235343.305,
+        "avg_sortino": NaN,
+        "avg_win_rate": 0.47133926485877686,
+        "avg_profit_factor": 1.4879016304846238
+      }
+    },
+    "PT": {
+      "0.2": {
+        "count": 1584,
+        "avg_sharpe": 0.0,
+        "avg_sortino": 0.0,
+        "avg_win_rate": 0.0,
+        "avg_profit_factor": 0.0
+      },
+      "0.3": {
+        "count": 1584,
+        "avg_sharpe": 0.0,
+        "avg_sortino": 0.0,
+        "avg_win_rate": 0.0,
+        "avg_profit_factor": 0.0
+      },
+      "0.4": {
+        "count": 1584,
+        "avg_sharpe": 0.0,
+        "avg_sortino": 0.0,
+        "avg_win_rate": 0.0,
+        "avg_profit_factor": 0.0
+      },
+      "0.5": {
+        "count": 1584,
+        "avg_sharpe": 0.0,
+        "avg_sortino": 0.0,
+        "avg_win_rate": 0.0,
+        "avg_profit_factor": 0.0
+      }
+    },
+    "V": {
+      "2": {
+        "count": 8910,
+        "avg_sharpe": 47234825935887.98,
+        "avg_sortino": NaN,
+        "avg_win_rate": 0.44665447549373216,
+        "avg_profit_factor": 1.0178109156141661
+      }
+    },
+    "L": {
+      "5": {
+        "count": 8052,
+        "avg_sharpe": -0.23083706395822545,
+        "avg_sortino": 870123492655582.4,
+        "avg_win_rate": 0.2414281574783576,
+        "avg_profit_factor": 0.5635309593758727
+      },
+      "10": {
+        "count": 8052,
+        "avg_sharpe": -0.382461259790546,
+        "avg_sortino": -64309654630543.37,
+        "avg_win_rate": 0.2614690693328939,
+        "avg_profit_factor": 0.4893653479589749
+      },
+      "15": {
+        "count": 8052,
+        "avg_sharpe": -0.259135904513191,
+        "avg_sortino": -64309654630543.21,
+        "avg_win_rate": 0.26577124877196145,
+        "avg_profit_factor": 0.5193419515369
+      },
+      "20": {
+        "count": 8052,
+        "avg_sharpe": -0.16477644819668208,
+        "avg_sortino": -64309654630543.17,
+        "avg_win_rate": 0.2514124771561594,
+        "avg_profit_factor": 0.5359872767367362
+      },
+      "30": {
+        "count": 8052,
+        "avg_sharpe": -0.20571959892949976,
+        "avg_sortino": -71546348399585.77,
+        "avg_win_rate": 0.22027540533286213,
+        "avg_profit_factor": 0.5356918453422096
+      },
+      "50": {
+        "count": 5280,
+        "avg_sharpe": 79708768766811.97,
+        "avg_sortino": NaN,
+        "avg_win_rate": 0.27630045294636024,
+        "avg_profit_factor": 0.8415280310550627
+      }
+    },
+    "TP": {
+      "20": {
+        "count": 4140,
+        "avg_sharpe": -0.3430204608094995,
+        "avg_sortino": NaN,
+        "avg_win_rate": 0.24997787060320992,
+        "avg_profit_factor": 0.5315680724783824
+      },
+      "30": {
+        "count": 12420,
+        "avg_sharpe": 8188534325666.614,
+        "avg_sortino": NaN,
+        "avg_win_rate": 0.25403390756068617,
+        "avg_profit_factor": 0.5553409516510611
+      },
+      "40": {
+        "count": 12420,
+        "avg_sharpe": 7341828887149.03,
+        "avg_sortino": NaN,
+        "avg_win_rate": 0.24939061529118034,
+        "avg_profit_factor": 0.5673220982326609
+      },
+      "50": {
+        "count": 16560,
+        "avg_sharpe": 13766617631979.967,
+        "avg_sortino": NaN,
+        "avg_win_rate": 0.2511337456906367,
+        "avg_profit_factor": 0.5789809091648179
+      }
+    },
+    "SL": {
+      "10": {
+        "count": 16560,
+        "avg_sharpe": -0.236872050204003,
+        "avg_sortino": NaN,
+        "avg_win_rate": 0.24369120442160153,
+        "avg_profit_factor": 0.5593411560151152
+      },
+      "15": {
+        "count": 12420,
+        "avg_sharpe": -0.2620464660255879,
+        "avg_sortino": NaN,
+        "avg_win_rate": 0.24792772518516268,
+        "avg_profit_factor": 0.5473204998318941
+      },
+      "20": {
+        "count": 12420,
+        "avg_sharpe": 24708108300802.7,
+        "avg_sortino": NaN,
+        "avg_win_rate": 0.26084976005417154,
+        "avg_profit_factor": 0.5868611603843217
+      },
+      "30": {
+        "count": 4140,
+        "avg_sharpe": 27533235263960.094,
+        "avg_sortino": NaN,
+        "avg_win_rate": 0.2636891485169473,
+        "avg_profit_factor": 0.5755712540797114
+      }
+    }
+  }
+}
