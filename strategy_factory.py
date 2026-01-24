@@ -460,35 +460,50 @@ class MomentumBurst(Strategy):
             raw_buy = momentum_burst_up & volume_surge
             raw_sell = momentum_burst_down & volume_surge
             
-            # Apply TIME-BASED cooldown (not index-based!)
-            last_signal_time = None
-            daily_trade_count = {}
-            cooldown_delta = pd.Timedelta(minutes=self.cooldown)
+            # Check if index is datetime-based for time-based cooldown
+            has_datetime_index = isinstance(df.index, pd.DatetimeIndex)
             
-            for i in range(len(signals)):
-                current_time = df.index[i]
-                current_date = current_time.date() if hasattr(current_time, 'date') else None
+            if has_datetime_index:
+                # Apply TIME-BASED cooldown (not index-based!)
+                last_signal_time = None
+                daily_trade_count = {}
+                cooldown_delta = pd.Timedelta(minutes=self.cooldown)
                 
-                # Check max trades per day
-                if current_date:
-                    if daily_trade_count.get(current_date, 0) >= self.max_trades_per_day:
-                        continue
-                
-                # Check time-based cooldown
-                if last_signal_time is not None:
-                    if (current_time - last_signal_time) < cooldown_delta:
-                        continue
-                
-                if raw_buy.iloc[i]:
-                    signals.iloc[i] = 1
-                    last_signal_time = current_time
+                for i in range(len(signals)):
+                    current_time = df.index[i]
+                    current_date = current_time.date() if hasattr(current_time, 'date') else None
+                    
+                    # Check max trades per day
                     if current_date:
-                        daily_trade_count[current_date] = daily_trade_count.get(current_date, 0) + 1
-                elif raw_sell.iloc[i]:
-                    signals.iloc[i] = -1
-                    last_signal_time = current_time
-                    if current_date:
-                        daily_trade_count[current_date] = daily_trade_count.get(current_date, 0) + 1
+                        if daily_trade_count.get(current_date, 0) >= self.max_trades_per_day:
+                            continue
+                    
+                    # Check time-based cooldown
+                    if last_signal_time is not None:
+                        if (current_time - last_signal_time) < cooldown_delta:
+                            continue
+                    
+                    if raw_buy.iloc[i]:
+                        signals.iloc[i] = 1
+                        last_signal_time = current_time
+                        if current_date:
+                            daily_trade_count[current_date] = daily_trade_count.get(current_date, 0) + 1
+                    elif raw_sell.iloc[i]:
+                        signals.iloc[i] = -1
+                        last_signal_time = current_time
+                        if current_date:
+                            daily_trade_count[current_date] = daily_trade_count.get(current_date, 0) + 1
+            else:
+                # Fallback to index-based cooldown for non-datetime indices (e.g., in tests)
+                # This preserves backward compatibility but won't fix the overtrading issue
+                last_signal_idx = -self.cooldown - 1
+                for i in range(len(signals)):
+                    if raw_buy.iloc[i] and (i - last_signal_idx) > self.cooldown:
+                        signals.iloc[i] = 1
+                        last_signal_idx = i
+                    elif raw_sell.iloc[i] and (i - last_signal_idx) > self.cooldown:
+                        signals.iloc[i] = -1
+                        last_signal_idx = i
         
         return signals
 
