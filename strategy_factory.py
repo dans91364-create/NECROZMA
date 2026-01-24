@@ -291,11 +291,14 @@ class MeanReverterV3(Strategy):
     - Win Rate: 51.2%
     """
     
+    # Class constant: Optimal lookback period proven in backtesting
+    OPTIMAL_LOOKBACK = 5
+    
     def __init__(self, params: Dict):
         super().__init__("MeanReverterV3", params)
         
         # FIXED optimal parameters (proven in backtesting)
-        self.lookback = 5  # DO NOT CHANGE - only value that works
+        self.lookback = self.OPTIMAL_LOOKBACK  # Always use optimal value
         
         # Configurable but with proven defaults
         self.base_threshold = params.get("threshold_std", 2.0)
@@ -344,13 +347,15 @@ class MeanReverterV3(Strategy):
             
             # Adaptive threshold based on volatility regime
             if self.adaptive_threshold:
-                # Calculate recent volatility
+                # Calculate recent volatility (rolling window)
                 volatility = price.pct_change().rolling(self.volatility_lookback).std()
-                volatility_mean = volatility.mean()
+                volatility_mean = volatility.mean()  # Overall mean volatility
                 
-                # Adjust threshold: higher vol = lower threshold (more sensitive)
-                # Lower vol = higher threshold (more selective)
-                threshold = self.base_threshold * (volatility_mean / (volatility + EPSILON))
+                # Adjust threshold: higher current vol = lower threshold (more sensitive)
+                # Lower current vol = higher threshold (more selective)
+                # Use ratio of current vol to mean vol to adjust threshold
+                vol_ratio = volatility / (volatility_mean + EPSILON)
+                threshold = self.base_threshold / vol_ratio
                 threshold = threshold.clip(1.8, 2.2)  # Keep within proven range
             else:
                 threshold = self.base_threshold

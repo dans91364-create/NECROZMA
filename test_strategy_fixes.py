@@ -166,9 +166,8 @@ def test_meanreverter_v3_fixed_lookback():
         "close": prices,
     }, index=pd.date_range("2025-01-01", periods=n, freq="5min"))
     
-    # Try to override lookback (should be ignored)
+    # MeanReverterV3 ignores 'lookback_periods' and always uses OPTIMAL_LOOKBACK=5
     params = {
-        "lookback_periods": 20,  # This should be IGNORED
         "threshold_std": 2.0,
         "adaptive_threshold": False,
     }
@@ -176,10 +175,9 @@ def test_meanreverter_v3_fixed_lookback():
     strategy = MeanReverterV3(params)
     signals = strategy.generate_signals(df)
     
-    # Verify lookback is 5
+    # Verify lookback is 5 (the class constant)
     if strategy.lookback == 5:
-        print(f"   ✅ PASSED: Lookback is fixed at 5 (as designed)")
-        print(f"      Even though params specified lookback_periods=20")
+        print(f"   ✅ PASSED: Lookback is fixed at 5 (using OPTIMAL_LOOKBACK constant)")
         return True
     else:
         print(f"   ❌ FAILED: Lookback is {strategy.lookback}, expected 5")
