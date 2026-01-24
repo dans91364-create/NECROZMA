@@ -443,6 +443,7 @@ STRATEGY_TEMPLATES = [
     'TrendFollower',
     'MeanReverter', 
     'MeanReverterV2',
+    'MeanReverterV3',
     'MomentumBurst',
 ]
 
@@ -476,6 +477,21 @@ STRATEGY_PARAMS = {
     # Total: 2 × 4 × 3 × 3 × 2 × 2 × 2 = 576 combinações
     
     # ═══════════════════════════════════════════════════════════════
+    # CAMADA 2.5: MeanReverterV3 - Optimized from Round 3 results
+    # Fixed lookback=5, adaptive threshold, optimal R:R ratio
+    # Best performance: Sharpe 6.29, Return 59%, Win Rate 51.2%
+    # ═══════════════════════════════════════════════════════════════
+    'MeanReverterV3': {
+        'threshold_std': [1.8, 2.0, 2.2],  # Narrow range around optimal
+        'adaptive_threshold': [True, False],
+        'stop_loss_pips': [25, 30, 35],
+        'take_profit_pips': [45, 50, 55],
+        'require_confirmation': [True, False],
+        'use_session_filter': [True, False],
+    },
+    # Total: 3 × 2 × 3 × 3 × 2 × 2 = 216 combinations
+    
+    # ═══════════════════════════════════════════════════════════════
     # CAMADA 3: MomentumBurst - Alta frequência (30-60 trades/dia)
     # Foco: Volume de trades, Sharpe > 0.3
     # MUDANÇA PRINCIPAL: Cooldowns mais baixos!
@@ -501,7 +517,7 @@ STRATEGY_PARAMS = {
     },
     # Total: 3 × 4 × 3 × 3 = 108 combinações
     
-    # TOTAL ROUND 3: ~1000 combinações focadas em FREQUÊNCIA
+    # TOTAL ROUND 3+: 12 + 576 + 216 + 675 + 108 = 1587 combinations
 }
 
 

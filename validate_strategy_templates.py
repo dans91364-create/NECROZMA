@@ -19,6 +19,7 @@ from strategy_factory import (
     MeanReverter,
     RegimeAdapter,
     MeanReverterV2,
+    MeanReverterV3,
     MomentumBurst,
     StrategyFactory
 )
@@ -128,6 +129,7 @@ def test_all_templates():
         (TrendFollower, "TrendFollower"),
         (MeanReverter, "MeanReverter"),
         (MeanReverterV2, "MeanReverterV2"),
+        (MeanReverterV3, "MeanReverterV3"),
         (MomentumBurst, "MomentumBurst"),
     ]
     
