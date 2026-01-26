@@ -23,6 +23,7 @@ from config import STRATEGY_TEMPLATES, STRATEGY_PARAMS
 
 # Constants
 EPSILON = 1e-8  # Small value to prevent division by zero
+V3_OPTIMAL_LOOKBACK = 5  # MeanReverterV3 proven optimal lookback period
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -427,7 +428,7 @@ class MomentumBurst(Strategy):
         self.volume_multiplier = 1.5
         # TIME-BASED cooldown in MINUTES (not candles/ticks!)
         self.cooldown = params.get("cooldown_minutes", params.get("cooldown", 60))  # In MINUTES
-        self.max_trades_per_day = params.get("max_trades_per_day", 10)  # Reduced from 50 to 10 for realistic trading
+        self.max_trades_per_day = params.get("max_trades_per_day", 10)  # Reduced from 50 to 10: limits overtrading and ensures realistic execution capacity
         
         # Add rules
         self.add_rule({
@@ -477,6 +478,7 @@ class MomentumBurst(Strategy):
                 for i in range(len(signals)):
                     current_time = df.index[i]
                     # Always extract date, use string fallback if date() method not available
+                    # String fallback assumes YYYY-MM-DD format (first 10 chars of ISO timestamp)
                     trade_date = current_time.date() if hasattr(current_time, 'date') else str(current_time)[:10]
                     
                     # Check max trades per day (always enforced)
@@ -854,7 +856,7 @@ class StrategyFactory:
         # Extract parameter lists
         # V3 always uses OPTIMAL_LOOKBACK=5, others use config or default
         if template_name == "MeanReverterV3":
-            lookbacks = [5]  # V3 ALWAYS uses fixed lookback=5
+            lookbacks = [V3_OPTIMAL_LOOKBACK]  # V3 ALWAYS uses fixed lookback=5 (proven optimal)
         else:
             lookbacks = template_params.get("lookback_periods", [20])
         thresholds = template_params.get("threshold_std", template_params.get("thresholds", [1.0]))
