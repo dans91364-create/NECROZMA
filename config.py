@@ -494,16 +494,16 @@ STRATEGY_PARAMS = {
     # ═══════════════════════════════════════════════════════════════
     # CAMADA 3: MomentumBurst - Alta frequência (30-60 trades/dia)
     # Foco: Volume de trades, Sharpe > 0.3
-    # MUDANÇA PRINCIPAL: Cooldowns mais baixos! (CD30 removed - too many trades)
+    # Round 5 optimization: Reduced to best-performing values from Round 4 analysis
     # ═══════════════════════════════════════════════════════════════
     'MomentumBurst': {
-        'lookback_periods': [5, 10, 15],
-        'threshold_std': [0.5, 0.8, 1.0, 1.2, 1.5],  # Mais sensível!
-        'stop_loss_pips': [10, 15, 20],
-        'take_profit_pips': [20, 30, 40],
-        'cooldown_minutes': [60, 90, 120, 180],  # Removed CD30 - causes overtrading even with max_trades_per_day fix
+        'lookback_periods': [10, 15],               # Removed L5 (too noisy)
+        'threshold_std': [1.0, 1.5],                # Only 2 best values
+        'stop_loss_pips': [15, 20],                 # Removed SL10 (too tight)
+        'take_profit_pips': [30, 40],               # Removed TP20 (too small)
+        'cooldown_minutes': [120, 180],             # Only high cooldowns (avoid overtrading)
     },
-    # Total: 3 × 5 × 3 × 3 × 4 = 540 combinações (reduced from 675 after removing CD30)
+    # Total: 2 × 2 × 2 × 2 × 2 = 32 combinations (reduced from 420 in Round 4)
     
     # ═══════════════════════════════════════════════════════════════
     # CAMADA 4: TrendFollower - Capturar tendências (10-20 trades/dia)
@@ -517,7 +517,8 @@ STRATEGY_PARAMS = {
     },
     # Total: 3 × 4 × 3 × 3 = 108 combinações
     
-    # TOTAL ROUND 3+: 12 + 576 + 216 + 675 + 108 = 1587 combinations
+    # TOTAL ROUND 5: 853 unique strategies after deduplication (reduced from 1241 after MomentumBurst optimization)
+    # Raw parameter combinations: 12 + 576 + 216 + 32 + 108 = 944
 }
 
 

@@ -112,39 +112,56 @@ def test_meanreverter_v3_strategies():
 
 
 def test_momentum_burst_combinations():
-    """Test that MomentumBurst no longer includes CD30"""
+    """Test that MomentumBurst uses Round 5 optimized parameters"""
     print("\n" + "=" * 70)
-    print("🧪 TEST: MomentumBurst Config (CD30 Removed)")
+    print("🧪 TEST: MomentumBurst Config (Round 5 Optimization)")
     print("=" * 70)
     
     # Check config
     mb_config = STRATEGY_PARAMS.get('MomentumBurst', {})
-    cooldowns = mb_config.get('cooldown_minutes', [])
     
     print(f"\n📊 Results:")
-    print(f"   Cooldown values: {cooldowns}")
+    print(f"   lookback_periods: {mb_config.get('lookback_periods', [])}")
+    print(f"   threshold_std: {mb_config.get('threshold_std', [])}")
+    print(f"   stop_loss_pips: {mb_config.get('stop_loss_pips', [])}")
+    print(f"   take_profit_pips: {mb_config.get('take_profit_pips', [])}")
+    print(f"   cooldown_minutes: {mb_config.get('cooldown_minutes', [])}")
     
-    if 30 not in cooldowns:
-        print(f"   ✅ PASSED: CD30 removed from config")
-        
-        # Expected: 3 × 5 × 3 × 3 × 4 = 540
-        factory = StrategyFactory(
-            templates=['MomentumBurst'],
-            params=STRATEGY_PARAMS
-        )
-        combinations = factory.generate_parameter_combinations('MomentumBurst')
-        
-        print(f"   Generated combinations: {len(combinations)}")
-        print(f"   Expected combinations: 540")
-        
-        if len(combinations) == 540:
-            print(f"   ✅ Correct number of combinations after CD30 removal")
-            return True
+    # Verify Round 5 optimizations
+    checks = [
+        (5 not in mb_config.get('lookback_periods', []), "L5 removed (too noisy)"),
+        (0.5 not in mb_config.get('threshold_std', []), "threshold 0.5 removed"),
+        (0.8 not in mb_config.get('threshold_std', []), "threshold 0.8 removed"),
+        (1.2 not in mb_config.get('threshold_std', []), "threshold 1.2 removed"),
+        (10 not in mb_config.get('stop_loss_pips', []), "SL10 removed (too tight)"),
+        (20 not in mb_config.get('take_profit_pips', []), "TP20 removed (too small)"),
+        (60 not in mb_config.get('cooldown_minutes', []), "CD60 removed"),
+        (90 not in mb_config.get('cooldown_minutes', []), "CD90 removed"),
+    ]
+    
+    all_passed = True
+    for check, desc in checks:
+        if check:
+            print(f"   ✅ {desc}")
         else:
-            print(f"   ⚠️  Expected 540 combinations, got {len(combinations)}")
-            return True  # Still pass since CD30 is removed
+            print(f"   ❌ {desc}")
+            all_passed = False
+    
+    # Expected: 2 × 2 × 2 × 2 × 2 = 32
+    factory = StrategyFactory(
+        templates=['MomentumBurst'],
+        params=STRATEGY_PARAMS
+    )
+    combinations = factory.generate_parameter_combinations('MomentumBurst')
+    
+    print(f"\n   Generated combinations: {len(combinations)}")
+    print(f"   Expected combinations: 32")
+    
+    if len(combinations) == 32:
+        print(f"   ✅ Correct number of combinations (Round 5 optimized)")
+        return all_passed
     else:
-        print(f"   ❌ FAILED: CD30 still in config")
+        print(f"   ❌ Expected 32 combinations, got {len(combinations)}")
         return False
 
 
@@ -157,7 +174,7 @@ def run_all_tests():
     results = {
         "MeanReverterV3 Combinations": test_meanreverter_v3_combinations(),
         "MeanReverterV3 Strategies": test_meanreverter_v3_strategies(),
-        "MomentumBurst CD30 Removed": test_momentum_burst_combinations(),
+        "MomentumBurst Round 5 Optimizations": test_momentum_burst_combinations(),
     }
     
     # Summary
