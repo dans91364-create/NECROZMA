@@ -23,6 +23,7 @@ from config import STRATEGY_TEMPLATES, STRATEGY_PARAMS
 
 # Constants
 EPSILON = 1e-8  # Small value to prevent division by zero
+V3_OPTIMAL_LOOKBACK = 5  # MeanReverterV3 proven optimal lookback period
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -427,7 +428,7 @@ class MomentumBurst(Strategy):
         self.volume_multiplier = 1.5
         # TIME-BASED cooldown in MINUTES (not candles/ticks!)
         self.cooldown = params.get("cooldown_minutes", params.get("cooldown", 60))  # In MINUTES
-        self.max_trades_per_day = params.get("max_trades_per_day", 50)  # Failsafe limit
+        self.max_trades_per_day = params.get("max_trades_per_day", 10)  # Reduced from 50 to 10: limits overtrading and ensures realistic execution capacity
         
         # Add rules
         self.add_rule({
@@ -476,12 +477,13 @@ class MomentumBurst(Strategy):
                 
                 for i in range(len(signals)):
                     current_time = df.index[i]
-                    current_date = current_time.date() if hasattr(current_time, 'date') else None
+                    # Always extract date, use string fallback if date() method not available
+                    # String fallback assumes YYYY-MM-DD format (first 10 chars of ISO timestamp)
+                    trade_date = current_time.date() if hasattr(current_time, 'date') else str(current_time)[:10]
                     
-                    # Check max trades per day
-                    if current_date:
-                        if daily_trade_count.get(current_date, 0) >= self.max_trades_per_day:
-                            continue
+                    # Check max trades per day (always enforced)
+                    if daily_trade_count.get(trade_date, 0) >= self.max_trades_per_day:
+                        continue
                     
                     # Check time-based cooldown
                     if last_signal_time is not None:
@@ -491,13 +493,11 @@ class MomentumBurst(Strategy):
                     if raw_buy.iloc[i]:
                         signals.iloc[i] = 1
                         last_signal_time = current_time
-                        if current_date:
-                            daily_trade_count[current_date] = daily_trade_count.get(current_date, 0) + 1
+                        daily_trade_count[trade_date] = daily_trade_count.get(trade_date, 0) + 1
                     elif raw_sell.iloc[i]:
                         signals.iloc[i] = -1
                         last_signal_time = current_time
-                        if current_date:
-                            daily_trade_count[current_date] = daily_trade_count.get(current_date, 0) + 1
+                        daily_trade_count[trade_date] = daily_trade_count.get(trade_date, 0) + 1
             else:
                 # Fallback to index-based cooldown for non-datetime indices (e.g., in tests)
                 # This preserves backward compatibility but won't fix the overtrading issue
@@ -854,7 +854,11 @@ class StrategyFactory:
         combinations = []
         
         # Extract parameter lists
-        lookbacks = template_params.get("lookback_periods", [20])
+        # V3 always uses OPTIMAL_LOOKBACK=5, others use config or default
+        if template_name == "MeanReverterV3":
+            lookbacks = [V3_OPTIMAL_LOOKBACK]  # V3 ALWAYS uses fixed lookback=5 (proven optimal)
+        else:
+            lookbacks = template_params.get("lookback_periods", [20])
         thresholds = template_params.get("threshold_std", template_params.get("thresholds", [1.0]))
         stop_losses = template_params.get("stop_loss_pips", [20])
         take_profits = template_params.get("take_profit_pips", [40])
@@ -863,8 +867,9 @@ class StrategyFactory:
         for lookback, threshold, stop, profit in product(
             lookbacks, thresholds, stop_losses, take_profits
         ):
-            # Only keep reasonable risk/reward (profit >= stop * 1.5)
-            if profit >= stop * 1.5:
+            # Risk/reward filter - less strict for V3 (tested combinations)
+            min_rr_ratio = 1.2 if template_name == "MeanReverterV3" else 1.5
+            if profit >= stop * min_rr_ratio:
                 base_params = {
                     "lookback_periods": lookback,
                     "threshold": threshold,
@@ -892,6 +897,23 @@ class StrategyFactory:
                         params["rsi_oversold"] = rsi_os
                         params["rsi_overbought"] = rsi_ob
                         params["volume_filter"] = vol_filter
+                        combinations.append(params)
+                
+                elif template_name == "MeanReverterV3":
+                    # Add V3-specific variations
+                    adaptive_thresholds = template_params.get("adaptive_threshold", [True, False])
+                    require_confirmations = template_params.get("require_confirmation", [True, False])
+                    use_session_filters = template_params.get("use_session_filter", [True, False])
+                    
+                    for adaptive, confirm, session in product(
+                        adaptive_thresholds, require_confirmations, use_session_filters
+                    ):
+                        params = base_params.copy()
+                        # V3 uses "threshold_std" instead of "threshold"
+                        params["threshold_std"] = params.pop("threshold", 2.0)
+                        params["adaptive_threshold"] = adaptive
+                        params["require_confirmation"] = confirm
+                        params["use_session_filter"] = session
                         combinations.append(params)
                 
                 else:
@@ -928,7 +950,9 @@ class StrategyFactory:
             
             for params in param_combinations:
                 # Create unique name including all key parameters
-                strategy_name = f"{template_name}_L{params['lookback_periods']}_T{params['threshold']}_SL{params['stop_loss_pips']}_TP{params['take_profit_pips']}"
+                # Handle both 'threshold' and 'threshold_std' (V3 uses threshold_std)
+                threshold_value = params.get('threshold_std', params.get('threshold', 1.0))
+                strategy_name = f"{template_name}_L{params['lookback_periods']}_T{threshold_value}_SL{params['stop_loss_pips']}_TP{params['take_profit_pips']}"
                 
                 # Add strategy-specific parameters to name
                 if template_name == "MomentumBurst" and "cooldown" in params:
@@ -938,6 +962,11 @@ class StrategyFactory:
                         strategy_name += f"_RSI{params['rsi_oversold']}-{params['rsi_overbought']}"
                     if "volume_filter" in params:
                         strategy_name += f"_VF{params['volume_filter']}"
+                elif template_name == "MeanReverterV3":
+                    # Include V3-specific parameters in the name
+                    strategy_name += f"_AT{int(params.get('adaptive_threshold', True))}"
+                    strategy_name += f"_RC{int(params.get('require_confirmation', True))}"
+                    strategy_name += f"_SF{int(params.get('use_session_filter', False))}"
                 
                 # Check for duplicates
                 if strategy_name in strategy_names:
