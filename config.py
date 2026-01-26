@@ -517,7 +517,8 @@ STRATEGY_PARAMS = {
     },
     # Total: 3 × 4 × 3 × 3 = 108 combinações
     
-    # TOTAL ROUND 3+: 12 + 576 + 216 + 675 + 108 = 1587 combinations
+    # TOTAL ROUND 5: 853 unique strategies after deduplication (reduced from 1241 after MomentumBurst optimization)
+    # Raw parameter combinations: 12 + 576 + 216 + 32 + 108 = 944
 }
 
 

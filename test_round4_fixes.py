@@ -174,7 +174,7 @@ def run_all_tests():
     results = {
         "MeanReverterV3 Combinations": test_meanreverter_v3_combinations(),
         "MeanReverterV3 Strategies": test_meanreverter_v3_strategies(),
-        "MomentumBurst CD30 Removed": test_momentum_burst_combinations(),
+        "MomentumBurst Round 5 Optimizations": test_momentum_burst_combinations(),
     }
     
     # Summary
