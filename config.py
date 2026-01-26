@@ -494,16 +494,16 @@ STRATEGY_PARAMS = {
     # ═══════════════════════════════════════════════════════════════
     # CAMADA 3: MomentumBurst - Alta frequência (30-60 trades/dia)
     # Foco: Volume de trades, Sharpe > 0.3
-    # MUDANÇA PRINCIPAL: Cooldowns mais baixos!
+    # MUDANÇA PRINCIPAL: Cooldowns mais baixos! (CD30 removed - too many trades)
     # ═══════════════════════════════════════════════════════════════
     'MomentumBurst': {
         'lookback_periods': [5, 10, 15],
         'threshold_std': [0.5, 0.8, 1.0, 1.2, 1.5],  # Mais sensível!
         'stop_loss_pips': [10, 15, 20],
         'take_profit_pips': [20, 30, 40],
-        'cooldown_minutes': [30, 60, 90, 120, 180],  # Mais baixos!
+        'cooldown_minutes': [60, 90, 120, 180],  # Removed CD30 - causes overtrading even with max_trades_per_day fix
     },
-    # Total: 3 × 5 × 3 × 3 × 5 = 675 combinações
+    # Total: 3 × 5 × 3 × 3 × 4 = 540 combinações (reduced from 675 after removing CD30)
     
     # ═══════════════════════════════════════════════════════════════
     # CAMADA 4: TrendFollower - Capturar tendências (10-20 trades/dia)
