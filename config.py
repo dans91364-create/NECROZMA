@@ -453,70 +453,64 @@ STRATEGY_PARAMS = {
     # ═══════════════════════════════════════════════════════════════
     
     # ═══════════════════════════════════════════════════════════════
-    # 🏆 MEAN REVERTER - CAMPEÃO (Sharpe 6.29)
-    # Originais: T1.8, T2.0 (~40-100 trades/ano)
-    # Agressivos: T1.2, T1.5 (~200-500 trades/ano)
+    # 🏆 MEAN REVERTER - Agora com max_trades_per_day
+    # Testando valores entre T1.5 e T2.0 para encontrar sweet spot
     # ═══════════════════════════════════════════════════════════════
     'MeanReverter': {
         'lookback_periods': [5],                    # Fixed optimal
-        'threshold_std': [1.2, 1.5, 1.8, 2.0],      # 4 valores: 2 agressivos + 2 originais
+        'threshold_std': [1.6, 1.7, 1.8, 1.9, 2.0], # 5 valores: testando gradualmente
         'stop_loss_pips': [20, 30],                 # 2 valores
         'take_profit_pips': [40, 50],               # 2 valores
     },
-    # Total: 1 × 4 × 2 × 2 = 16 combinações
+    # Total: 1 × 5 × 2 × 2 = 20 raw combinations
+    # After R:R filter (≥1.5): 15 strategies (SL30/TP40 filtered out)
     
     # ═══════════════════════════════════════════════════════════════
-    # 🥈 MEAN REVERTER V2 - BOA PERFORMANCE (Sharpe 0.93)
-    # Originais: T1.0, T1.5, RSI35-80
-    # Agressivos: T0.8, RSI30-70, VF1.2
+    # 🥈 MEAN REVERTER V2 - Mantém configuração atual
     # ═══════════════════════════════════════════════════════════════
     'MeanReverterV2': {
         'lookback_periods': [30],                   # Fixed optimal (L30)
-        'threshold_std': [0.8, 1.0, 1.5],           # 3 valores: 1 agressivo + 2 originais
+        'threshold_std': [1.0, 1.5],                # Testados, funcionam
         'stop_loss_pips': [15, 20],                 # 2 valores
         'take_profit_pips': [40, 50],               # 2 valores
-        'rsi_oversold': [30, 35],                   # 2 valores: 1 agressivo + 1 original
-        'rsi_overbought': [70, 80],                 # 2 valores: 1 agressivo + 1 original
-        'volume_filter': [1.2, 1.5],                # 2 valores: 1 agressivo + 1 original
+        'rsi_oversold': [30, 35],                   
+        'rsi_overbought': [70, 80],                 
+        'volume_filter': [1.2, 1.5],                
     },
-    # Total: 1 × 3 × 2 × 2 × 2 × 2 × 2 = 96 combinações (raw)
-    # After R:R filter (≥1.5): ~96 strategies (most pass the filter)
+    # Total: 1 × 2 × 2 × 2 × 2 × 2 × 2 = 64 raw combinations
+    # After R:R filter (≥1.5): 64 strategies (all pass the filter)
     
     # ═══════════════════════════════════════════════════════════════
-    # 🥉 MEAN REVERTER V3 - ADAPTIVE (Sharpe 3.86)
-    # IMPORTANTE: Só usar AT1 (adaptive_threshold=True)
-    # AT0 gerou MILHÕES de trades bugados!
-    # Originais: T1.8
-    # Agressivos: T1.2, T1.5
+    # 🥉 MEAN REVERTER V3 - SOMENTE AT1 (adaptive_threshold=True)
+    # Testar thresholds intermediários também
     # ═══════════════════════════════════════════════════════════════
     'MeanReverterV3': {
-        'lookback_periods': [5],                    # Fixed optimal (ignorado, usa constante)
-        'threshold_std': [1.2, 1.5, 1.8],           # 3 valores: 2 agressivos + 1 original
+        'lookback_periods': [5],                    # Fixed (ignorado)
+        'threshold_std': [1.6, 1.7, 1.8, 1.9, 2.0], # 5 valores
         'stop_loss_pips': [20, 25, 30],             # 3 valores
         'take_profit_pips': [45, 55],               # 2 valores
-        'adaptive_threshold': [True],               # SOMENTE True! False gerou bug
-        'require_confirmation': [False],            # SOMENTE False! True = 5 trades/ano
-        'use_session_filter': [False],              # SOMENTE False! True reduz demais
+        'adaptive_threshold': [True],               # SOMENTE True!
+        'require_confirmation': [False],            # False gera mais trades
+        'use_session_filter': [False],              
     },
-    # Total: 1 × 3 × 3 × 2 × 1 × 1 × 1 = 18 combinações
+    # Total: 1 × 5 × 3 × 2 × 1 × 1 × 1 = 30 combinações
     
     # ═══════════════════════════════════════════════════════════════
-    # 💥 MOMENTUM BURST - AGORA COM FIX DEFINITIVO
-    # max_trades_per_day SEMPRE aplicado
+    # 💥 MOMENTUM BURST - Já corrigido, manter
     # ═══════════════════════════════════════════════════════════════
     'MomentumBurst': {
-        'lookback_periods': [10, 15],               # 2 valores
-        'threshold_std': [1.0, 1.5],                # 2 valores
-        'stop_loss_pips': [15, 20],                 # 2 valores
-        'take_profit_pips': [30, 40],               # 2 valores
-        'cooldown_minutes': [180],                  # Só CD180 (mais conservador)
+        'lookback_periods': [10, 15],               
+        'threshold_std': [1.0, 1.5],                
+        'stop_loss_pips': [15, 20],                 
+        'take_profit_pips': [30, 40],               
+        'cooldown_minutes': [180],                  
     },
     # Total: 2 × 2 × 2 × 2 × 1 = 16 combinações
     
     # ═══════════════════════════════════════════════════════════════
-    # TOTAL: ~142 unique strategies (16 + 96 + 18 + 16 = 146 raw)
-    # After R:R filtering: ~142 strategies
-    # Estimated backtest time: ~15-20 minutes
+    # TOTAL: ~125 unique strategies (15 + 64 + 30 + 16 = 125)
+    # After R:R filtering: ~125 strategies
+    # Estimated backtest time: ~12-18 minutes
     # ═══════════════════════════════════════════════════════════════
 }
 

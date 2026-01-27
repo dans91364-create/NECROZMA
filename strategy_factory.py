@@ -189,7 +189,9 @@ class MeanReverter(Strategy):
     def __init__(self, params: Dict):
         super().__init__("MeanReverter", params)
         self.lookback = params.get("lookback_periods", 20)
-        self.threshold = params.get("threshold", 1.5)  # Changed from 2.0 to 1.5
+        # Accept both 'threshold_std' (from config) and 'threshold' (legacy)
+        self.threshold = params.get("threshold_std", params.get("threshold", 1.5))
+        self.max_trades_per_day = params.get("max_trades_per_day", 10)  # ADD max_trades_per_day
         
         # Add rules
         self.add_rule({
@@ -202,23 +204,29 @@ class MeanReverter(Strategy):
         })
     
     def generate_signals(self, df: pd.DataFrame) -> pd.Series:
-        """Generate mean reversion signals"""
+        """Generate mean reversion signals with max_trades_per_day limit"""
         signals = pd.Series(0, index=df.index)
         
         # Calculate z-score of price
-        if "mid_price" in df.columns:
-            price = df["mid_price"]
+        if "mid_price" in df.columns or "close" in df.columns:
+            price = df.get("mid_price", df.get("close"))
             
             # Rolling z-score
             rolling_mean = price.rolling(self.lookback).mean()
             rolling_std = price.rolling(self.lookback).std()
-            z_score = (price - rolling_mean) / rolling_std
             
-            # Buy when oversold
-            signals[z_score < -self.threshold] = 1
+            # Prevent division by zero
+            rolling_std_safe = rolling_std.replace(0, 1e-8)
+            z_score = (price - rolling_mean) / rolling_std_safe
             
-            # Sell when overbought
-            signals[z_score > self.threshold] = -1
+            # Raw buy/sell signals
+            raw_buy = z_score < -self.threshold
+            raw_sell = z_score > self.threshold
+            
+            # ALWAYS apply max_trades_per_day using base class method
+            signals = self.apply_max_trades_per_day_filter(
+                signals, df, raw_buy, raw_sell, self.max_trades_per_day
+            )
         
         return signals
 
