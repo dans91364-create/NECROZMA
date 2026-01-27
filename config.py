@@ -444,31 +444,18 @@ METRIC_THRESHOLDS = {
 
 # Strategy templates to generate
 # ❌ REMOVIDO: TrendFollower - Sharpe negativo, 114k trades inúteis
+# ❌ REMOVIDO: MomentumBurst - Bug de overtrading não resolvido (742,908 trades/ano)
+# ❌ REMOVIDO: MeanReverter - Duplicado de MeanReverterLegacy (mesmos parâmetros)
 STRATEGY_TEMPLATES = [
-    'MeanReverter',        # 🏆 Renomeado de Legacy (Sharpe 6.29)
-    'MeanReverterV2',      # 🥈 Volume de trades (Sharpe 0.93)
-    'MeanReverterV3',      # 🥉 Adaptive (Sharpe 4.80)
-    'MeanReverterLegacy',  # 🏆 Alias for backward compatibility
-    'MomentumBurst',       # 🔥 Resurrected with bulletproof fix
+    'MeanReverterLegacy',  # 🏆 Campeão - Sharpe 6.29
+    'MeanReverterV3',      # Adaptive - Sharpe até 4.80
+    'MeanReverterV2',      # Volume - Sharpe até 0.93
 ]
 
 # Parameter ranges for strategy generation
 STRATEGY_PARAMS = {
     # ═══════════════════════════════════════════════════════════════
-    # 🏆 MEAN REVERTER - CAMPEÃO (Sharpe 6.29)
-    # Versão comprovada em 10 rounds de backtesting
-    # ═══════════════════════════════════════════════════════════════
-    'MeanReverter': {
-        'lookback_periods': [5],
-        'threshold': [1.8, 2.0],           # USA 'threshold' NÃO 'threshold_std'
-        'stop_loss_pips': [20, 30],
-        'take_profit_pips': [40, 50],
-    },
-    # Total: 1 × 2 × 2 × 2 = 8 combinações
-    
-    # ═══════════════════════════════════════════════════════════════
-    # 🏆 MEAN REVERTER LEGACY - Alias for backward compatibility
-    # Same as MeanReverter (Round 7 version)
+    # 🏆 MEAN REVERTER LEGACY - CAMPEÃO (Sharpe 6.29, 41 trades)
     # ═══════════════════════════════════════════════════════════════
     'MeanReverterLegacy': {
         'lookback_periods': [5],
@@ -479,21 +466,7 @@ STRATEGY_PARAMS = {
     # Total: 1 × 2 × 2 × 2 = 8 combinações
     
     # ═══════════════════════════════════════════════════════════════
-    # 🥈 MEAN REVERTER V2 - Volume de Trades (Sharpe 0.78-0.93)
-    # ═══════════════════════════════════════════════════════════════
-    'MeanReverterV2': {
-        'lookback_periods': [30],
-        'threshold_std': [0.8, 1.0, 1.5],
-        'stop_loss_pips': [15, 20],
-        'take_profit_pips': [40, 50],
-        'rsi_oversold': [35],
-        'rsi_overbought': [70, 80],
-        'volume_filter': [1.2],
-    },
-    # Total: 1 × 3 × 2 × 2 × 1 × 2 × 1 = 24 combinações
-    
-    # ═══════════════════════════════════════════════════════════════
-    # 🥉 MEAN REVERTER V3 - Adaptive Threshold (Sharpe 2.5-4.8)
+    # 🥈 MEAN REVERTER V3 - Adaptive (Sharpe até 4.80)
     # ═══════════════════════════════════════════════════════════════
     'MeanReverterV3': {
         'lookback_periods': [5],
@@ -507,21 +480,29 @@ STRATEGY_PARAMS = {
     # Total: 1 × 2 × 3 × 2 × 1 × 1 × 1 = 12 combinações
     
     # ═══════════════════════════════════════════════════════════════
-    # 🔥 MOMENTUM BURST - Resurrected with bulletproof fix
+    # 🥉 MEAN REVERTER V2 - Volume (Sharpe até 0.93)
     # ═══════════════════════════════════════════════════════════════
-    'MomentumBurst': {
-        'lookback_periods': [10, 15],
-        'threshold_std': [1.5, 2.0],
-        'stop_loss_pips': [20, 30],
+    'MeanReverterV2': {
+        'lookback_periods': [30],
+        'threshold_std': [0.8, 1.0, 1.5],
+        'stop_loss_pips': [15, 20],
         'take_profit_pips': [40, 50],
-        'cooldown_minutes': [120, 180],  # 2-3 hours
-        'max_trades_per_day': [5],  # Hard limit
+        'rsi_oversold': [35],
+        'rsi_overbought': [80],  # APENAS 80, removido 70 (performance inferior)
+        'volume_filter': [1.2],
     },
-    # Total: 2 × 2 × 2 × 2 × 2 × 1 = 32 combinações
+    # Total: 1 × 3 × 2 × 2 × 1 × 1 × 1 = 12 combinações
     
     # ═══════════════════════════════════════════════════════════════
-    # TOTAL: 84 unique strategies (8 + 8 + 24 + 12 + 32 = 84)
-    # MeanReverter: 8 + MeanReverterLegacy: 8 + MeanReverterV2: 24 + MeanReverterV3: 12 + MomentumBurst: 32
+    # REMOVIDOS:
+    # - MomentumBurst: Bug de overtrading não resolvido (742,908 trades/ano)
+    # - MeanReverter: Duplicado de MeanReverterLegacy
+    # - MeanReverterV2 RSI 35-70: Performance inferior (Sharpe < 0.5)
+    # ═══════════════════════════════════════════════════════════════
+    
+    # ═══════════════════════════════════════════════════════════════
+    # TOTAL: 32 unique strategies (8 + 12 + 12 = 32)
+    # MeanReverterLegacy: 8 + MeanReverterV3: 12 + MeanReverterV2: 12
     # ═══════════════════════════════════════════════════════════════
 }
 
