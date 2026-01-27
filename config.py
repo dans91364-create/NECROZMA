@@ -438,79 +438,69 @@ METRIC_THRESHOLDS = {
 # 🏭 STRATEGY FACTORY CONFIGURATION (Strategy Generation)
 # ═══════════════════════════════════════════════════════════════
 
+# ═══════════════════════════════════════════════════════════════════════════
+# 🏆 NECROZMA TOP 30 - ESTRATÉGIAS COMPROVADAS EM 8 ROUNDS DE BACKTESTING
+# ═══════════════════════════════════════════════════════════════════════════
+
 # Strategy templates to generate
+# ❌ REMOVIDO: TrendFollower - Sharpe negativo, 114k trades inúteis
+# ❌ REMOVIDO: MomentumBurst - Bug de milhões de trades nunca corrigido
 STRATEGY_TEMPLATES = [
-    'MeanReverter', 
-    'MeanReverterV2',
-    'MeanReverterV3',
-    'MomentumBurst',
+    'MeanReverter',      # 🥇 Sharpe 6.29
+    'MeanReverterV2',    # 🥈 Volume de trades
+    'MeanReverterV3',    # 🥉 Adaptive
 ]
 
-# Parameter ranges for strategy generation (Round 3: ~1000 combinations focused on FREQUENCY)
+# Parameter ranges for strategy generation
 STRATEGY_PARAMS = {
     # ═══════════════════════════════════════════════════════════════
-    # REMOVIDO: TrendFollower - Sharpe negativo, 114k trades inúteis
-    # ═══════════════════════════════════════════════════════════════
-    
-    # ═══════════════════════════════════════════════════════════════
-    # 🏆 MEAN REVERTER - Agora com max_trades_per_day
-    # Testando valores entre T1.5 e T2.0 para encontrar sweet spot
+    # 🥇 MEAN REVERTER - CAMPEÃO ABSOLUTO (Sharpe 6.29)
+    # IMPORTANTE: NÃO usar max_trades_per_day - quebra a estratégia!
+    # Thresholds comprovados: T1.8, T2.0
     # ═══════════════════════════════════════════════════════════════
     'MeanReverter': {
-        'lookback_periods': [5],                    # Fixed optimal
-        'threshold_std': [1.6, 1.7, 1.8, 1.9, 2.0], # 5 valores: testando gradualmente
-        'stop_loss_pips': [20, 30],                 # 2 valores
-        'take_profit_pips': [40, 50],               # 2 valores
+        'lookback_periods': [5],                    # L5 é o ideal comprovado
+        'threshold_std': [1.8, 2.0],                # APENAS T1.8 e T2.0 funcionam
+        'stop_loss_pips': [20, 30],                 # SL20 e SL30 testados
+        'take_profit_pips': [40, 50],               # TP40 e TP50 testados
     },
-    # Total: 1 × 5 × 2 × 2 = 20 raw combinations
-    # After R:R filter (≥1.5): 15 strategies (SL30/TP40 filtered out)
+    # Total: 1 × 2 × 2 × 2 = 8 combinações
+    # Estratégias: MeanReverter_L5_T1.8/T2.0_SL20/30_TP40/50
     
     # ═══════════════════════════════════════════════════════════════
-    # 🥈 MEAN REVERTER V2 - Mantém configuração atual
+    # 🥈 MEAN REVERTER V2 - MELHOR VOLUME DE TRADES (Sharpe 0.78-0.93)
+    # Gera 700-1200 trades/ano com Sharpe positivo consistente
     # ═══════════════════════════════════════════════════════════════
     'MeanReverterV2': {
-        'lookback_periods': [30],                   # Fixed optimal (L30)
-        'threshold_std': [1.0, 1.5],                # Testados, funcionam
-        'stop_loss_pips': [15, 20],                 # 2 valores
-        'take_profit_pips': [40, 50],               # 2 valores
-        'rsi_oversold': [30, 35],                   
-        'rsi_overbought': [70, 80],                 
-        'volume_filter': [1.2, 1.5],                
+        'lookback_periods': [30],                   # L30 é o ideal
+        'threshold_std': [0.8, 1.0, 1.5],           # T0.8, T1.0, T1.5 funcionam
+        'stop_loss_pips': [15, 20],                 
+        'take_profit_pips': [40, 50],               
+        'rsi_oversold': [35],                       # RSI35 é melhor
+        'rsi_overbought': [70, 80],                 # RSI70 e RSI80
+        'volume_filter': [1.2],                     # VF1.2 (1.5 dá mesmo resultado)
     },
-    # Total: 1 × 2 × 2 × 2 × 2 × 2 × 2 = 64 raw combinations
-    # After R:R filter (≥1.5): 64 strategies (all pass the filter)
+    # Total: 1 × 3 × 2 × 2 × 1 × 2 × 1 = 24 combinações
     
     # ═══════════════════════════════════════════════════════════════
-    # 🥉 MEAN REVERTER V3 - SOMENTE AT1 (adaptive_threshold=True)
-    # Testar thresholds intermediários também
+    # 🥉 MEAN REVERTER V3 - ADAPTIVE THRESHOLD (Sharpe 2.5-4.8)
+    # CRÍTICO: SOMENTE adaptive_threshold=True funciona!
+    # T1.7 e T1.8 são os melhores
     # ═══════════════════════════════════════════════════════════════
     'MeanReverterV3': {
-        'lookback_periods': [5],                    # Fixed (ignorado)
-        'threshold_std': [1.6, 1.7, 1.8, 1.9, 2.0], # 5 valores
-        'stop_loss_pips': [20, 25, 30],             # 3 valores
-        'take_profit_pips': [45, 55],               # 2 valores
+        'lookback_periods': [5],                    # Ignorado, usa constante
+        'threshold_std': [1.7, 1.8],                # T1.7 e T1.8 comprovados
+        'stop_loss_pips': [20, 25, 30],             
+        'take_profit_pips': [45, 55],               
         'adaptive_threshold': [True],               # SOMENTE True!
-        'require_confirmation': [False],            # False gera mais trades
-        'use_session_filter': [False],              
+        'require_confirmation': [False],            # False é melhor
+        'use_session_filter': [False],              # False é melhor
     },
-    # Total: 1 × 5 × 3 × 2 × 1 × 1 × 1 = 30 combinações
+    # Total: 1 × 2 × 3 × 2 × 1 × 1 × 1 = 12 combinações
     
     # ═══════════════════════════════════════════════════════════════
-    # 💥 MOMENTUM BURST - Já corrigido, manter
-    # ═══════════════════════════════════════════════════════════════
-    'MomentumBurst': {
-        'lookback_periods': [10, 15],               
-        'threshold_std': [1.0, 1.5],                
-        'stop_loss_pips': [15, 20],                 
-        'take_profit_pips': [30, 40],               
-        'cooldown_minutes': [180],                  
-    },
-    # Total: 2 × 2 × 2 × 2 × 1 = 16 combinações
-    
-    # ═══════════════════════════════════════════════════════════════
-    # TOTAL: ~125 unique strategies (15 + 64 + 30 + 16 = 125)
-    # After R:R filtering: ~125 strategies
-    # Estimated backtest time: ~12-18 minutes
+    # TOTAL: 44 unique strategies (8 + 24 + 12 = 44)
+    # Estimated backtest time: ~5-8 minutes
     # ═══════════════════════════════════════════════════════════════
 }
 

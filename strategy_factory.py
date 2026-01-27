@@ -184,27 +184,30 @@ class TrendFollower(Strategy):
 # ═══════════════════════════════════════════════════════════════
 
 class MeanReverter(Strategy):
-    """Mean reversion strategy"""
+    """Mean reversion strategy - PROVEN CHAMPION (Sharpe 6.29)
+    
+    IMPORTANT: NO max_trades_per_day - it breaks the strategy!
+    Original version from Round 6/7 that achieved best results.
+    """
     
     def __init__(self, params: Dict):
         super().__init__("MeanReverter", params)
-        self.lookback = params.get("lookback_periods", 20)
+        self.lookback = params.get("lookback_periods", 5)  # L5 is optimal
         # Accept both 'threshold_std' (from config) and 'threshold' (legacy)
-        self.threshold = params.get("threshold_std", params.get("threshold", 1.5))
-        self.max_trades_per_day = params.get("max_trades_per_day", 10)  # ADD max_trades_per_day
+        self.threshold = params.get("threshold_std", params.get("threshold", 2.0))
         
         # Add rules
         self.add_rule({
             "type": "entry_long",
-            "condition": f"z_score < -{self.threshold} AND volatility < 0.8"
+            "condition": f"z_score < -{self.threshold}"
         })
         self.add_rule({
             "type": "entry_short",
-            "condition": f"z_score > {self.threshold} AND volatility < 0.8"
+            "condition": f"z_score > {self.threshold}"
         })
     
     def generate_signals(self, df: pd.DataFrame) -> pd.Series:
-        """Generate mean reversion signals with max_trades_per_day limit"""
+        """Generate mean reversion signals - NO max_trades_per_day (breaks strategy!)"""
         signals = pd.Series(0, index=df.index)
         
         # Calculate z-score of price
@@ -219,14 +222,11 @@ class MeanReverter(Strategy):
             rolling_std_safe = rolling_std.replace(0, 1e-8)
             z_score = (price - rolling_mean) / rolling_std_safe
             
-            # Raw buy/sell signals
-            raw_buy = z_score < -self.threshold
-            raw_sell = z_score > self.threshold
+            # Buy when oversold (z_score very negative)
+            signals[z_score < -self.threshold] = 1
             
-            # ALWAYS apply max_trades_per_day using base class method
-            signals = self.apply_max_trades_per_day_filter(
-                signals, df, raw_buy, raw_sell, self.max_trades_per_day
-            )
+            # Sell when overbought (z_score very positive)
+            signals[z_score > self.threshold] = -1
         
         return signals
 
