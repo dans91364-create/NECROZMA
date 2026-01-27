@@ -4,7 +4,7 @@
 Test to verify FILE_PREFIX dynamic update fix
 
 This test verifies that when config.FILE_PREFIX is updated,
-the reference in analyzer.py will point to the new value.
+the reference in analyzer.py and light_report.py will point to the new value.
 """
 
 import sys
@@ -21,67 +21,86 @@ def test_file_prefix_import():
     print("🧪 TEST: FILE_PREFIX Import Verification")
     print("="*70)
     
-    # Check analyzer.py source to ensure it uses config.FILE_PREFIX
-    analyzer_path = Path(__file__).parent / "analyzer.py"
+    files_to_check = {
+        "analyzer.py": 10,  # Expected number of FILE_PREFIX usages
+        "light_report.py": 1,
+    }
     
-    with open(analyzer_path, 'r') as f:
-        content = f.read()
+    all_passed = True
     
-    # Check that FILE_PREFIX is not in the import statement
-    import_section = content[:2000]  # First 2000 chars should contain imports
-    
-    print("\n1️⃣ Checking import statement...")
-    if "from config import" in import_section and "FILE_PREFIX" in import_section:
-        # Check if it's after the from config import block
-        from_config_import = import_section[import_section.find("from config import"):]
-        closing_paren = from_config_import.find(")")
-        import_block = from_config_import[:closing_paren + 1]
+    for filename, expected_count in files_to_check.items():
+        file_path = Path(__file__).parent / filename
         
-        if "FILE_PREFIX" in import_block:
-            print(f"   ❌ FAILURE: FILE_PREFIX is imported as a value in analyzer.py")
-            print(f"   This means it won't update dynamically!")
-            return False
-    
-    print(f"   ✅ SUCCESS: FILE_PREFIX is NOT imported as a value")
-    
-    # Check that config module is imported
-    print("\n2️⃣ Checking if config module is imported...")
-    if "import config" in import_section:
-        print(f"   ✅ SUCCESS: config module is imported")
-    else:
-        print(f"   ❌ FAILURE: config module is NOT imported")
-        return False
-    
-    # Check that config.FILE_PREFIX is used instead of FILE_PREFIX
-    print("\n3️⃣ Checking FILE_PREFIX usage in analyzer.py...")
-    
-    # Find all FILE_PREFIX usages (excluding comments and the import)
-    lines = content.split('\n')
-    file_prefix_usages = []
-    
-    for i, line in enumerate(lines, 1):
-        if 'FILE_PREFIX' in line and not line.strip().startswith('#'):
-            # Skip the import line
-            if 'from config import' in line or 'import config' in line:
+        print(f"\n📁 Checking {filename}...")
+        
+        with open(file_path, 'r') as f:
+            content = f.read()
+        
+        # Check that FILE_PREFIX is not in the import statement
+        import_section = content[:2000]  # First 2000 chars should contain imports
+        
+        print(f"  1️⃣ Checking import statement...")
+        if "from config import" in import_section and "FILE_PREFIX" in import_section:
+            # Check if it's after the from config import block
+            from_config_import = import_section[import_section.find("from config import"):]
+            closing_paren = from_config_import.find(")")
+            if closing_paren == -1:
+                # Single line import
+                closing_paren = from_config_import.find("\n")
+            import_block = from_config_import[:closing_paren + 1]
+            
+            if "FILE_PREFIX" in import_block:
+                print(f"     ❌ FAILURE: FILE_PREFIX is imported as a value in {filename}")
+                print(f"     This means it won't update dynamically!")
+                all_passed = False
                 continue
-            file_prefix_usages.append((i, line.strip()))
-    
-    print(f"   Found {len(file_prefix_usages)} usages of FILE_PREFIX")
-    
-    all_correct = True
-    for line_num, line_content in file_prefix_usages:
-        if 'config.FILE_PREFIX' in line_content:
-            print(f"   ✅ Line {line_num}: Uses config.FILE_PREFIX")
+        
+        print(f"     ✅ SUCCESS: FILE_PREFIX is NOT imported as a value")
+        
+        # Check that config module is imported
+        print(f"  2️⃣ Checking if config module is imported...")
+        if "import config" in import_section:
+            print(f"     ✅ SUCCESS: config module is imported")
         else:
-            print(f"   ❌ Line {line_num}: Does NOT use config.FILE_PREFIX")
-            print(f"      Content: {line_content[:80]}")
-            all_correct = False
+            print(f"     ❌ FAILURE: config module is NOT imported")
+            all_passed = False
+            continue
+        
+        # Check that config.FILE_PREFIX is used instead of FILE_PREFIX
+        print(f"  3️⃣ Checking FILE_PREFIX usage...")
+        
+        # Find all FILE_PREFIX usages (excluding comments and the import)
+        lines = content.split('\n')
+        file_prefix_usages = []
+        
+        for i, line in enumerate(lines, 1):
+            if 'FILE_PREFIX' in line and not line.strip().startswith('#'):
+                # Skip the import line
+                if 'from config import' in line or 'import config' in line:
+                    continue
+                file_prefix_usages.append((i, line.strip()))
+        
+        print(f"     Found {len(file_prefix_usages)} usages of FILE_PREFIX (expected {expected_count})")
+        
+        if len(file_prefix_usages) != expected_count:
+            print(f"     ⚠️  WARNING: Expected {expected_count} usages, found {len(file_prefix_usages)}")
+        
+        file_passed = True
+        for line_num, line_content in file_prefix_usages:
+            if 'config.FILE_PREFIX' in line_content:
+                print(f"     ✅ Line {line_num}: Uses config.FILE_PREFIX")
+            else:
+                print(f"     ❌ Line {line_num}: Does NOT use config.FILE_PREFIX")
+                print(f"        Content: {line_content[:80]}")
+                file_passed = False
+                all_passed = False
+        
+        if file_passed:
+            print(f"     ✅ SUCCESS: All usages reference config.FILE_PREFIX in {filename}")
     
-    if not all_correct:
-        print(f"\n   ❌ FAILURE: Some usages don't reference config.FILE_PREFIX")
+    if not all_passed:
+        print(f"\n   ❌ FAILURE: Some files don't properly reference config.FILE_PREFIX")
         return False
-    
-    print(f"\n   ✅ SUCCESS: All usages reference config.FILE_PREFIX")
     
     print("\n" + "="*70)
     print("✅ TEST PASSED: FILE_PREFIX will update dynamically!")
