@@ -180,9 +180,61 @@ class TrendFollower(Strategy):
 
 
 # ═══════════════════════════════════════════════════════════════
-# 🏆 MEAN REVERTER LEGACY - Versão EXATA do Round 6/7
+# 🏆 MEAN REVERTER ORIGINAL - EXACT Round 7 version (Sharpe 6.29, 41 trades)
 # ═══════════════════════════════════════════════════════════════
 
+class MeanReverterOriginal(Strategy):
+    """
+    🏆 MeanReverter ORIGINAL - EXACT Round 7 version (Sharpe 6.29, 41 trades)
+    
+    This is the PROVEN CHAMPION from Round 7 backtesting.
+    DO NOT MODIFY THIS CODE - it's been validated to produce optimal results.
+    
+    Key features that MUST be preserved:
+    1. Division by zero protection: rolling_std.replace(0, 1e-8)
+    2. Support both mid_price AND close columns
+    3. Accept both threshold_std and threshold parameters
+    4. NO max_trades_per_day limit
+    """
+    
+    def __init__(self, params: Dict):
+        super().__init__("MeanReverterOriginal", params)
+        self.lookback = params.get("lookback_periods", 5)  # L5 is optimal
+        # Accept both 'threshold_std' (from config) and 'threshold' (legacy)
+        self.threshold = params.get("threshold_std", params.get("threshold", 2.0))
+        
+        self.add_rule({
+            "type": "entry_long",
+            "condition": f"z_score < -{self.threshold}"
+        })
+        self.add_rule({
+            "type": "entry_short",
+            "condition": f"z_score > {self.threshold}"
+        })
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.Series:
+        """Generate mean reversion signals - EXACT Round 7 implementation"""
+        signals = pd.Series(0, index=df.index)
+        
+        # CRITICAL: Support both mid_price AND close (original behavior)
+        if "mid_price" in df.columns or "close" in df.columns:
+            price = df.get("mid_price", df.get("close"))
+            
+            # Rolling z-score
+            rolling_mean = price.rolling(self.lookback).mean()
+            rolling_std = price.rolling(self.lookback).std()
+            
+            # CRITICAL: Division by zero protection (THIS WAS MISSING!)
+            rolling_std_safe = rolling_std.replace(0, EPSILON)
+            z_score = (price - rolling_mean) / rolling_std_safe
+            
+            # Buy when oversold (z_score very negative)
+            signals[z_score < -self.threshold] = 1
+            
+            # Sell when overbought (z_score very positive)
+            signals[z_score > self.threshold] = -1
+        
+        return signals
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -894,6 +946,7 @@ class StrategyFactory:
         # Map template names to classes
         self.template_classes = {
             "TrendFollower": TrendFollower,
+            "MeanReverterOriginal": MeanReverterOriginal,  # 🏆 Round 7 EXACT (Sharpe 6.29, 41 trades)
             "MeanReverterLegacy": MeanReverterLegacy,  # 🏆 Round 7 version (Sharpe 6.29)
             "MeanReverter": MeanReverter,
             "RegimeAdapter": RegimeAdapter,
