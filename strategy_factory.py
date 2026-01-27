@@ -58,11 +58,11 @@ class Strategy:
             index_value: pandas index value (could be Timestamp, datetime, or string)
             
         Returns:
-            Extracted date (datetime.date object or string in YYYY-MM-DD format)
+            Extracted date as string in YYYY-MM-DD format for consistent comparison
         """
         # Method 1: Try .date() method (works for Timestamp and datetime)
         if hasattr(index_value, 'date'):
-            return index_value.date()
+            return str(index_value.date())
         # Method 2: Try string conversion (ISO format fallback)
         elif hasattr(index_value, 'strftime'):
             return str(index_value)[:10]
@@ -86,14 +86,13 @@ class Strategy:
         Returns:
             Signal series with max trades per day limit applied
         """
-        daily_trade_count = {}
         total_trades_today = 0  # FAILSAFE global counter
-        current_day = None
+        current_day = ""  # Initialize to empty string for consistent string comparison
         
         for i in range(len(signals)):
             current_time = df.index[i]
             
-            # Extract date using helper method
+            # Extract date using helper method (returns string for consistent comparison)
             trade_date = self.extract_date_from_index(current_time)
             
             # Reset daily counter on new day
@@ -108,11 +107,9 @@ class Strategy:
             if buy_signal.iloc[i]:
                 signals.iloc[i] = 1
                 total_trades_today += 1
-                daily_trade_count[trade_date] = daily_trade_count.get(trade_date, 0) + 1
             elif sell_signal.iloc[i]:
                 signals.iloc[i] = -1
                 total_trades_today += 1
-                daily_trade_count[trade_date] = daily_trade_count.get(trade_date, 0) + 1
         
         return signals
     
@@ -524,15 +521,14 @@ class MomentumBurst(Strategy):
             if has_datetime_index:
                 # Apply TIME-BASED cooldown (not index-based!)
                 last_signal_time = None
-                daily_trade_count = {}
                 total_trades_today = 0  # FAILSAFE global counter
-                current_day = None
+                current_day = ""  # Initialize to empty string for consistent string comparison
                 cooldown_delta = pd.Timedelta(minutes=self.cooldown)
                 
                 for i in range(len(signals)):
                     current_time = df.index[i]
                     
-                    # Extract date using base class helper method
+                    # Extract date using base class helper method (returns string)
                     trade_date = self.extract_date_from_index(current_time)
                     
                     # Reset daily counter on new day
@@ -553,12 +549,10 @@ class MomentumBurst(Strategy):
                         signals.iloc[i] = 1
                         last_signal_time = current_time
                         total_trades_today += 1
-                        daily_trade_count[trade_date] = daily_trade_count.get(trade_date, 0) + 1
                     elif raw_sell.iloc[i]:
                         signals.iloc[i] = -1
                         last_signal_time = current_time
                         total_trades_today += 1
-                        daily_trade_count[trade_date] = daily_trade_count.get(trade_date, 0) + 1
             else:
                 # Fallback to index-based cooldown for non-datetime indices (e.g., in tests)
                 # This preserves backward compatibility but won't fix the overtrading issue
