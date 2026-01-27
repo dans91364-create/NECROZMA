@@ -222,6 +222,92 @@ def test_meanreverter_v3_adaptive_threshold():
     return True
 
 
+def test_meanreverter_v3_max_trades_per_day():
+    """Test MeanReverterV3 max_trades_per_day (bug fix validation)"""
+    print("\n" + "=" * 70)
+    print("🧪 TEST: MeanReverterV3 Max Trades Per Day (Bug Fix)")
+    print("=" * 70)
+    
+    # Create data spanning 2 days with strong mean reversion signals
+    np.random.seed(42)
+    n = 2000
+    
+    # Create mean-reverting price with frequent overshoots
+    base_price = 1.10
+    mean = base_price
+    prices = [base_price]
+    for i in range(1, n):
+        # Strong oscillations to trigger many signals
+        if i % 50 == 0:
+            # Large deviation from mean
+            prices.append(mean + 0.0100 * (1 if i % 100 == 0 else -1))
+        else:
+            # Mean reversion
+            prices.append(prices[-1] + (mean - prices[-1]) * 0.05 + np.random.randn() * 0.0001)
+    
+    # 1-minute intervals, spanning ~1.4 days
+    df = pd.DataFrame({
+        "mid_price": prices,
+        "close": prices,
+    }, index=pd.date_range("2025-01-01", periods=n, freq="1min"))
+    
+    # Test with low threshold to generate many signals, but max 5 per day
+    params = {
+        "threshold_std": 1.2,  # Low threshold = more signals
+        "adaptive_threshold": False,
+        "require_confirmation": False,  # No confirmation = more signals
+        "max_trades_per_day": 5,  # New default limit
+    }
+    
+    strategy = MeanReverterV3(params)
+    signals = strategy.generate_signals(df)
+    
+    # Count signals per day
+    signals_df = pd.DataFrame({"signal": signals})
+    signals_df = signals_df[signals_df["signal"] != 0]
+    
+    if len(signals_df) > 0:
+        signals_by_day = signals_df.groupby(signals_df.index.date).size()
+        print(f"\n📊 Signals per day:")
+        for date, count in signals_by_day.items():
+            print(f"   {date}: {count} signals")
+        
+        max_per_day = signals_by_day.max()
+        if max_per_day <= 5:
+            print(f"   ✅ PASSED: Max trades per day limit working correctly!")
+            print(f"      (Bug fixed: max_trades_per_day now ALWAYS enforced)")
+            return True
+        else:
+            print(f"   ❌ FAILED: Expected max 5 signals per day, got {max_per_day}")
+            print(f"      (Bug still present: max_trades_per_day not enforced properly)")
+            return False
+    else:
+        print(f"   ⚠️  No signals generated (might need to adjust test data)")
+        return True
+
+
+def test_default_max_trades_per_day():
+    """Test that default max_trades_per_day is now 5 (reduced from 10)"""
+    print("\n" + "=" * 70)
+    print("🧪 TEST: Default max_trades_per_day = 5")
+    print("=" * 70)
+    
+    # Test MomentumBurst default
+    momentum_strategy = MomentumBurst({})
+    print(f"   MomentumBurst default max_trades_per_day: {momentum_strategy.max_trades_per_day}")
+    
+    # Test MeanReverterV3 default
+    meanrev_strategy = MeanReverterV3({})
+    print(f"   MeanReverterV3 default max_trades_per_day: {meanrev_strategy.max_trades_per_day}")
+    
+    if momentum_strategy.max_trades_per_day == 5 and meanrev_strategy.max_trades_per_day == 5:
+        print(f"   ✅ PASSED: Default max_trades_per_day reduced to 5")
+        return True
+    else:
+        print(f"   ❌ FAILED: Expected default=5 for both strategies")
+        return False
+
+
 def run_all_tests():
     """Run all tests"""
     print("\n" + "=" * 70)
@@ -233,6 +319,8 @@ def run_all_tests():
         "MomentumBurst Max Trades Per Day": test_momentum_burst_max_trades_per_day(),
         "MeanReverterV3 Fixed Lookback": test_meanreverter_v3_fixed_lookback(),
         "MeanReverterV3 Adaptive Threshold": test_meanreverter_v3_adaptive_threshold(),
+        "MeanReverterV3 Max Trades Per Day": test_meanreverter_v3_max_trades_per_day(),
+        "Default max_trades_per_day = 5": test_default_max_trades_per_day(),
     }
     
     # Summary

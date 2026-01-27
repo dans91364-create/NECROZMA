@@ -49,6 +49,70 @@ class Strategy:
         """Add a trading rule"""
         self.rules.append(rule)
     
+    @staticmethod
+    def extract_date_from_index(index_value):
+        """
+        Extract date from index value with multiple fallback methods
+        
+        Args:
+            index_value: pandas index value (could be Timestamp, datetime, or string)
+            
+        Returns:
+            Extracted date as string in YYYY-MM-DD format for consistent comparison
+        """
+        # Method 1: Try .date() method (works for Timestamp and datetime)
+        if hasattr(index_value, 'date'):
+            return str(index_value.date())
+        # Method 2: Try string conversion (ISO format fallback)
+        elif hasattr(index_value, 'strftime'):
+            return str(index_value)[:10]
+        # Method 3: Direct string conversion fallback
+        else:
+            return str(index_value)[:10]
+    
+    def apply_max_trades_per_day_filter(self, signals: pd.Series, df: pd.DataFrame, 
+                                       buy_signal: pd.Series, sell_signal: pd.Series,
+                                       max_trades_per_day: int) -> pd.Series:
+        """
+        Apply max trades per day limit to signals
+        
+        Args:
+            signals: Empty signal series to populate
+            df: DataFrame with index (must have DatetimeIndex or convertible index)
+            buy_signal: Boolean series indicating buy signals
+            sell_signal: Boolean series indicating sell signals
+            max_trades_per_day: Maximum number of trades allowed per day
+            
+        Returns:
+            Signal series with max trades per day limit applied
+        """
+        total_trades_today = 0  # FAILSAFE global counter
+        current_day = ""  # Initialize to empty string for consistent string comparison
+        
+        for i in range(len(signals)):
+            current_time = df.index[i]
+            
+            # Extract date using helper method (returns string for consistent comparison)
+            trade_date = self.extract_date_from_index(current_time)
+            
+            # Reset daily counter on new day
+            if trade_date != current_day:
+                current_day = trade_date
+                total_trades_today = 0
+            
+            # ALWAYS check max trades - NO EXCEPTIONS
+            if total_trades_today >= max_trades_per_day:
+                continue  # Skip signal generation for rest of day
+            
+            if buy_signal.iloc[i]:
+                signals.iloc[i] = 1
+                total_trades_today += 1
+            elif sell_signal.iloc[i]:
+                signals.iloc[i] = -1
+                total_trades_today += 1
+        
+        return signals
+    
     def generate_signals(self, df: pd.DataFrame) -> pd.Series:
         """
         Generate trading signals
@@ -318,8 +382,8 @@ class MeanReverterV3(Strategy):
         self.use_session_filter = params.get("use_session_filter", False)
         self.active_hours = params.get("active_hours", (8, 20))  # London+NY sessions
         
-        # Max trades per day (failsafe)
-        self.max_trades_per_day = params.get("max_trades_per_day", 10)
+        # Max trades per day (failsafe) - REDUCED from 10 to 5
+        self.max_trades_per_day = params.get("max_trades_per_day", 5)
         
         # Add rules
         self.add_rule({
@@ -386,25 +450,10 @@ class MeanReverterV3(Strategy):
             buy_signal = confirmed_buy & session_active
             sell_signal = confirmed_sell & session_active
             
-            # Apply max trades per day limit
-            daily_trade_count = {}
-            for i in range(len(signals)):
-                current_time = df.index[i]
-                current_date = current_time.date() if hasattr(current_time, 'date') else None
-                
-                # Check max trades per day
-                if current_date:
-                    if daily_trade_count.get(current_date, 0) >= self.max_trades_per_day:
-                        continue
-                
-                if buy_signal.iloc[i]:
-                    signals.iloc[i] = 1
-                    if current_date:
-                        daily_trade_count[current_date] = daily_trade_count.get(current_date, 0) + 1
-                elif sell_signal.iloc[i]:
-                    signals.iloc[i] = -1
-                    if current_date:
-                        daily_trade_count[current_date] = daily_trade_count.get(current_date, 0) + 1
+            # Apply max trades per day limit using base class method
+            signals = self.apply_max_trades_per_day_filter(
+                signals, df, buy_signal, sell_signal, self.max_trades_per_day
+            )
         
         return signals
 
@@ -428,7 +477,7 @@ class MomentumBurst(Strategy):
         self.volume_multiplier = 1.5
         # TIME-BASED cooldown in MINUTES (not candles/ticks!)
         self.cooldown = params.get("cooldown_minutes", params.get("cooldown", 60))  # In MINUTES
-        self.max_trades_per_day = params.get("max_trades_per_day", 10)  # Reduced from 50 to 10: limits overtrading and ensures realistic execution capacity
+        self.max_trades_per_day = params.get("max_trades_per_day", 5)  # REDUCED from 10 to 5: critical fix to prevent overtrading
         
         # Add rules
         self.add_rule({
@@ -472,18 +521,24 @@ class MomentumBurst(Strategy):
             if has_datetime_index:
                 # Apply TIME-BASED cooldown (not index-based!)
                 last_signal_time = None
-                daily_trade_count = {}
+                total_trades_today = 0  # FAILSAFE global counter
+                current_day = ""  # Initialize to empty string for consistent string comparison
                 cooldown_delta = pd.Timedelta(minutes=self.cooldown)
                 
                 for i in range(len(signals)):
                     current_time = df.index[i]
-                    # Always extract date, use string fallback if date() method not available
-                    # String fallback assumes YYYY-MM-DD format (first 10 chars of ISO timestamp)
-                    trade_date = current_time.date() if hasattr(current_time, 'date') else str(current_time)[:10]
                     
-                    # Check max trades per day (always enforced)
-                    if daily_trade_count.get(trade_date, 0) >= self.max_trades_per_day:
-                        continue
+                    # Extract date using base class helper method (returns string)
+                    trade_date = self.extract_date_from_index(current_time)
+                    
+                    # Reset daily counter on new day
+                    if trade_date != current_day:
+                        current_day = trade_date
+                        total_trades_today = 0
+                    
+                    # ALWAYS check max trades - NO EXCEPTIONS
+                    if total_trades_today >= self.max_trades_per_day:
+                        continue  # Skip signal generation for rest of day
                     
                     # Check time-based cooldown
                     if last_signal_time is not None:
@@ -493,11 +548,11 @@ class MomentumBurst(Strategy):
                     if raw_buy.iloc[i]:
                         signals.iloc[i] = 1
                         last_signal_time = current_time
-                        daily_trade_count[trade_date] = daily_trade_count.get(trade_date, 0) + 1
+                        total_trades_today += 1
                     elif raw_sell.iloc[i]:
                         signals.iloc[i] = -1
                         last_signal_time = current_time
-                        daily_trade_count[trade_date] = daily_trade_count.get(trade_date, 0) + 1
+                        total_trades_today += 1
             else:
                 # Fallback to index-based cooldown for non-datetime indices (e.g., in tests)
                 # This preserves backward compatibility but won't fix the overtrading issue
