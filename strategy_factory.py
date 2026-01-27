@@ -180,6 +180,61 @@ class TrendFollower(Strategy):
 
 
 # ═══════════════════════════════════════════════════════════════
+# 🏆 MEAN REVERTER LEGACY - Versão EXATA do Round 6/7
+# ═══════════════════════════════════════════════════════════════
+
+class MeanReverterLegacy(Strategy):
+    """
+    🏆 MeanReverter LEGACY - Versão EXATA do Round 6/7
+    
+    HISTÓRICO DE RESULTADOS:
+    - Round 7: Sharpe 6.29, 41 trades, Return 59%
+    - Esta é a versão que funcionava perfeitamente!
+    
+    DIFERENÇA TÉCNICA:
+    - Usa 'threshold' diretamente (não 'threshold_std')
+    - Sem proteção de divisão por zero (original)
+    - Verifica apenas 'mid_price' (comportamento original)
+    """
+    
+    def __init__(self, params: Dict):
+        super().__init__("MeanReverterLegacy", params)
+        self.lookback = params.get("lookback_periods", 5)
+        # LEGACY: usar 'threshold' diretamente (como era no Round 6/7)
+        self.threshold = params.get("threshold", 2.0)
+        
+        self.add_rule({
+            "type": "entry_long",
+            "condition": f"z_score < -{self.threshold}"
+        })
+        self.add_rule({
+            "type": "entry_short",
+            "condition": f"z_score > {self.threshold}"
+        })
+    
+    def generate_signals(self, df: pd.DataFrame) -> pd.Series:
+        """Generate mean reversion signals - LEGACY VERSION (Round 7)"""
+        signals = pd.Series(0, index=df.index)
+        
+        # Original: verificar apenas 'mid_price'
+        if "mid_price" in df.columns:
+            price = df["mid_price"]
+            
+            # Rolling z-score (versão original sem proteção)
+            rolling_mean = price.rolling(self.lookback).mean()
+            rolling_std = price.rolling(self.lookback).std()
+            z_score = (price - rolling_mean) / rolling_std
+            
+            # Buy when oversold
+            signals[z_score < -self.threshold] = 1
+            
+            # Sell when overbought
+            signals[z_score > self.threshold] = -1
+        
+        return signals
+
+
+# ═══════════════════════════════════════════════════════════════
 # 🔄 MEAN REVERTER
 # ═══════════════════════════════════════════════════════════════
 
@@ -839,6 +894,7 @@ class StrategyFactory:
         # Map template names to classes
         self.template_classes = {
             "TrendFollower": TrendFollower,
+            "MeanReverterLegacy": MeanReverterLegacy,  # 🏆 Round 7 version (Sharpe 6.29)
             "MeanReverter": MeanReverter,
             "RegimeAdapter": RegimeAdapter,
             "MeanReverterV2": MeanReverterV2,
@@ -878,7 +934,13 @@ class StrategyFactory:
             lookbacks = [V3_OPTIMAL_LOOKBACK]  # V3 ALWAYS uses fixed lookback=5 (proven optimal)
         else:
             lookbacks = template_params.get("lookback_periods", [20])
-        thresholds = template_params.get("threshold_std", template_params.get("thresholds", [1.0]))
+        
+        # MeanReverterLegacy uses 'threshold', others use 'threshold_std'
+        if template_name == "MeanReverterLegacy":
+            thresholds = template_params.get("threshold", template_params.get("threshold_std", [1.0]))
+        else:
+            thresholds = template_params.get("threshold_std", template_params.get("thresholds", [1.0]))
+        
         stop_losses = template_params.get("stop_loss_pips", [20])
         take_profits = template_params.get("take_profit_pips", [40])
         
@@ -889,7 +951,7 @@ class StrategyFactory:
             # Risk/reward filter - less strict for V3 and MeanReverter (tested combinations)
             if template_name == "MeanReverterV3":
                 min_rr_ratio = 1.2
-            elif template_name == "MeanReverter":
+            elif template_name in ["MeanReverter", "MeanReverterLegacy"]:
                 min_rr_ratio = 1.3  # Allow SL30/TP40 (1.33 ratio)
             else:
                 min_rr_ratio = 1.5

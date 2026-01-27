@@ -446,15 +446,28 @@ METRIC_THRESHOLDS = {
 # ❌ REMOVIDO: TrendFollower - Sharpe negativo, 114k trades inúteis
 # ❌ REMOVIDO: MomentumBurst - Bug de milhões de trades nunca corrigido
 STRATEGY_TEMPLATES = [
-    'MeanReverter',      # 🥇 Sharpe 6.29
-    'MeanReverterV2',    # 🥈 Volume de trades
-    'MeanReverterV3',    # 🥉 Adaptive
+    'MeanReverterLegacy',  # 🏆 NOVO: Versão Round 7 (Sharpe 6.29)
+    'MeanReverter',        # Versão atual para comparação
+    'MeanReverterV2',      # 🥈 Volume de trades
+    'MeanReverterV3',      # 🥉 Adaptive
 ]
 
 # Parameter ranges for strategy generation
 STRATEGY_PARAMS = {
     # ═══════════════════════════════════════════════════════════════
-    # 🥇 MEAN REVERTER - CAMPEÃO ABSOLUTO (Sharpe 6.29)
+    # 🏆 MEAN REVERTER LEGACY - Versão EXATA do Round 7 (Sharpe 6.29)
+    # USA 'threshold' NÃO 'threshold_std' para compatibilidade
+    # ═══════════════════════════════════════════════════════════════
+    'MeanReverterLegacy': {
+        'lookback_periods': [5],
+        'threshold': [1.8, 2.0],           # NOTA: 'threshold' não 'threshold_std'
+        'stop_loss_pips': [20, 30],
+        'take_profit_pips': [40, 50],
+    },
+    # Total: 1 × 2 × 2 × 2 = 8 combinações
+    
+    # ═══════════════════════════════════════════════════════════════
+    # 🥇 MEAN REVERTER - Versão atual (Round 9) para comparação
     # IMPORTANTE: NÃO usar max_trades_per_day - quebra a estratégia!
     # Thresholds comprovados: T1.8, T2.0
     # ═══════════════════════════════════════════════════════════════
@@ -499,8 +512,9 @@ STRATEGY_PARAMS = {
     # Total: 1 × 2 × 3 × 2 × 1 × 1 × 1 = 12 combinações
     
     # ═══════════════════════════════════════════════════════════════
-    # TOTAL: 44 unique strategies (8 + 24 + 12 = 44)
-    # Estimated backtest time: ~5-8 minutes
+    # TOTAL: 52 unique strategies (8 + 8 + 24 + 12 = 52)
+    # MeanReverterLegacy: 8 + MeanReverter: 8 + MeanReverterV2: 24 + MeanReverterV3: 12
+    # Estimated backtest time: ~6-9 minutes
     # ═══════════════════════════════════════════════════════════════
 }
 
