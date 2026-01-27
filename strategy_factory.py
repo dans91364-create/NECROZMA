@@ -185,7 +185,7 @@ class TrendFollower(Strategy):
 
 class MeanReverterOriginal(Strategy):
     """
-    🏆 MeanReverter ORIGINAL - EXACT Round 7 version (Sharpe 6.29, 41 trades)
+    🏆 MeanReverter Original - EXACT Round 7 version (Sharpe 6.29, 41 trades)
     
     This is the PROVEN CHAMPION from Round 7 backtesting.
     DO NOT MODIFY THIS CODE - it's been validated to produce optimal results.
