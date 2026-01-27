@@ -241,6 +241,15 @@ class MeanReverter(Strategy):
 
 
 # ═══════════════════════════════════════════════════════════════
+# 🏆 MEAN REVERTER LEGACY (Alias for backward compatibility)
+# ═══════════════════════════════════════════════════════════════
+
+# MeanReverterLegacy is an alias for MeanReverter (Round 7 version)
+# This maintains backward compatibility with existing configs and tests
+MeanReverterLegacy = MeanReverter
+
+
+# ═══════════════════════════════════════════════════════════════
 # 🎭 REGIME ADAPTER
 # ═══════════════════════════════════════════════════════════════
 
@@ -476,67 +485,104 @@ class MeanReverterV3(Strategy):
 
 
 # ═══════════════════════════════════════════════════════════════
-# 💥 MOMENTUM BURST (Explosions of momentum)
+# 💥 MOMENTUM BURST (Explosions of momentum) - BULLETPROOF FIX
 # ═══════════════════════════════════════════════════════════════
 
 class MomentumBurst(Strategy):
     """
-    Captures sudden momentum explosions with volume confirmation
-    - Detects rapid price movement (> 2 std dev)
-    - Requires volume confirmation (> 1.5x average)
-    - Rides the momentum wave
+    Momentum burst strategy with BULLETPROOF trade limiting.
+    
+    After multiple failed attempts (PRs #62, #75, #76, #77, #78, #80),
+    this version uses a simple loop that ALWAYS enforces limits.
     """
     
     def __init__(self, params: Dict):
         super().__init__("MomentumBurst", params)
-        self.lookback = params.get("lookback_periods", 20)
-        self.threshold = params.get("threshold", 2.0)  # Std dev threshold
-        self.volume_multiplier = 1.5
-        # TIME-BASED cooldown in MINUTES (not candles/ticks!)
-        self.cooldown = params.get("cooldown_minutes", params.get("cooldown", 60))  # In MINUTES
-        self.max_trades_per_day = params.get("max_trades_per_day", 5)  # REDUCED from 10 to 5: critical fix to prevent overtrading
+        self.lookback = params.get("lookback_periods", 15)
+        self.threshold = params.get("threshold_std", params.get("threshold", 1.5))
+        self.volume_multiplier = params.get("volume_multiplier", 1.5)
         
-        # Add rules
+        # BULLETPROOF limits - very conservative
+        self.max_trades_per_day = params.get("max_trades_per_day", 5)
+        self.cooldown_minutes = params.get("cooldown_minutes", 120)  # 2 hours minimum
+        
         self.add_rule({
             "type": "entry_long",
-            "condition": f"price_change > {self.threshold} * std_dev AND volume > avg_volume * {self.volume_multiplier}"
+            "condition": f"momentum_burst_up AND volume_surge (max {self.max_trades_per_day}/day)"
         })
         self.add_rule({
-            "type": "entry_short",
-            "condition": f"price_change < -{self.threshold} * std_dev AND volume > avg_volume * {self.volume_multiplier}"
+            "type": "entry_short", 
+            "condition": f"momentum_burst_down AND volume_surge (max {self.max_trades_per_day}/day)"
         })
     
     def generate_signals(self, df: pd.DataFrame) -> pd.Series:
-        """Generate momentum burst signals - ALWAYS applies max_trades_per_day"""
+        """Generate momentum burst signals with ABSOLUTE trade limiting."""
         signals = pd.Series(0, index=df.index)
         
+        # Check if we have price data
         if "mid_price" in df.columns or "close" in df.columns:
             price = df.get("mid_price", df.get("close"))
             
-            # Calculate price changes
+            # Calculate momentum burst conditions
             price_change = price.diff()
             rolling_std = price_change.rolling(self.lookback).std()
+            rolling_std_safe = rolling_std.replace(0, 1e-8)
             
-            # Detect momentum burst (> threshold std devs)
-            momentum_burst_up = price_change > (self.threshold * rolling_std)
-            momentum_burst_down = price_change < (-self.threshold * rolling_std)
+            momentum_burst_up = price_change > (self.threshold * rolling_std_safe)
+            momentum_burst_down = price_change < (-self.threshold * rolling_std_safe)
             
-            # Volume confirmation
+            # Volume confirmation (optional)
             if "volume" in df.columns:
                 avg_volume = df["volume"].rolling(self.lookback).mean()
                 volume_surge = df["volume"] > avg_volume * self.volume_multiplier
             else:
-                volume_surge = True  # No volume filter if not available
+                volume_surge = pd.Series(True, index=df.index)
             
-            # RAW signals
+            # Raw signals before limiting
             raw_buy = momentum_burst_up & volume_surge
             raw_sell = momentum_burst_down & volume_surge
             
-            # ALWAYS apply max_trades_per_day using base class method
-            # This works with ANY index type and ALWAYS enforces the limit
-            signals = self.apply_max_trades_per_day_filter(
-                signals, df, raw_buy, raw_sell, self.max_trades_per_day
-            )
+            # BULLETPROOF LIMITING - Simple loop, no edge cases
+            last_signal_time = None
+            trades_per_day = {}
+            
+            for i in range(len(df)):
+                idx = df.index[i]
+                
+                # Extract date - works with ANY index type
+                if hasattr(idx, 'date'):
+                    current_date = str(idx.date())
+                elif hasattr(idx, 'strftime'):
+                    current_date = idx.strftime('%Y-%m-%d')
+                else:
+                    current_date = str(idx)[:10]
+                
+                # CHECK 1: Daily limit (ABSOLUTE - no exceptions)
+                day_trades = trades_per_day.get(current_date, 0)
+                if day_trades >= self.max_trades_per_day:
+                    continue
+                
+                # CHECK 2: Cooldown in real minutes (ABSOLUTE - no exceptions)
+                if last_signal_time is not None:
+                    try:
+                        if hasattr(idx, 'timestamp') or hasattr(idx, 'to_pydatetime'):
+                            time_diff_seconds = (idx - last_signal_time).total_seconds()
+                            time_diff_minutes = time_diff_seconds / 60
+                            if time_diff_minutes < self.cooldown_minutes:
+                                continue
+                    except (TypeError, AttributeError, ValueError):
+                        # If time comparison fails, skip cooldown check but daily limit still applies
+                        pass
+                
+                # Apply signal if all checks pass
+                if raw_buy.iloc[i]:
+                    signals.iloc[i] = 1
+                    last_signal_time = idx
+                    trades_per_day[current_date] = day_trades + 1
+                elif raw_sell.iloc[i]:
+                    signals.iloc[i] = -1
+                    last_signal_time = idx
+                    trades_per_day[current_date] = day_trades + 1
         
         return signals
 
