@@ -183,9 +183,15 @@ class TrendFollower(Strategy):
 # 🏆 MEAN REVERTER LEGACY - Versão EXATA do Round 6/7
 # ═══════════════════════════════════════════════════════════════
 
-class MeanReverterLegacy(Strategy):
+
+
+# ═══════════════════════════════════════════════════════════════
+# 🏆 MEAN REVERTER - CAMPEÃO (Sharpe 6.29)
+# ═══════════════════════════════════════════════════════════════
+
+class MeanReverter(Strategy):
     """
-    🏆 MeanReverter LEGACY - Versão EXATA do Round 6/7
+    🏆 MeanReverter - Versão EXATA do Round 6/7
     
     HISTÓRICO DE RESULTADOS:
     - Round 7: Sharpe 6.29, 41 trades, Return 59%
@@ -198,7 +204,7 @@ class MeanReverterLegacy(Strategy):
     """
     
     def __init__(self, params: Dict):
-        super().__init__("MeanReverterLegacy", params)
+        super().__init__("MeanReverter", params)
         self.lookback = params.get("lookback_periods", 5)
         # LEGACY: usar 'threshold' diretamente (como era no Round 6/7)
         self.threshold = params.get("threshold", 2.0)
@@ -229,58 +235,6 @@ class MeanReverterLegacy(Strategy):
             signals[z_score < -self.threshold] = 1
             
             # Sell when overbought
-            signals[z_score > self.threshold] = -1
-        
-        return signals
-
-
-# ═══════════════════════════════════════════════════════════════
-# 🔄 MEAN REVERTER
-# ═══════════════════════════════════════════════════════════════
-
-class MeanReverter(Strategy):
-    """Mean reversion strategy - PROVEN CHAMPION (Sharpe 6.29)
-    
-    IMPORTANT: NO max_trades_per_day - it breaks the strategy!
-    Original version from Round 6/7 that achieved best results.
-    """
-    
-    def __init__(self, params: Dict):
-        super().__init__("MeanReverter", params)
-        self.lookback = params.get("lookback_periods", 5)  # L5 is optimal
-        # Accept both 'threshold_std' (from config) and 'threshold' (legacy)
-        self.threshold = params.get("threshold_std", params.get("threshold", 2.0))
-        
-        # Add rules
-        self.add_rule({
-            "type": "entry_long",
-            "condition": f"z_score < -{self.threshold}"
-        })
-        self.add_rule({
-            "type": "entry_short",
-            "condition": f"z_score > {self.threshold}"
-        })
-    
-    def generate_signals(self, df: pd.DataFrame) -> pd.Series:
-        """Generate mean reversion signals - NO max_trades_per_day (breaks strategy!)"""
-        signals = pd.Series(0, index=df.index)
-        
-        # Calculate z-score of price
-        if "mid_price" in df.columns or "close" in df.columns:
-            price = df.get("mid_price", df.get("close"))
-            
-            # Rolling z-score
-            rolling_mean = price.rolling(self.lookback).mean()
-            rolling_std = price.rolling(self.lookback).std()
-            
-            # Prevent division by zero
-            rolling_std_safe = rolling_std.replace(0, 1e-8)
-            z_score = (price - rolling_mean) / rolling_std_safe
-            
-            # Buy when oversold (z_score very negative)
-            signals[z_score < -self.threshold] = 1
-            
-            # Sell when overbought (z_score very positive)
             signals[z_score > self.threshold] = -1
         
         return signals
