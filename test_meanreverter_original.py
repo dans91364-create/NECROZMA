@@ -283,12 +283,13 @@ def test_meanreverter_original_vs_current():
     print(f"   MeanReverterOriginal signals: {original_count}")
     print(f"   MeanReverter signals:         {current_count}")
     
-    # Original should have MORE signals due to inf/-inf handling
-    print(f"\n   Key differences:")
-    print(f"   - Original has NO division protection: allows inf/-inf z_scores")
-    print(f"   - Original supports both mid_price and close columns")
-    print(f"   - Original accepts both threshold_std and threshold params")
-    print(f"   - MeanReverter has NO division protection either")
+    # Both strategies now have NO division protection
+    print(f"\n   Key differences between MeanReverterOriginal and MeanReverter:")
+    print(f"   - MeanReverterOriginal supports both mid_price AND close columns")
+    print(f"   - MeanReverterOriginal accepts both threshold_std and threshold params")
+    print(f"   - MeanReverter only checks mid_price column")
+    print(f"   - MeanReverter only uses threshold param (not threshold_std)")
+    print(f"   - BOTH have NO division protection (allow inf/-inf z_scores)")
     
     # Test passes if original doesn't error (signal count doesn't matter for this test)
     print(f"   ✅ PASSED: MeanReverterOriginal implementation is working!")
