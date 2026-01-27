@@ -29,7 +29,6 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).parent))
 
 
-
 # ═══════════════════════════════════════════════════════════════
 # 🎯 CONFIGURATION
 # ═══════════════════════════════════════════════════════════════
@@ -58,8 +57,8 @@ def load_progress():
         try:
             with open(PROGRESS_FILE, 'r') as f:
                 return json.load(f)
-        except:
-            pass
+        except (json.JSONDecodeError, IOError) as e:
+            print(f"⚠️ Error loading progress file: {e}")
     return {
         "completed": [],
         "failed": [],
@@ -167,6 +166,17 @@ def run_single_backtest(dataset: dict) -> dict:
         # Run WITHOUT timeout - let it complete naturally
         result = subprocess.run(cmd)
         
+        # Check if subprocess succeeded
+        if result.returncode != 0:
+            elapsed = time.time() - start_time
+            print(f"   ❌ Subprocess failed with exit code {result.returncode}")
+            return {
+                "pair": pair, "year": year,
+                "status": "error",
+                "elapsed_time": elapsed,
+                "error": f"Subprocess exited with code {result.returncode}"
+            }
+        
         elapsed = time.time() - start_time
         elapsed_str = f"{elapsed/3600:.1f}h" if elapsed > 3600 else f"{elapsed/60:.1f}m"
         
@@ -246,10 +256,7 @@ def show_status():
     
     print(f"\n📈 Overall Progress:")
     print(f"   Total datasets:    {total}")
-    if total > 0:
-        print(f"   ✅ Completed:      {completed} ({completed/total*100:.1f}%)")
-    else:
-        print(f"   ✅ Completed:      {completed}")
+    print(f"   ✅ Completed:      {completed}" + (f" ({completed/total*100:.1f}%)" if total > 0 else ""))
     print(f"   ❌ Failed:         {failed}")
     print(f"   ⏳ Remaining:      {remaining}")
     
@@ -399,10 +406,10 @@ def generate_final_report(progress):
     print(f"\n📊 FINAL RESULTS ({len(results)} datasets)")
     print("-"*70)
     
-    # Sort by best sharpe
+    # Sort by best sharpe (handle None values)
     sorted_results = sorted(
         results.items(),
-        key=lambda x: x[1].get("best_sharpe", 0),
+        key=lambda x: x[1].get("best_sharpe") or 0,
         reverse=True
     )
     
