@@ -1386,7 +1386,6 @@ def main():
         # Save final_judgment to JSON
         if final_judgment:
             import json
-            from pathlib import Path
             from config import OUTPUT_DIR
             
             output_dir = Path(OUTPUT_DIR)
