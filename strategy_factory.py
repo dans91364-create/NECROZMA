@@ -185,11 +185,14 @@ class TrendFollower(Strategy):
 
 class MeanReverterOriginal(Strategy):
     """
-    🏆 MeanReverter ORIGINAL - EXACT Round 5/6/7 version (Sharpe 6.29, 41 trades)
+    🏆 MeanReverter ORIGINAL - RESTORED Round 5/6/7 version (Sharpe 6.29, 41 trades)
     
     CRITICAL: This code MUST NOT have division-by-zero protection!
     The original behavior depends on inf/-inf values from division by zero
     to generate the correct signals.
+    
+    This class has been RESTORED to remove the division protection that was
+    inadvertently added, which was eliminating 59 critical signals.
     
     DO NOT ADD: rolling_std.replace(0, EPSILON) or any similar protection!
     
