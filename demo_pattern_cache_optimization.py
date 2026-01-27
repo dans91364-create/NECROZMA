@@ -70,6 +70,7 @@ def demo_optimization():
         labels_dir = tmpdir / "labels"
         
         # Simulate the workflow
+        # NOTE: Time estimates are approximate examples and may vary based on dataset size and hardware
         steps = [
             ("STEP 1", "Labeling", "~2 hours", "Creates 56GB in labels/"),
             ("STEP 2", "Regime Detection", "~97 minutes", "Creates regimes.parquet"),
@@ -102,6 +103,7 @@ def demo_optimization():
         print("\n⚡ SECOND RUN (EURUSD_2024) - Using cached patterns:")
         print("─"*80)
         
+        # NOTE: Time estimates are approximate examples and may vary based on dataset size and hardware
         steps_cached = [
             ("", "✅ Patterns cached!", "", "Loading from patterns.json"),
             ("STEP 1", "❌ SKIPPED", "", "Labeling not needed!"),

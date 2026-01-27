@@ -21,6 +21,7 @@ import argparse
 import json
 import time
 import subprocess
+import shutil
 from pathlib import Path
 from datetime import datetime
 import pandas as pd
@@ -184,7 +185,6 @@ def run_single_backtest(dataset: dict) -> dict:
         print(f"   ✅ Completed in {elapsed_str}")
         
         # Clean up labels directory to free space
-        import shutil
         labels_dir = Path("labels")
         if labels_dir.exists():
             try:

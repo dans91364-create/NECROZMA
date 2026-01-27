@@ -11,6 +11,8 @@ import sys
 import os
 import argparse
 import time
+import json
+import shutil
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -724,9 +726,6 @@ def run_strategy_discovery(df, args):
                   message="Strategy Discovery Pipeline Initiated")
     
     try:
-        import json
-        import shutil
-        
         # Ensure output directory exists
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
         
