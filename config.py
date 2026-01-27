@@ -485,8 +485,8 @@ STRATEGY_PARAMS = {
         'adaptive_threshold': [True, False],
         'stop_loss_pips': [20, 25, 30],         # Tighter stops
         'take_profit_pips': [35, 45, 55],       # Adjusted TPs
-        'require_confirmation': [False],        # REMOVED True - too conservative
-        'use_session_filter': [False],          # REMOVED True - reduces signals
+        'require_confirmation': [False],        # Single value: removed True (too conservative)
+        'use_session_filter': [False],          # Single value: removed True (reduces signals)
     },
     # Total: 3 × 2 × 3 × 3 × 1 × 1 = 54 combinations (reduced from 216)
     
