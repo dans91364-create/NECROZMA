@@ -183,6 +183,16 @@ def run_single_backtest(dataset: dict) -> dict:
         
         print(f"   ✅ Completed in {elapsed_str}")
         
+        # Clean up labels directory to free space
+        import shutil
+        labels_dir = Path("labels")
+        if labels_dir.exists():
+            try:
+                shutil.rmtree(labels_dir, ignore_errors=True)
+                print(f"   🗑️  Labels cleaned for next dataset")
+            except Exception as e:
+                print(f"   ⚠️  Could not clean labels: {e}")
+        
         # Find the report file
         reports_dir = Path("ultra_necrozma_results/reports")
         if reports_dir.exists():
