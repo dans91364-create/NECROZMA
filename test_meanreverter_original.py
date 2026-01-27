@@ -292,7 +292,7 @@ def test_meanreverter_original_vs_current():
     print(f"   - MeanReverterOriginal HAS division protection (rolling_std.replace(0, EPSILON))")
     print(f"   - MeanReverterOriginal supports both mid_price AND close columns")
     print(f"   - MeanReverterOriginal accepts both threshold_std and threshold params")
-    print(f"   - MeanReverter may have NO division protection (check implementation)")
+    print(f"   - MeanReverter has NO division protection (line 284 in strategy_factory.py)")
     print(f"   - MeanReverter only checks mid_price column")
     print(f"   - MeanReverter only uses threshold param (not threshold_std)")
     
