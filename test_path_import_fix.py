@@ -81,8 +81,13 @@ def test_path_import_fix():
             continue
         
         if in_main_function:
-            # Check for Path import inside main function (excluding comments)
+            # Exit main() scope when we encounter another top-level function or class
             stripped = line.strip()
+            if (stripped.startswith('def ') or stripped.startswith('class ')) and not line.startswith((' ', '\t')):
+                # Reached another top-level definition, exit main() scope
+                break
+            
+            # Check for Path import inside main function (excluding comments)
             if 'from pathlib import Path' in stripped and not stripped.startswith('#'):
                 local_path_imports.append(i)
     
