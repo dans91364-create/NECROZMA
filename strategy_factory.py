@@ -519,70 +519,70 @@ class MomentumBurst(Strategy):
         """Generate momentum burst signals with ABSOLUTE trade limiting."""
         signals = pd.Series(0, index=df.index)
         
-        if "mid_price" not in df.columns and "close" not in df.columns:
-            return signals
+        # Check if we have price data
+        if "mid_price" in df.columns or "close" in df.columns:
+            price = df.get("mid_price", df.get("close"))
             
-        price = df.get("mid_price", df.get("close"))
-        
-        # Calculate momentum burst conditions
-        price_change = price.diff()
-        rolling_std = price_change.rolling(self.lookback).std()
-        rolling_std_safe = rolling_std.replace(0, 1e-8)
-        
-        momentum_burst_up = price_change > (self.threshold * rolling_std_safe)
-        momentum_burst_down = price_change < (-self.threshold * rolling_std_safe)
-        
-        # Volume confirmation (optional)
-        if "volume" in df.columns:
-            avg_volume = df["volume"].rolling(self.lookback).mean()
-            volume_surge = df["volume"] > avg_volume * self.volume_multiplier
-        else:
-            volume_surge = pd.Series(True, index=df.index)
-        
-        # Raw signals before limiting
-        raw_buy = momentum_burst_up & volume_surge
-        raw_sell = momentum_burst_down & volume_surge
-        
-        # BULLETPROOF LIMITING - Simple loop, no edge cases
-        last_signal_time = None
-        trades_per_day = {}
-        
-        for i in range(len(df)):
-            idx = df.index[i]
+            # Calculate momentum burst conditions
+            price_change = price.diff()
+            rolling_std = price_change.rolling(self.lookback).std()
+            rolling_std_safe = rolling_std.replace(0, 1e-8)
             
-            # Extract date - works with ANY index type
-            if hasattr(idx, 'date'):
-                current_date = str(idx.date())
-            elif hasattr(idx, 'strftime'):
-                current_date = idx.strftime('%Y-%m-%d')
+            momentum_burst_up = price_change > (self.threshold * rolling_std_safe)
+            momentum_burst_down = price_change < (-self.threshold * rolling_std_safe)
+            
+            # Volume confirmation (optional)
+            if "volume" in df.columns:
+                avg_volume = df["volume"].rolling(self.lookback).mean()
+                volume_surge = df["volume"] > avg_volume * self.volume_multiplier
             else:
-                current_date = str(idx)[:10]
+                volume_surge = pd.Series(True, index=df.index)
             
-            # CHECK 1: Daily limit (ABSOLUTE - no exceptions)
-            day_trades = trades_per_day.get(current_date, 0)
-            if day_trades >= self.max_trades_per_day:
-                continue
+            # Raw signals before limiting
+            raw_buy = momentum_burst_up & volume_surge
+            raw_sell = momentum_burst_down & volume_surge
             
-            # CHECK 2: Cooldown in real minutes (ABSOLUTE - no exceptions)
-            if last_signal_time is not None:
-                try:
-                    if hasattr(idx, 'timestamp') or hasattr(idx, 'to_pydatetime'):
-                        time_diff_seconds = (idx - last_signal_time).total_seconds()
-                        time_diff_minutes = time_diff_seconds / 60
-                        if time_diff_minutes < self.cooldown_minutes:
-                            continue
-                except:
-                    pass  # If time comparison fails, skip cooldown check but daily limit still applies
+            # BULLETPROOF LIMITING - Simple loop, no edge cases
+            last_signal_time = None
+            trades_per_day = {}
             
-            # Apply signal if all checks pass
-            if raw_buy.iloc[i]:
-                signals.iloc[i] = 1
-                last_signal_time = idx
-                trades_per_day[current_date] = day_trades + 1
-            elif raw_sell.iloc[i]:
-                signals.iloc[i] = -1
-                last_signal_time = idx
-                trades_per_day[current_date] = day_trades + 1
+            for i in range(len(df)):
+                idx = df.index[i]
+                
+                # Extract date - works with ANY index type
+                if hasattr(idx, 'date'):
+                    current_date = str(idx.date())
+                elif hasattr(idx, 'strftime'):
+                    current_date = idx.strftime('%Y-%m-%d')
+                else:
+                    current_date = str(idx)[:10]
+                
+                # CHECK 1: Daily limit (ABSOLUTE - no exceptions)
+                day_trades = trades_per_day.get(current_date, 0)
+                if day_trades >= self.max_trades_per_day:
+                    continue
+                
+                # CHECK 2: Cooldown in real minutes (ABSOLUTE - no exceptions)
+                if last_signal_time is not None:
+                    try:
+                        if hasattr(idx, 'timestamp') or hasattr(idx, 'to_pydatetime'):
+                            time_diff_seconds = (idx - last_signal_time).total_seconds()
+                            time_diff_minutes = time_diff_seconds / 60
+                            if time_diff_minutes < self.cooldown_minutes:
+                                continue
+                    except (TypeError, AttributeError, ValueError):
+                        # If time comparison fails, skip cooldown check but daily limit still applies
+                        pass
+                
+                # Apply signal if all checks pass
+                if raw_buy.iloc[i]:
+                    signals.iloc[i] = 1
+                    last_signal_time = idx
+                    trades_per_day[current_date] = day_trades + 1
+                elif raw_sell.iloc[i]:
+                    signals.iloc[i] = -1
+                    last_signal_time = idx
+                    trades_per_day[current_date] = day_trades + 1
         
         return signals
 
