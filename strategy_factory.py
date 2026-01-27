@@ -225,7 +225,7 @@ class MeanReverterOriginal(Strategy):
             rolling_std = price.rolling(self.lookback).std()
             
             # CRITICAL: Division by zero protection (THIS WAS MISSING!)
-            rolling_std_safe = rolling_std.replace(0, 1e-8)
+            rolling_std_safe = rolling_std.replace(0, EPSILON)
             z_score = (price - rolling_mean) / rolling_std_safe
             
             # Buy when oversold (z_score very negative)
