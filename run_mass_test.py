@@ -164,7 +164,8 @@ def run_single_backtest(dataset: dict) -> dict:
         print(f"   Running... (NO TIMEOUT - will complete fully)")
         
         # Run WITHOUT timeout - let it complete naturally
-        result = subprocess.run(cmd)
+        # Note: We don't capture output to allow real-time display
+        result = subprocess.run(cmd, check=False)
         
         # Check if subprocess succeeded
         if result.returncode != 0:
