@@ -21,6 +21,7 @@ import argparse
 import json
 import time
 import subprocess
+import shutil
 from pathlib import Path
 from datetime import datetime
 import pandas as pd
@@ -182,6 +183,15 @@ def run_single_backtest(dataset: dict) -> dict:
         elapsed_str = f"{elapsed/3600:.1f}h" if elapsed > 3600 else f"{elapsed/60:.1f}m"
         
         print(f"   ✅ Completed in {elapsed_str}")
+        
+        # Clean up labels directory to free space
+        labels_dir = Path("labels")
+        if labels_dir.exists():
+            try:
+                shutil.rmtree(labels_dir, ignore_errors=True)
+                print(f"   🗑️  Labels cleaned for next dataset")
+            except Exception as e:
+                print(f"   ⚠️  Could not clean labels: {e}")
         
         # Find the report file
         reports_dir = Path("ultra_necrozma_results/reports")
