@@ -17,12 +17,7 @@ def test_main_with_parquet_arg():
     Test that main.py can be invoked with --parquet argument.
     This simulates what run_mass_test.py does.
     """
-    # Create a dummy parquet path (doesn't need to exist for this test)
-    dummy_parquet = "data/parquet/EURUSD_2024.parquet"
-    
-    # Try to run main.py with --parquet argument
-    # We use --help along with it to avoid actually running the full analysis
-    # But first, let's test that the argument parsing works
+    # Test that the argument parsing works
     result = subprocess.run(
         [sys.executable, "main.py", "--help"],
         capture_output=True,
