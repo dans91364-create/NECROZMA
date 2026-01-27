@@ -445,32 +445,31 @@ METRIC_THRESHOLDS = {
 # Strategy templates to generate
 # ❌ REMOVIDO: TrendFollower - Sharpe negativo, 114k trades inúteis
 STRATEGY_TEMPLATES = [
-    'MeanReverter',        # 🏆 Renomeado de Legacy (Sharpe 6.29)
-    'MeanReverterV2',      # 🥈 Volume de trades (Sharpe 0.93)
-    'MeanReverterV3',      # 🥉 Adaptive (Sharpe 4.80)
-    'MeanReverterLegacy',  # 🏆 Alias for backward compatibility
-    'MomentumBurst',       # 🔥 Resurrected with bulletproof fix
+    'MeanReverterOriginal',  # 🏆 Round 7 EXACT (Sharpe 6.29, 41 trades)
+    'MeanReverter',          # Current version (Sharpe 5.75, 45 trades)
+    'MeanReverterV2',        # 🥈 Volume de trades (Sharpe 0.93)
+    'MeanReverterV3',        # 🥉 Adaptive (Sharpe 4.80)
 ]
 
 # Parameter ranges for strategy generation
 STRATEGY_PARAMS = {
     # ═══════════════════════════════════════════════════════════════
-    # 🏆 MEAN REVERTER - CAMPEÃO (Sharpe 6.29)
-    # Versão comprovada em 10 rounds de backtesting
+    # 🏆 MEAN REVERTER ORIGINAL - EXACT Round 7 (Sharpe 6.29, 41 trades)
+    # This is the PROVEN CHAMPION - DO NOT MODIFY
     # ═══════════════════════════════════════════════════════════════
-    'MeanReverter': {
+    'MeanReverterOriginal': {
         'lookback_periods': [5],
-        'threshold': [1.8, 2.0],           # USA 'threshold' NÃO 'threshold_std'
+        'threshold_std': [1.8, 2.0],  # Uses threshold_std with fallback
         'stop_loss_pips': [20, 30],
         'take_profit_pips': [40, 50],
     },
     # Total: 1 × 2 × 2 × 2 = 8 combinações
     
     # ═══════════════════════════════════════════════════════════════
-    # 🏆 MEAN REVERTER LEGACY - Alias for backward compatibility
-    # Same as MeanReverter (Round 7 version)
+    # 🏆 MEAN REVERTER - Current version (Sharpe 5.75, 45 trades)
+    # Kept for comparison with original
     # ═══════════════════════════════════════════════════════════════
-    'MeanReverterLegacy': {
+    'MeanReverter': {
         'lookback_periods': [5],
         'threshold': [1.8, 2.0],           # USA 'threshold' NÃO 'threshold_std'
         'stop_loss_pips': [20, 30],
@@ -507,21 +506,8 @@ STRATEGY_PARAMS = {
     # Total: 1 × 2 × 3 × 2 × 1 × 1 × 1 = 12 combinações
     
     # ═══════════════════════════════════════════════════════════════
-    # 🔥 MOMENTUM BURST - Resurrected with bulletproof fix
-    # ═══════════════════════════════════════════════════════════════
-    'MomentumBurst': {
-        'lookback_periods': [10, 15],
-        'threshold_std': [1.5, 2.0],
-        'stop_loss_pips': [20, 30],
-        'take_profit_pips': [40, 50],
-        'cooldown_minutes': [120, 180],  # 2-3 hours
-        'max_trades_per_day': [5],  # Hard limit
-    },
-    # Total: 2 × 2 × 2 × 2 × 2 × 1 = 32 combinações
-    
-    # ═══════════════════════════════════════════════════════════════
-    # TOTAL: 84 unique strategies (8 + 8 + 24 + 12 + 32 = 84)
-    # MeanReverter: 8 + MeanReverterLegacy: 8 + MeanReverterV2: 24 + MeanReverterV3: 12 + MomentumBurst: 32
+    # TOTAL: 52 unique strategies (8 + 8 + 24 + 12 = 52)
+    # MeanReverterOriginal: 8 + MeanReverter: 8 + MeanReverterV2: 24 + MeanReverterV3: 12
     # ═══════════════════════════════════════════════════════════════
 }
 
