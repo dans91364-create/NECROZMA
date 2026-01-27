@@ -189,7 +189,8 @@ class MeanReverter(Strategy):
     def __init__(self, params: Dict):
         super().__init__("MeanReverter", params)
         self.lookback = params.get("lookback_periods", 20)
-        self.threshold = params.get("threshold", 1.5)  # Changed from 2.0 to 1.5
+        # Accept both 'threshold_std' (from config) and 'threshold' (legacy)
+        self.threshold = params.get("threshold_std", params.get("threshold", 1.5))
         self.max_trades_per_day = params.get("max_trades_per_day", 10)  # ADD max_trades_per_day
         
         # Add rules
