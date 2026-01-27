@@ -20,8 +20,8 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 from datetime import datetime
 
+import config
 from backtester import BacktestResults
-from config import FILE_PREFIX
 
 
 
@@ -335,7 +335,7 @@ class LightReportGenerator:
         """
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"{FILE_PREFIX}LIGHT_REPORT_{timestamp}.json"
+            filename = f"{config.FILE_PREFIX}LIGHT_REPORT_{timestamp}.json"
         
         filepath = self.output_dir / filename
         
