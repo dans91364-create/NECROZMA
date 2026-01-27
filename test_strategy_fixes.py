@@ -12,7 +12,7 @@ import numpy as np
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from strategy_factory import MomentumBurst, MeanReverterV3
+from strategy_factory import MomentumBurst, MeanReverterV3, MeanReverter
 
 
 def test_momentum_burst_time_based_cooldown():
@@ -286,6 +286,87 @@ def test_meanreverter_v3_max_trades_per_day():
         return True
 
 
+def test_meanreverter_max_trades_per_day():
+    """Test MeanReverter max_trades_per_day (bug fix validation)"""
+    print("\n" + "=" * 70)
+    print("🧪 TEST: MeanReverter Max Trades Per Day (Bug Fix)")
+    print("=" * 70)
+    
+    # Create data spanning 2 days with strong mean reversion signals
+    np.random.seed(42)
+    n = 2000
+    
+    # Create mean-reverting price with frequent overshoots
+    base_price = 1.10
+    mean = base_price
+    prices = [base_price]
+    for i in range(1, n):
+        # Strong oscillations to trigger many signals
+        if i % 50 == 0:
+            # Large deviation from mean
+            prices.append(mean + 0.0100 * (1 if i % 100 == 0 else -1))
+        else:
+            # Mean reversion
+            prices.append(prices[-1] + (mean - prices[-1]) * 0.05 + np.random.randn() * 0.0001)
+    
+    # 1-minute intervals, spanning ~1.4 days
+    df = pd.DataFrame({
+        "mid_price": prices,
+        "close": prices,
+    }, index=pd.date_range("2025-01-01", periods=n, freq="1min"))
+    
+    # Test with low threshold to generate many signals, but max 10 per day
+    params = {
+        "lookback_periods": 5,
+        "threshold_std": 1.6,  # Low threshold = more signals
+        "max_trades_per_day": 10,  # Limit to 10 per day
+    }
+    
+    strategy = MeanReverter(params)
+    signals = strategy.generate_signals(df)
+    
+    # Count signals per day
+    signals_df = pd.DataFrame({"signal": signals})
+    signals_df = signals_df[signals_df["signal"] != 0]
+    
+    if len(signals_df) > 0:
+        signals_by_day = signals_df.groupby(signals_df.index.date).size()
+        print(f"\n📊 Signals per day:")
+        for date, count in signals_by_day.items():
+            print(f"   {date}: {count} signals")
+        
+        max_per_day = signals_by_day.max()
+        if max_per_day <= 10:
+            print(f"   ✅ PASSED: Max trades per day limit working correctly!")
+            print(f"      (Bug fixed: max_trades_per_day now ALWAYS enforced)")
+            return True
+        else:
+            print(f"   ❌ FAILED: Expected max 10 signals per day, got {max_per_day}")
+            print(f"      (Bug still present: max_trades_per_day not enforced properly)")
+            return False
+    else:
+        print(f"   ⚠️  No signals generated (might need to adjust test data)")
+        return True
+
+
+def test_meanreverter_default_max_trades_per_day():
+    """Test that MeanReverter default max_trades_per_day is 10"""
+    print("\n" + "=" * 70)
+    print("🧪 TEST: MeanReverter Default max_trades_per_day = 10")
+    print("=" * 70)
+    
+    # Test MeanReverter default
+    strategy = MeanReverter({})
+    print(f"   MeanReverter default max_trades_per_day: {strategy.max_trades_per_day}")
+    
+    if strategy.max_trades_per_day == 10:
+        print(f"   ✅ PASSED: Default max_trades_per_day is 10")
+        return True
+    else:
+        print(f"   ❌ FAILED: Expected default=10, got {strategy.max_trades_per_day}")
+        return False
+
+
 def test_default_max_trades_per_day():
     """Test that default max_trades_per_day is now 5 (reduced from 10)"""
     print("\n" + "=" * 70)
@@ -317,6 +398,8 @@ def run_all_tests():
     results = {
         "MomentumBurst Time-Based Cooldown": test_momentum_burst_time_based_cooldown(),
         "MomentumBurst Max Trades Per Day": test_momentum_burst_max_trades_per_day(),
+        "MeanReverter Max Trades Per Day": test_meanreverter_max_trades_per_day(),
+        "MeanReverter Default max_trades_per_day": test_meanreverter_default_max_trades_per_day(),
         "MeanReverterV3 Fixed Lookback": test_meanreverter_v3_fixed_lookback(),
         "MeanReverterV3 Adaptive Threshold": test_meanreverter_v3_adaptive_threshold(),
         "MeanReverterV3 Max Trades Per Day": test_meanreverter_v3_max_trades_per_day(),
