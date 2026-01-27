@@ -459,66 +459,68 @@ STRATEGY_PARAMS = {
         'stop_loss_pips': [20, 30],
         'take_profit_pips': [40, 50],
     },
-    # Total: 1 × 3 × 2 × 2 = 12 combinações
+    # Total: 1 × 3 × 2 × 2 = 12 combinações (unchanged - performs best!)
     
     # ═══════════════════════════════════════════════════════════════
-    # CAMADA 2: MeanReverterV2 - Frequência média (10-20 trades/dia)
-    # Foco: Sharpe > 0.8, mais trades que MeanReverter
+    # CAMADA 2: MeanReverterV2 - Reduced to best performers
+    # Round 6: Keep only L30 (best performer), reduce parameters
     # ═══════════════════════════════════════════════════════════════
     'MeanReverterV2': {
-        'lookback_periods': [20, 30],
-        'threshold_std': [0.8, 1.0, 1.2, 1.5],  # Mais sensível!
-        'stop_loss_pips': [15, 20, 25],
-        'take_profit_pips': [30, 40, 50],
-        'rsi_oversold': [30, 35],
-        'rsi_overbought': [75, 80],
-        'volume_filter': [1.5, 2.0],
+        'lookback_periods': [30],               # Only L30 works well
+        'threshold_std': [1.0, 1.5],            # 2 values (reduced from 4)
+        'stop_loss_pips': [15, 20],             # 2 values (reduced from 3)
+        'take_profit_pips': [40, 50],           # 2 values (reduced from 3)
+        'rsi_oversold': [35],                   # 1 value (best performer)
+        'rsi_overbought': [80],                 # 1 value (best performer)
+        'volume_filter': [1.5],                 # 1 value (best performer)
     },
-    # Total: 2 × 4 × 3 × 3 × 2 × 2 × 2 = 576 combinações
+    # Total: 1 × 2 × 2 × 2 × 1 × 1 × 1 = 8 combinations (reduced from 576!)
     
     # ═══════════════════════════════════════════════════════════════
-    # CAMADA 2.5: MeanReverterV3 - Optimized from Round 3 results
-    # Fixed lookback=5, adaptive threshold, optimal R:R ratio
-    # Best performance: Sharpe 6.29, Return 59%, Win Rate 51.2%
+    # CAMADA 2.5: MeanReverterV3 - Adjusted for more trades
+    # Round 6: Lower thresholds, tighter SL/TP, remove conservative filters
     # ═══════════════════════════════════════════════════════════════
     'MeanReverterV3': {
-        'threshold_std': [1.8, 2.0, 2.2],  # Narrow range around optimal
+        'threshold_std': [1.2, 1.5, 1.8],       # Lower thresholds = more signals
         'adaptive_threshold': [True, False],
-        'stop_loss_pips': [25, 30, 35],
-        'take_profit_pips': [45, 50, 55],
-        'require_confirmation': [True, False],
-        'use_session_filter': [True, False],
+        'stop_loss_pips': [20, 25, 30],         # Tighter stops
+        'take_profit_pips': [35, 45, 55],       # Adjusted TPs
+        'require_confirmation': [False],        # REMOVED True - too conservative
+        'use_session_filter': [False],          # REMOVED True - reduces signals
     },
-    # Total: 3 × 2 × 3 × 3 × 2 × 2 = 216 combinations
+    # Total: 3 × 2 × 3 × 3 × 1 × 1 = 54 combinations (reduced from 216)
     
     # ═══════════════════════════════════════════════════════════════
-    # CAMADA 3: MomentumBurst - Alta frequência (30-60 trades/dia)
-    # Foco: Volume de trades, Sharpe > 0.3
-    # Round 5 optimization: Reduced to best-performing values from Round 4 analysis
+    # CAMADA 3: MomentumBurst - Reduced to highest cooldown only
+    # Round 6: Keep only CD180 to prevent overtrading
+    # CRITICAL FIX: max_trades_per_day now ALWAYS enforced (default=5)
     # ═══════════════════════════════════════════════════════════════
     'MomentumBurst': {
-        'lookback_periods': [10, 15],               # Removed L5 (too noisy)
-        'threshold_std': [1.0, 1.5],                # Only 2 best values
-        'stop_loss_pips': [15, 20],                 # Removed SL10 (too tight)
-        'take_profit_pips': [30, 40],               # Removed TP20 (too small)
-        'cooldown_minutes': [120, 180],             # Only high cooldowns (avoid overtrading)
+        'lookback_periods': [10, 15],           # 2 values
+        'threshold_std': [1.0, 1.5],            # 2 values
+        'stop_loss_pips': [15, 20],             # 2 values
+        'take_profit_pips': [30, 40],           # 2 values
+        'cooldown_minutes': [180],              # Only highest cooldown (removed 120)
     },
-    # Total: 2 × 2 × 2 × 2 × 2 = 32 combinations (reduced from 420 in Round 4)
+    # Total: 2 × 2 × 2 × 2 × 1 = 16 combinations (reduced from 32)
     
     # ═══════════════════════════════════════════════════════════════
-    # CAMADA 4: TrendFollower - Capturar tendências (10-20 trades/dia)
-    # Foco: Movimentos maiores, complementa reversão
+    # CAMADA 4: TrendFollower - Reduced parameters
+    # Round 6: Keep best-performing parameter ranges
     # ═══════════════════════════════════════════════════════════════
     'TrendFollower': {
-        'lookback_periods': [10, 20, 30],
-        'threshold_std': [0.5, 0.8, 1.0, 1.5],  # Mais sensível!
-        'stop_loss_pips': [20, 30, 40],
-        'take_profit_pips': [40, 60, 80],
+        'lookback_periods': [10, 20],           # 2 values (reduced from 3)
+        'threshold_std': [1.0, 1.5],            # 2 values (reduced from 4)
+        'stop_loss_pips': [15, 20],             # 2 values (reduced from 3)
+        'take_profit_pips': [30, 40],           # 2 values (reduced from 3)
     },
-    # Total: 3 × 4 × 3 × 3 = 108 combinações
+    # Total: 2 × 2 × 2 × 2 = 16 combinations (reduced from 108)
     
-    # TOTAL ROUND 5: 853 unique strategies after deduplication (reduced from 1241 after MomentumBurst optimization)
-    # Raw parameter combinations: 12 + 576 + 216 + 32 + 108 = 944
+    # ═══════════════════════════════════════════════════════════════
+    # TOTAL ROUND 6: ~106 unique strategies (reduced from 853!)
+    # Raw parameter combinations: 12 + 8 + 54 + 16 + 16 = 106
+    # Estimated backtest time: ~15-20 minutes (down from 40+ minutes)
+    # ═══════════════════════════════════════════════════════════════
 }
 
 

@@ -318,8 +318,8 @@ class MeanReverterV3(Strategy):
         self.use_session_filter = params.get("use_session_filter", False)
         self.active_hours = params.get("active_hours", (8, 20))  # London+NY sessions
         
-        # Max trades per day (failsafe)
-        self.max_trades_per_day = params.get("max_trades_per_day", 10)
+        # Max trades per day (failsafe) - REDUCED from 10 to 5
+        self.max_trades_per_day = params.get("max_trades_per_day", 5)
         
         # Add rules
         self.add_rule({
@@ -386,25 +386,39 @@ class MeanReverterV3(Strategy):
             buy_signal = confirmed_buy & session_active
             sell_signal = confirmed_sell & session_active
             
-            # Apply max trades per day limit
+            # Apply max trades per day limit - ALWAYS ENFORCED
             daily_trade_count = {}
+            total_trades_today = 0  # FAILSAFE global counter
+            current_day = None
+            
             for i in range(len(signals)):
                 current_time = df.index[i]
-                current_date = current_time.date() if hasattr(current_time, 'date') else None
                 
-                # Check max trades per day
-                if current_date:
-                    if daily_trade_count.get(current_date, 0) >= self.max_trades_per_day:
-                        continue
+                # Extract date - multiple fallback methods
+                if hasattr(current_time, 'date'):
+                    trade_date = current_time.date()
+                elif hasattr(current_time, 'strftime'):
+                    trade_date = str(current_time)[:10]  # ISO format string fallback
+                else:
+                    trade_date = str(current_time)[:10]  # String fallback
+                
+                # Reset daily counter on new day
+                if trade_date != current_day:
+                    current_day = trade_date
+                    total_trades_today = 0
+                
+                # ALWAYS check max trades - NO EXCEPTIONS
+                if total_trades_today >= self.max_trades_per_day:
+                    continue  # Skip signal generation for rest of day
                 
                 if buy_signal.iloc[i]:
                     signals.iloc[i] = 1
-                    if current_date:
-                        daily_trade_count[current_date] = daily_trade_count.get(current_date, 0) + 1
+                    total_trades_today += 1
+                    daily_trade_count[trade_date] = daily_trade_count.get(trade_date, 0) + 1
                 elif sell_signal.iloc[i]:
                     signals.iloc[i] = -1
-                    if current_date:
-                        daily_trade_count[current_date] = daily_trade_count.get(current_date, 0) + 1
+                    total_trades_today += 1
+                    daily_trade_count[trade_date] = daily_trade_count.get(trade_date, 0) + 1
         
         return signals
 
@@ -428,7 +442,7 @@ class MomentumBurst(Strategy):
         self.volume_multiplier = 1.5
         # TIME-BASED cooldown in MINUTES (not candles/ticks!)
         self.cooldown = params.get("cooldown_minutes", params.get("cooldown", 60))  # In MINUTES
-        self.max_trades_per_day = params.get("max_trades_per_day", 10)  # Reduced from 50 to 10: limits overtrading and ensures realistic execution capacity
+        self.max_trades_per_day = params.get("max_trades_per_day", 5)  # REDUCED from 10 to 5: critical fix to prevent overtrading
         
         # Add rules
         self.add_rule({
@@ -473,17 +487,29 @@ class MomentumBurst(Strategy):
                 # Apply TIME-BASED cooldown (not index-based!)
                 last_signal_time = None
                 daily_trade_count = {}
+                total_trades_today = 0  # FAILSAFE global counter
+                current_day = None
                 cooldown_delta = pd.Timedelta(minutes=self.cooldown)
                 
                 for i in range(len(signals)):
                     current_time = df.index[i]
-                    # Always extract date, use string fallback if date() method not available
-                    # String fallback assumes YYYY-MM-DD format (first 10 chars of ISO timestamp)
-                    trade_date = current_time.date() if hasattr(current_time, 'date') else str(current_time)[:10]
                     
-                    # Check max trades per day (always enforced)
-                    if daily_trade_count.get(trade_date, 0) >= self.max_trades_per_day:
-                        continue
+                    # Extract date - multiple fallback methods
+                    if hasattr(current_time, 'date'):
+                        trade_date = current_time.date()
+                    elif hasattr(current_time, 'strftime'):
+                        trade_date = str(current_time)[:10]  # ISO format string fallback
+                    else:
+                        trade_date = str(current_time)[:10]  # String fallback
+                    
+                    # Reset daily counter on new day
+                    if trade_date != current_day:
+                        current_day = trade_date
+                        total_trades_today = 0
+                    
+                    # ALWAYS check max trades - NO EXCEPTIONS
+                    if total_trades_today >= self.max_trades_per_day:
+                        continue  # Skip signal generation for rest of day
                     
                     # Check time-based cooldown
                     if last_signal_time is not None:
@@ -493,10 +519,12 @@ class MomentumBurst(Strategy):
                     if raw_buy.iloc[i]:
                         signals.iloc[i] = 1
                         last_signal_time = current_time
+                        total_trades_today += 1
                         daily_trade_count[trade_date] = daily_trade_count.get(trade_date, 0) + 1
                     elif raw_sell.iloc[i]:
                         signals.iloc[i] = -1
                         last_signal_time = current_time
+                        total_trades_today += 1
                         daily_trade_count[trade_date] = daily_trade_count.get(trade_date, 0) + 1
             else:
                 # Fallback to index-based cooldown for non-datetime indices (e.g., in tests)
