@@ -11,6 +11,8 @@ import sys
 import os
 import argparse
 import time
+import json
+import shutil
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -724,27 +726,96 @@ def run_strategy_discovery(df, args):
                   message="Strategy Discovery Pipeline Initiated")
     
     try:
+        # Ensure output directory exists
+        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        
         # ─────────────────────────────────────────────────────────
-        # STEP 1: LABELING
+        # STEP 1 & 3: CHECK FOR CACHED PATTERNS FIRST
         # ─────────────────────────────────────────────────────────
-        print("\n" + "─" * 80)
-        print("📊 STEP 1/7: Multi-Dimensional Outcome Labeling")
-        print("─" * 80)
+        patterns_path = OUTPUT_DIR / f"{FILE_PREFIX}patterns.json"
         
-        lore.broadcast(EventType.PROGRESS, 
-                      message="Step 1/7: Labeling outcomes across dimensions...")
-        
-        from labeler import label_dataframe
-        
-        start_time = time.time()
-        labels_dict = label_dataframe(df)
-        elapsed = time.time() - start_time
-        
-        print(f"\n✅ Labeling complete in {elapsed:.1f}s")
-        print(f"   Labeled scenarios: {len(labels_dict)}")
-        
-        lore.broadcast(EventType.MILESTONE, 
-                      message=f"Labeling complete: {len(labels_dict)} scenarios labeled")
+        if patterns_path.exists():
+            print("\n" + "─" * 80)
+            print("✅ PATTERNS FOUND IN CACHE - SKIPPING LABELING!")
+            print("─" * 80)
+            print(f"   Loading from: {patterns_path}")
+            
+            with open(patterns_path, 'r') as f:
+                patterns = json.load(f)
+            
+            n_patterns = len(patterns.get('important_features', []))
+            print(f"   Important features loaded: {n_patterns}")
+            
+            # Create empty labels_dict for compatibility
+            labels_dict = {}
+            
+            lore.broadcast(EventType.MILESTONE, 
+                          message="Patterns loaded from cache - Labeling skipped!")
+        else:
+            # ─────────────────────────────────────────────────────────
+            # STEP 1: LABELING (only if patterns not cached)
+            # ─────────────────────────────────────────────────────────
+            print("\n" + "─" * 80)
+            print("📊 STEP 1/7: Multi-Dimensional Outcome Labeling")
+            print("─" * 80)
+            
+            lore.broadcast(EventType.PROGRESS, 
+                          message="Step 1/7: Labeling outcomes across dimensions...")
+            
+            from labeler import label_dataframe
+            
+            start_time = time.time()
+            labels_dict = label_dataframe(df)
+            elapsed = time.time() - start_time
+            
+            print(f"\n✅ Labeling complete in {elapsed:.1f}s")
+            print(f"   Labeled scenarios: {len(labels_dict)}")
+            
+            lore.broadcast(EventType.MILESTONE, 
+                          message=f"Labeling complete: {len(labels_dict)} scenarios labeled")
+            
+            # ─────────────────────────────────────────────────────────
+            # STEP 3: PATTERN MINING (only if not cached)
+            # ─────────────────────────────────────────────────────────
+            print("\n" + "─" * 80)
+            print("⛏️  STEP 3/7: ML-Based Pattern Mining")
+            print("─" * 80)
+            
+            lore.broadcast(EventType.PROGRESS, 
+                          message="Step 3/7: Mining patterns with ML...")
+            
+            from pattern_miner import PatternMiner
+            
+            start_time = time.time()
+            miner = PatternMiner()
+            patterns = miner.discover_patterns(df, labels_dict)
+            elapsed = time.time() - start_time
+            
+            n_patterns = len(patterns.get('important_features', []))
+            print(f"\n✅ Pattern mining complete in {elapsed:.1f}s")
+            print(f"   Important features found: {n_patterns}")
+            
+            # SAVE PATTERNS for future use
+            with open(patterns_path, 'w') as f:
+                json.dump(patterns, f, indent=2, default=str)
+            print(f"   💾 Patterns saved to: {patterns_path}")
+            
+            lore.broadcast(EventType.DISCOVERY, 
+                          message=f"Discovered {n_patterns} important patterns")
+            
+            # ─────────────────────────────────────────────────────────
+            # CLEANUP: Remove labels directory to free space (~56GB)
+            # ─────────────────────────────────────────────────────────
+            labels_dir = Path("labels")
+            if labels_dir.exists():
+                try:
+                    # Calculate size before deletion
+                    size_before = sum(f.stat().st_size for f in labels_dir.rglob('*') if f.is_file())
+                    shutil.rmtree(labels_dir, ignore_errors=True)
+                    size_gb = size_before / 1e9
+                    print(f"   🗑️  Labels removed: {size_gb:.1f}GB freed!")
+                except Exception as e:
+                    print(f"   ⚠️  Could not remove labels directory: {e}")
         
         # ─────────────────────────────────────────────────────────
         # STEP 2: REGIME DETECTION
@@ -758,13 +829,12 @@ def run_strategy_discovery(df, args):
         
         from regime_detector import RegimeDetector
         
-        # Ensure output directory exists
-        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
         regimes_path = OUTPUT_DIR / f"{FILE_PREFIX}regimes.parquet"
         
         # Check if regimes already exist (cache)
         if regimes_path.exists():
-            print("✅ Loading saved regimes from cache...")
+            print("✅ Regimes found in cache, loading...")
+            print(f"   Loading from: {regimes_path}")
             start_time = time.time()
             regimes_df = pd.read_parquet(regimes_path)
             elapsed = time.time() - start_time
@@ -776,6 +846,9 @@ def run_strategy_discovery(df, args):
             
             print(f"   Loaded in {elapsed:.1f}s")
             print(f"   Regimes loaded: {n_regimes}")
+            
+            lore.broadcast(EventType.MILESTONE, 
+                          message="Regimes loaded from cache")
         else:
             print("🔄 Running HDBSCAN clustering (this may take ~97 minutes)...")
             start_time = time.time()
@@ -794,30 +867,6 @@ def run_strategy_discovery(df, args):
         
         lore.broadcast(EventType.REGIME_CHANGE, 
                       message=f"Detected {n_regimes} distinct market regimes")
-        
-        # ─────────────────────────────────────────────────────────
-        # STEP 3: PATTERN MINING
-        # ─────────────────────────────────────────────────────────
-        print("\n" + "─" * 80)
-        print("⛏️  STEP 3/7: ML-Based Pattern Mining")
-        print("─" * 80)
-        
-        lore.broadcast(EventType.PROGRESS, 
-                      message="Step 3/7: Mining patterns with ML...")
-        
-        from pattern_miner import PatternMiner
-        
-        start_time = time.time()
-        miner = PatternMiner()
-        patterns = miner.discover_patterns(df, labels_dict)
-        elapsed = time.time() - start_time
-        
-        n_patterns = len(patterns.get('important_features', []))
-        print(f"\n✅ Pattern mining complete in {elapsed:.1f}s")
-        print(f"   Important features found: {n_patterns}")
-        
-        lore.broadcast(EventType.DISCOVERY, 
-                      message=f"Discovered {n_patterns} important patterns")
         
         # ─────────────────────────────────────────────────────────
         # STEP 4: STRATEGY GENERATION
