@@ -1219,25 +1219,6 @@ def main():
     parquet_path = Path(args.parquet) if args.parquet else PARQUET_FILE
     num_workers = args.workers if args.workers else NUM_WORKERS
     
-    # ═══════════════════════════════════════════════════════════════
-    # 📊 DYNAMIC FILE_PREFIX (Problem 2 Fix)
-    # ═══════════════════════════════════════════════════════════════
-    # When --parquet argument is provided, dynamically update config
-    # to isolate cache per pair/year (prevents EURUSD cache being used for AUDJPY)
-    if args.parquet:
-        parquet_filename = Path(args.parquet)
-        filename = parquet_filename.stem  # e.g., "AUDJPY_2023"
-        parts = filename.split("_")
-        if len(parts) >= 2:
-            import config
-            config.PAIR_NAME = parts[0]  # "AUDJPY"
-            config.DATA_YEAR = parts[1]  # "2023"
-            config.FILE_PREFIX = f"{parts[0]}_{parts[1]}_"
-            # Also update FILE_PREFIX_STABLE if it exists
-            if hasattr(config, 'FILE_PREFIX_STABLE'):
-                config.FILE_PREFIX_STABLE = f"{parts[0]}_{parts[1]}_"
-            print(f"📊 Dynamic config: PAIR={config.PAIR_NAME}, YEAR={config.DATA_YEAR}, PREFIX={config.FILE_PREFIX}")
-    
     if args.sequential:
         num_workers = 1
         print("⚠️  Sequential mode enabled (single thread)\n")
