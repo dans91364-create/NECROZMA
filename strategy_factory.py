@@ -886,8 +886,13 @@ class StrategyFactory:
         for lookback, threshold, stop, profit in product(
             lookbacks, thresholds, stop_losses, take_profits
         ):
-            # Risk/reward filter - less strict for V3 (tested combinations)
-            min_rr_ratio = 1.2 if template_name == "MeanReverterV3" else 1.5
+            # Risk/reward filter - less strict for V3 and MeanReverter (tested combinations)
+            if template_name == "MeanReverterV3":
+                min_rr_ratio = 1.2
+            elif template_name == "MeanReverter":
+                min_rr_ratio = 1.3  # Allow SL30/TP40 (1.33 ratio)
+            else:
+                min_rr_ratio = 1.5
             if profit >= stop * min_rr_ratio:
                 base_params = {
                     "lookback_periods": lookback,
@@ -937,7 +942,11 @@ class StrategyFactory:
                 
                 else:
                     # For other strategies (TrendFollower, MeanReverter), just use base params
-                    combinations.append(base_params)
+                    params = base_params.copy()
+                    # For MeanReverter, also include threshold_std for naming consistency
+                    if template_name == "MeanReverter":
+                        params["threshold_std"] = params["threshold"]
+                    combinations.append(params)
         
         return combinations
     
