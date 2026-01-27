@@ -4,13 +4,15 @@
 ⚡🌟💎 NECROZMA - MASS TESTING SYSTEM 💎🌟⚡
 
 Testa todas as estratégias em múltiplos pares e anos
-"Light That Burns The Sky - Across All Dimensions"
+COM SISTEMA DE RESUME para rodar overnight sem perder progresso
 
 Uso:
-    python run_mass_test.py                    # Testa todos os pares/anos
+    python run_mass_test.py                    # Roda todos (resume automático)
     python run_mass_test.py --pair EURUSD      # Testa apenas EURUSD
     python run_mass_test.py --year 2024        # Testa apenas 2024
-    python run_mass_test.py --parallel 4       # 4 processos paralelos
+    python run_mass_test.py --status           # Mostra progresso
+    python run_mass_test.py --fresh            # Reinicia do zero
+    python run_mass_test.py --retry-failed     # Retenta apenas falhas
 """
 
 import os
@@ -18,9 +20,9 @@ import sys
 import argparse
 import json
 import time
+import subprocess
 from pathlib import Path
 from datetime import datetime
-from concurrent.futures import ProcessPoolExecutor, as_completed
 import pandas as pd
 
 # Add parent directory to path
@@ -33,6 +35,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 PARQUET_DIR = Path("data/parquet")
 RESULTS_DIR = Path("results/mass_test")
+PROGRESS_FILE = RESULTS_DIR / "progress.json"
 
 # Pares disponíveis
 PAIRS = [
@@ -42,6 +45,65 @@ PAIRS = [
 
 # Anos disponíveis
 YEARS = ["2023", "2024", "2025"]
+
+
+# ═══════════════════════════════════════════════════════════════
+# 💾 PROGRESS TRACKING
+# ═══════════════════════════════════════════════════════════════
+
+def load_progress():
+    """Load progress from file"""
+    if PROGRESS_FILE.exists():
+        try:
+            with open(PROGRESS_FILE, 'r') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            print(f"⚠️ Error loading progress file: {e}")
+    return {
+        "completed": [],
+        "failed": [],
+        "in_progress": None,
+        "started_at": None,
+        "last_update": None
+    }
+
+
+def save_progress(progress):
+    """Save progress to file"""
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    progress["last_update"] = datetime.now().isoformat()
+    with open(PROGRESS_FILE, 'w') as f:
+        json.dump(progress, f, indent=2)
+
+
+def mark_completed(progress, dataset_key, result):
+    """Mark a dataset as completed"""
+    if dataset_key not in progress["completed"]:
+        progress["completed"].append(dataset_key)
+    if dataset_key in progress["failed"]:
+        progress["failed"].remove(dataset_key)
+    progress["in_progress"] = None
+    progress["results"] = progress.get("results", {})
+    progress["results"][dataset_key] = result
+    save_progress(progress)
+
+
+def mark_failed(progress, dataset_key, error):
+    """Mark a dataset as failed"""
+    if dataset_key not in progress["failed"]:
+        progress["failed"].append(dataset_key)
+    progress["in_progress"] = None
+    progress["errors"] = progress.get("errors", {})
+    progress["errors"][dataset_key] = str(error)
+    save_progress(progress)
+
+
+def mark_in_progress(progress, dataset_key):
+    """Mark a dataset as in progress"""
+    progress["in_progress"] = dataset_key
+    if progress["started_at"] is None:
+        progress["started_at"] = datetime.now().isoformat()
+    save_progress(progress)
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -57,7 +119,6 @@ def get_available_datasets():
         return datasets
     
     for parquet_file in PARQUET_DIR.glob("*.parquet"):
-        # Parse filename: PAIR_YEAR.parquet
         name = parquet_file.stem
         parts = name.split("_")
         
@@ -68,113 +129,187 @@ def get_available_datasets():
                 "pair": pair,
                 "year": year,
                 "file": parquet_file,
-                "name": name
+                "name": name,
+                "key": f"{pair}_{year}"
             })
     
-    return datasets
+    return sorted(datasets, key=lambda x: (x["pair"], x["year"]))
 
 
 def run_single_backtest(dataset: dict) -> dict:
-    """
-    Run backtest for a single pair/year combination
+    """Run backtest for a single pair/year using subprocess (NO TIMEOUT)"""
     
-    Args:
-        dataset: Dict with pair, year, file info
-        
-    Returns:
-        Dict with results
-    """
     pair = dataset["pair"]
     year = dataset["year"]
     parquet_file = dataset["file"]
     
     print(f"\n{'='*70}")
     print(f"🚀 Testing {pair} {year}")
+    print(f"   File: {parquet_file}")
+    print(f"   Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"{'='*70}")
     
     start_time = time.time()
     
     try:
-        # Import after path setup
-        import config
+        cmd = [
+            sys.executable,
+            "main.py",
+            "--strategy-discovery",
+            "--batch-mode",
+            "--parquet", str(parquet_file)
+        ]
         
-        # Update config to use this parquet file
-        original_parquet = config.PARQUET_FILE
-        config.PARQUET_FILE = parquet_file
+        print(f"   Command: {' '.join(cmd)}")
+        print(f"   Running... (NO TIMEOUT - will complete fully)")
         
-        # Set FILE_PREFIX for this test
-        original_prefix = config.FILE_PREFIX
-        config.FILE_PREFIX = f"{pair}_{year}_"
+        # Run WITHOUT timeout - let it complete naturally
+        # Note: We don't capture output to allow real-time display
+        result = subprocess.run(cmd, check=False)
         
-        # Import main after config is set
-        from main import main as run_necrozma
-        
-        # Run the backtest
-        run_necrozma()
-        
-        # Restore original config
-        config.PARQUET_FILE = original_parquet
-        config.FILE_PREFIX = original_prefix
+        # Check if subprocess succeeded
+        if result.returncode != 0:
+            elapsed = time.time() - start_time
+            print(f"   ❌ Subprocess failed with exit code {result.returncode}")
+            return {
+                "pair": pair, "year": year,
+                "status": "error",
+                "elapsed_time": elapsed,
+                "error": f"Subprocess exited with code {result.returncode}"
+            }
         
         elapsed = time.time() - start_time
+        elapsed_str = f"{elapsed/3600:.1f}h" if elapsed > 3600 else f"{elapsed/60:.1f}m"
         
-        # Find the most recent light report for this pair/year
+        print(f"   ✅ Completed in {elapsed_str}")
+        
+        # Find the report file
         reports_dir = Path("ultra_necrozma_results/reports")
         if reports_dir.exists():
-            # Look for reports with this prefix
-            pattern = f"{pair}_{year}_LIGHT_REPORT_*.json"
-            report_files = list(reports_dir.glob(pattern))
+            # Try multiple patterns
+            patterns = [
+                f"{pair}_{year}_*LIGHT_REPORT*.json",
+                f"{pair}_{year}_LIGHT_REPORT_*.json",
+                f"*{pair}*{year}*LIGHT*.json"
+            ]
+            
+            report_files = []
+            for pattern in patterns:
+                report_files.extend(list(reports_dir.glob(pattern)))
             
             if report_files:
-                # Get the most recent one
                 report_file = max(report_files, key=lambda p: p.stat().st_mtime)
+                print(f"   📄 Report: {report_file.name}")
                 
                 with open(report_file, 'r') as f:
                     report = json.load(f)
+                
+                best = report.get("executive_summary", {}).get("best_strategy", {})
                 
                 return {
                     "pair": pair,
                     "year": year,
                     "status": "success",
                     "elapsed_time": elapsed,
+                    "elapsed_str": elapsed_str,
                     "total_strategies": report.get("executive_summary", {}).get("viable_strategies_found", 0),
-                    "best_strategy": report.get("executive_summary", {}).get("best_strategy", {}),
+                    "best_strategy": best.get("name", "N/A"),
+                    "best_sharpe": best.get("sharpe_ratio", 0),
                     "avg_sharpe": report.get("executive_summary", {}).get("avg_sharpe", 0),
-                    "top_strategies": report.get("top_strategies", [])[:10]
+                    "report_file": str(report_file)
                 }
         
-        # No report found
         return {
-            "pair": pair,
-            "year": year,
+            "pair": pair, "year": year,
             "status": "no_report",
             "elapsed_time": elapsed,
+            "elapsed_str": elapsed_str,
             "error": "Report file not found"
         }
-            
+        
+    except KeyboardInterrupt:
+        print(f"\n   ⚠️ Interrupted by user")
+        raise
     except Exception as e:
         elapsed = time.time() - start_time
+        print(f"   ❌ Error: {e}")
         return {
-            "pair": pair,
-            "year": year,
+            "pair": pair, "year": year,
             "status": "error",
             "elapsed_time": elapsed,
             "error": str(e)
         }
 
 
-def run_mass_test(pairs=None, years=None, parallel=1):
-    """
-    Run mass testing across multiple pairs and years
+def show_status():
+    """Show current progress status"""
+    progress = load_progress()
+    datasets = get_available_datasets()
     
-    Args:
-        pairs: List of pairs to test (None = all)
-        years: List of years to test (None = all)
-        parallel: Number of parallel processes
-    """
+    total = len(datasets)
+    completed = len(progress.get("completed", []))
+    failed = len(progress.get("failed", []))
+    remaining = total - completed
+    
+    print("\n" + "="*70)
+    print("📊 MASS TEST PROGRESS STATUS")
+    print("="*70)
+    
+    print(f"\n📈 Overall Progress:")
+    print(f"   Total datasets:    {total}")
+    print(f"   ✅ Completed:      {completed}" + (f" ({completed/total*100:.1f}%)" if total > 0 else ""))
+    print(f"   ❌ Failed:         {failed}")
+    print(f"   ⏳ Remaining:      {remaining}")
+    
+    if progress.get("started_at"):
+        print(f"\n⏱️  Started: {progress['started_at']}")
+    if progress.get("last_update"):
+        print(f"   Last update: {progress['last_update']}")
+    if progress.get("in_progress"):
+        print(f"   🔄 In progress: {progress['in_progress']}")
+    
+    if progress.get("completed"):
+        print(f"\n✅ Completed ({len(progress['completed'])}):")
+        for key in progress["completed"]:
+            result = progress.get("results", {}).get(key, {})
+            sharpe = result.get("best_sharpe", "?")
+            elapsed = result.get("elapsed_str", "?")
+            print(f"   • {key}: Sharpe {sharpe}, Time {elapsed}")
+    
+    if progress.get("failed"):
+        print(f"\n❌ Failed ({len(progress['failed'])}):")
+        for key in progress["failed"]:
+            error = progress.get("errors", {}).get(key, "Unknown")
+            print(f"   • {key}: {error[:50]}")
+    
+    remaining_datasets = [d for d in datasets if d["key"] not in progress.get("completed", [])]
+    if remaining_datasets and remaining_datasets[:5]:
+        print(f"\n⏳ Next up:")
+        for d in remaining_datasets[:5]:
+            print(f"   • {d['key']}")
+
+
+def run_mass_test(pairs=None, years=None, fresh=False, retry_failed=False):
+    """Run mass testing with resume support"""
+    
     print("\n" + "="*70)
     print("⚡🌟💎 NECROZMA MASS TESTING SYSTEM 💎🌟⚡")
+    print("        WITH RESUME SUPPORT (NO TIMEOUT)")
     print("="*70)
+    
+    # Load or initialize progress
+    if fresh:
+        print("\n🔄 Fresh start - clearing previous progress...")
+        progress = {
+            "completed": [],
+            "failed": [],
+            "in_progress": None,
+            "started_at": datetime.now().isoformat(),
+            "last_update": None
+        }
+        save_progress(progress)
+    else:
+        progress = load_progress()
     
     # Get available datasets
     datasets = get_available_datasets()
@@ -189,177 +324,127 @@ def run_mass_test(pairs=None, years=None, parallel=1):
     if years:
         datasets = [d for d in datasets if d["year"] in years]
     
-    print(f"\n📊 Found {len(datasets)} datasets to test:")
+    # Filter based on progress
+    if retry_failed:
+        # Only retry failed ones
+        failed_keys = progress.get("failed", [])
+        datasets = [d for d in datasets if d["key"] in failed_keys]
+        print(f"\n🔄 Retrying {len(datasets)} failed datasets...")
+    else:
+        # Skip completed ones
+        completed_keys = progress.get("completed", [])
+        skipped = [d for d in datasets if d["key"] in completed_keys]
+        datasets = [d for d in datasets if d["key"] not in completed_keys]
+        
+        if skipped:
+            print(f"\n⏭️  Skipping {len(skipped)} already completed datasets")
+    
+    if not datasets:
+        print("\n✅ All datasets already completed!")
+        show_status()
+        return
+    
+    print(f"\n📊 Datasets to process: {len(datasets)}")
     for d in datasets:
         print(f"   • {d['pair']} {d['year']}: {d['file']}")
     
     # Create results directory
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     
-    # Run tests
-    all_results = []
-    start_time = time.time()
+    # Run tests sequentially with resume
+    total = len(datasets)
     
-    if parallel > 1:
-        # Parallel execution
-        print(f"\n🚀 Running {len(datasets)} tests with {parallel} parallel processes...")
+    print(f"\n🚀 Starting mass test ({total} datasets)...")
+    print(f"   Press Ctrl+C to pause (progress is saved automatically)")
+    
+    for i, dataset in enumerate(datasets, 1):
+        key = dataset["key"]
         
-        with ProcessPoolExecutor(max_workers=parallel) as executor:
-            futures = {executor.submit(run_single_backtest, d): d for d in datasets}
-            
-            for future in as_completed(futures):
-                result = future.result()
-                all_results.append(result)
-                
-                if result["status"] == "success":
-                    print(f"✅ {result['pair']} {result['year']}: "
-                          f"Sharpe {result.get('avg_sharpe', 0):.2f}, "
-                          f"{result.get('total_strategies', 0)} strategies")
-                else:
-                    print(f"❌ {result['pair']} {result['year']}: {result.get('error', 'Unknown error')}")
-    else:
-        # Sequential execution
-        print(f"\n🚀 Running {len(datasets)} tests sequentially...")
+        print(f"\n{'─'*70}")
+        print(f"📌 Progress: {i}/{total} ({i/total*100:.1f}%)")
+        print(f"{'─'*70}")
         
-        for dataset in datasets:
+        # Mark as in progress
+        mark_in_progress(progress, key)
+        
+        try:
             result = run_single_backtest(dataset)
-            all_results.append(result)
             
             if result["status"] == "success":
-                print(f"✅ {result['pair']} {result['year']}: "
-                      f"Sharpe {result.get('avg_sharpe', 0):.2f}, "
-                      f"{result.get('total_strategies', 0)} strategies")
+                mark_completed(progress, key, result)
+                print(f"   ✅ {key}: Best Sharpe = {result.get('best_sharpe', 'N/A')}")
             else:
-                print(f"❌ {result['pair']} {result['year']}: {result.get('error', 'Unknown error')}")
+                mark_failed(progress, key, result.get("error", "Unknown"))
+                print(f"   ❌ {key}: {result.get('error', 'Unknown error')}")
+                
+        except KeyboardInterrupt:
+            print(f"\n\n⚠️ Interrupted! Progress saved.")
+            print(f"   Run again to resume from {key}")
+            save_progress(progress)
+            return
+        except Exception as e:
+            mark_failed(progress, key, str(e))
+            print(f"   ❌ {key}: {e}")
+            continue  # Continue with next dataset
     
-    total_time = time.time() - start_time
-    
-    # Generate summary report
-    generate_summary_report(all_results, total_time)
-    
-    return all_results
-
-
-def generate_summary_report(results: list, total_time: float):
-    """Generate consolidated summary report"""
-    
+    # Generate final report
     print("\n" + "="*70)
-    print("📊 MASS TEST SUMMARY REPORT")
+    print("🏁 MASS TEST COMPLETE!")
     print("="*70)
     
-    # Basic stats
-    successful = [r for r in results if r["status"] == "success"]
-    failed = [r for r in results if r["status"] != "success"]
+    generate_final_report(progress)
+
+
+def generate_final_report(progress):
+    """Generate final consolidated report"""
     
-    print(f"\n📈 Overall Statistics:")
-    print(f"   Total tests: {len(results)}")
-    print(f"   Successful: {len(successful)}")
-    print(f"   Failed: {len(failed)}")
-    print(f"   Total time: {total_time:.1f}s ({total_time/60:.1f}m)")
+    results = progress.get("results", {})
     
-    if successful:
-        # Best performers by pair
-        print(f"\n🏆 Best Strategy by Pair:")
-        print("-" * 70)
-        
-        pair_best = {}
-        for r in successful:
-            pair = r["pair"]
-            best = r.get("best_strategy", {})
-            sharpe = best.get("sharpe_ratio", 0)
-            
-            if pair not in pair_best or sharpe > pair_best[pair]["sharpe"]:
-                pair_best[pair] = {
-                    "year": r["year"],
-                    "strategy": best.get("name", "N/A"),
-                    "sharpe": sharpe,
-                    "win_rate": best.get("win_rate", 0)
-                }
-        
-        for pair in sorted(pair_best.keys()):
-            info = pair_best[pair]
-            print(f"   {pair} ({info['year']}): {info['strategy']}")
-            print(f"      Sharpe: {info['sharpe']:.2f}, Win Rate: {info['win_rate']*100:.1f}%")
-        
-        # Global top 10
-        print(f"\n🌟 Global Top 10 Strategies (All Pairs/Years):")
-        print("-" * 70)
-        
-        all_strategies = []
-        for r in successful:
-            for s in r.get("top_strategies", []):
-                all_strategies.append({
-                    "pair": r["pair"],
-                    "year": r["year"],
-                    "name": s.get("name", "N/A"),
-                    "sharpe": s.get("performance", {}).get("sharpe_ratio", 0),
-                    "trades": s.get("trading_stats", {}).get("total_trades", 0),
-                    "win_rate": s.get("performance", {}).get("win_rate", 0)
-                })
-        
-        # Sort by Sharpe
-        all_strategies.sort(key=lambda x: x["sharpe"], reverse=True)
-        
-        for i, s in enumerate(all_strategies[:10], 1):
-            print(f"   {i}. {s['pair']} {s['year']}: {s['name']}")
-            print(f"      Sharpe: {s['sharpe']:.2f}, Trades: {s['trades']}, Win: {s['win_rate']*100:.1f}%")
-        
-        # Consistency analysis
-        print(f"\n📊 Strategy Consistency Across Pairs/Years:")
-        print("-" * 70)
-        
-        strategy_counts = {}
-        for s in all_strategies:
-            name_base = s["name"].split("_")[0]  # e.g., "MeanReverter"
-            if name_base not in strategy_counts:
-                strategy_counts[name_base] = {"count": 0, "sharpes": []}
-            strategy_counts[name_base]["count"] += 1
-            strategy_counts[name_base]["sharpes"].append(s["sharpe"])
-        
-        for name, data in sorted(strategy_counts.items(), key=lambda x: sum(x[1]["sharpes"])/len(x[1]["sharpes"]) if x[1]["sharpes"] else 0, reverse=True):
-            avg_sharpe = sum(data["sharpes"]) / len(data["sharpes"]) if data["sharpes"] else 0
-            print(f"   {name}: {data['count']} appearances, Avg Sharpe: {avg_sharpe:.2f}")
+    if not results:
+        print("No results to report.")
+        return
     
-    # Save detailed report
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    report_file = RESULTS_DIR / f"mass_test_report_{timestamp}.json"
+    print(f"\n📊 FINAL RESULTS ({len(results)} datasets)")
+    print("-"*70)
     
-    report = {
-        "timestamp": timestamp,
-        "total_tests": len(results),
-        "successful": len(successful),
-        "failed": len(failed),
-        "total_time_seconds": total_time,
-        "results": results
-    }
+    # Sort by best sharpe (handle None values)
+    sorted_results = sorted(
+        results.items(),
+        key=lambda x: x[1].get("best_sharpe") or 0,
+        reverse=True
+    )
     
-    with open(report_file, 'w') as f:
-        json.dump(report, f, indent=2, default=str)
-    
-    print(f"\n💾 Detailed report saved to: {report_file}")
+    print("\n🏆 Top 10 by Sharpe Ratio:")
+    for i, (key, r) in enumerate(sorted_results[:10], 1):
+        print(f"   {i:2}. {key}: Sharpe {r.get('best_sharpe', 0):.2f} - {r.get('best_strategy', 'N/A')}")
     
     # Save CSV summary
-    if successful:
-        csv_file = RESULTS_DIR / f"mass_test_summary_{timestamp}.csv"
-        
-        rows = []
-        for r in successful:
-            best = r.get("best_strategy", {})
-            rows.append({
-                "pair": r["pair"],
-                "year": r["year"],
-                "best_strategy": best.get("name", "N/A"),
-                "sharpe_ratio": best.get("sharpe_ratio", 0),
-                "total_return": best.get("total_return", 0),
-                "win_rate": best.get("win_rate", 0),
-                "max_drawdown": best.get("max_drawdown", 0),
-                "total_strategies": r.get("total_strategies", 0),
-                "elapsed_time": r.get("elapsed_time", 0)
-            })
-        
-        df = pd.DataFrame(rows)
-        df.to_csv(csv_file, index=False)
-        print(f"💾 CSV summary saved to: {csv_file}")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    csv_file = RESULTS_DIR / f"mass_test_summary_{timestamp}.csv"
+    
+    rows = []
+    for key, r in results.items():
+        rows.append({
+            "pair_year": key,
+            "pair": r.get("pair"),
+            "year": r.get("year"),
+            "status": r.get("status"),
+            "best_strategy": r.get("best_strategy"),
+            "best_sharpe": r.get("best_sharpe"),
+            "avg_sharpe": r.get("avg_sharpe"),
+            "total_strategies": r.get("total_strategies"),
+            "elapsed_time": r.get("elapsed_str")
+        })
+    
+    df = pd.DataFrame(rows)
+    df.to_csv(csv_file, index=False)
+    print(f"\n💾 CSV saved: {csv_file}")
+    
+    # Save JSON report
+    json_file = RESULTS_DIR / f"mass_test_report_{timestamp}.json"
+    with open(json_file, 'w') as f:
+        json.dump(progress, f, indent=2, default=str)
+    print(f"💾 JSON saved: {json_file}")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -368,59 +453,44 @@ def generate_summary_report(results: list, total_time: float):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="NECROZMA Mass Testing System",
+        description="NECROZMA Mass Testing System with Resume Support",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-    python run_mass_test.py                    # Test all pairs/years
+    python run_mass_test.py                    # Run all (auto-resume)
+    python run_mass_test.py --status           # Show progress
+    python run_mass_test.py --fresh            # Start from zero
+    python run_mass_test.py --retry-failed     # Retry only failed
     python run_mass_test.py --pair EURUSD      # Test only EURUSD
     python run_mass_test.py --year 2024        # Test only 2024
-    python run_mass_test.py --pair EURUSD GBPUSD --year 2024 2025
-    python run_mass_test.py --parallel 4       # Use 4 parallel processes
         """
     )
     
-    parser.add_argument(
-        "--pair", "-p",
-        nargs="+",
-        choices=PAIRS,
-        help="Pairs to test (default: all)"
-    )
-    
-    parser.add_argument(
-        "--year", "-y",
-        nargs="+",
-        choices=YEARS,
-        help="Years to test (default: all)"
-    )
-    
-    parser.add_argument(
-        "--parallel", "-j",
-        type=int,
-        default=1,
-        help="Number of parallel processes (default: 1)"
-    )
-    
-    parser.add_argument(
-        "--list", "-l",
-        action="store_true",
-        help="List available datasets and exit"
-    )
+    parser.add_argument("--pair", "-p", nargs="+", choices=PAIRS, help="Pairs to test")
+    parser.add_argument("--year", "-y", nargs="+", choices=YEARS, help="Years to test")
+    parser.add_argument("--status", "-s", action="store_true", help="Show progress status")
+    parser.add_argument("--fresh", "-f", action="store_true", help="Start fresh (ignore progress)")
+    parser.add_argument("--retry-failed", "-r", action="store_true", help="Retry only failed datasets")
+    parser.add_argument("--list", "-l", action="store_true", help="List available datasets")
     
     args = parser.parse_args()
     
     if args.list:
         datasets = get_available_datasets()
         print(f"\n📁 Available datasets ({len(datasets)}):")
-        for d in sorted(datasets, key=lambda x: (x["pair"], x["year"])):
+        for d in datasets:
             print(f"   • {d['pair']} {d['year']}: {d['file']}")
         return
     
-    # Run mass test
+    if args.status:
+        show_status()
+        return
+    
     run_mass_test(
         pairs=args.pair,
         years=args.year,
-        parallel=args.parallel
+        fresh=args.fresh,
+        retry_failed=args.retry_failed
     )
 
 
