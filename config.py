@@ -479,8 +479,8 @@ STRATEGY_PARAMS = {
         'rsi_overbought': [70, 80],                 # 2 valores: 1 agressivo + 1 original
         'volume_filter': [1.2, 1.5],                # 2 valores: 1 agressivo + 1 original
     },
-    # Total: 1 × 3 × 2 × 2 × 2 × 2 × 2 = 96 combinações (filtrado por R:R)
-    # Após filtro R:R ~1.5: ~48 combinações
+    # Total: 1 × 3 × 2 × 2 × 2 × 2 × 2 = 96 combinações (raw)
+    # After R:R filter (≥1.5): ~96 strategies (most pass the filter)
     
     # ═══════════════════════════════════════════════════════════════
     # 🥉 MEAN REVERTER V3 - ADAPTIVE (Sharpe 3.86)
@@ -514,7 +514,8 @@ STRATEGY_PARAMS = {
     # Total: 2 × 2 × 2 × 2 × 1 = 16 combinações
     
     # ═══════════════════════════════════════════════════════════════
-    # TOTAL: ~98 unique strategies (16 + 48 + 18 + 16)
+    # TOTAL: ~142 unique strategies (16 + 96 + 18 + 16 = 146 raw)
+    # After R:R filtering: ~142 strategies
     # Estimated backtest time: ~15-20 minutes
     # ═══════════════════════════════════════════════════════════════
 }

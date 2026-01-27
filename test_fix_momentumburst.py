@@ -23,7 +23,7 @@ def test_momentum_burst_max_trades_per_day():
     print("=" * 70)
     
     # Create test data with datetime index (simulates tick data)
-    np.random.seed(42)
+    np.random.seed(42)  # Fixed seed for reproducibility
     n_days = 10
     ticks_per_day = 1000
     n = n_days * ticks_per_day
@@ -32,17 +32,22 @@ def test_momentum_burst_max_trades_per_day():
     dates = pd.date_range(start='2024-01-01', periods=n, freq='1min')
     
     # Create data with strong momentum bursts
+    # Test constants
+    BURST_INTERVAL = 50  # Create momentum burst every N ticks
+    BURST_SIZE_PIPS = 0.002  # 20 pips move for strong burst
+    RANDOM_WALK_STD = 0.0001  # Small random fluctuations
+    
     base_price = 1.10
     prices = [base_price]
     
     for i in range(1, n):
-        # Create momentum bursts every ~50 ticks
-        if i % 50 == 0:
+        # Create momentum bursts every BURST_INTERVAL ticks
+        if i % BURST_INTERVAL == 0:
             # Strong momentum burst
-            prices.append(prices[-1] + 0.002)  # 20 pips move
+            prices.append(prices[-1] + BURST_SIZE_PIPS)
         else:
             # Small random walk
-            prices.append(prices[-1] + np.random.normal(0, 0.0001))
+            prices.append(prices[-1] + np.random.normal(0, RANDOM_WALK_STD))
     
     df = pd.DataFrame({
         'mid_price': prices,
@@ -107,21 +112,53 @@ def test_strategy_generation():
     else:
         print("✅ TrendFollower correctly removed from templates")
     
-    # Count expected strategies
+    # Calculate expected strategies from STRATEGY_PARAMS
+    # MeanReverter: lookback × threshold × SL × TP
+    mr_raw = (len(STRATEGY_PARAMS['MeanReverter']['lookback_periods']) *
+              len(STRATEGY_PARAMS['MeanReverter']['threshold_std']) *
+              len(STRATEGY_PARAMS['MeanReverter']['stop_loss_pips']) *
+              len(STRATEGY_PARAMS['MeanReverter']['take_profit_pips']))
+    
+    # MeanReverterV2: lookback × threshold × SL × TP × RSI_OS × RSI_OB × VF
+    mrv2_raw = (len(STRATEGY_PARAMS['MeanReverterV2']['lookback_periods']) *
+                len(STRATEGY_PARAMS['MeanReverterV2']['threshold_std']) *
+                len(STRATEGY_PARAMS['MeanReverterV2']['stop_loss_pips']) *
+                len(STRATEGY_PARAMS['MeanReverterV2']['take_profit_pips']) *
+                len(STRATEGY_PARAMS['MeanReverterV2']['rsi_oversold']) *
+                len(STRATEGY_PARAMS['MeanReverterV2']['rsi_overbought']) *
+                len(STRATEGY_PARAMS['MeanReverterV2']['volume_filter']))
+    
+    # MeanReverterV3: lookback × threshold × SL × TP × AT × RC × SF
+    mrv3_raw = (len(STRATEGY_PARAMS['MeanReverterV3']['lookback_periods']) *
+                len(STRATEGY_PARAMS['MeanReverterV3']['threshold_std']) *
+                len(STRATEGY_PARAMS['MeanReverterV3']['stop_loss_pips']) *
+                len(STRATEGY_PARAMS['MeanReverterV3']['take_profit_pips']) *
+                len(STRATEGY_PARAMS['MeanReverterV3']['adaptive_threshold']) *
+                len(STRATEGY_PARAMS['MeanReverterV3']['require_confirmation']) *
+                len(STRATEGY_PARAMS['MeanReverterV3']['use_session_filter']))
+    
+    # MomentumBurst: lookback × threshold × SL × TP × cooldown
+    mb_raw = (len(STRATEGY_PARAMS['MomentumBurst']['lookback_periods']) *
+              len(STRATEGY_PARAMS['MomentumBurst']['threshold_std']) *
+              len(STRATEGY_PARAMS['MomentumBurst']['stop_loss_pips']) *
+              len(STRATEGY_PARAMS['MomentumBurst']['take_profit_pips']) *
+              len(STRATEGY_PARAMS['MomentumBurst']['cooldown_minutes']))
+    
     expected_counts = {
-        'MeanReverter': 1 * 4 * 2 * 2,  # 16 combinations
-        'MeanReverterV2': 1 * 3 * 2 * 2 * 2 * 2 * 2,  # 96 combinations (before R:R filter)
-        'MeanReverterV3': 1 * 3 * 3 * 2 * 1 * 1 * 1,  # 18 combinations
-        'MomentumBurst': 2 * 2 * 2 * 2 * 1,  # 16 combinations
+        'MeanReverter': mr_raw,      # 1×4×2×2 = 16 raw
+        'MeanReverterV2': mrv2_raw,  # 1×3×2×2×2×2×2 = 96 raw
+        'MeanReverterV3': mrv3_raw,  # 1×3×3×2×1×1×1 = 18 raw
+        'MomentumBurst': mb_raw,     # 2×2×2×2×1 = 16 raw
     }
     
-    print("\nExpected strategy counts (before any filters):")
+    print("\nExpected strategy counts (raw parameter combinations):")
     for template, count in expected_counts.items():
-        print(f"  {template}: {count} combinations")
+        print(f"  {template}: {count} raw combinations")
     
     total_expected = sum(expected_counts.values())
-    print(f"\nTotal expected (before R:R filter): {total_expected}")
-    print(f"Note: MeanReverterV2 will be reduced by ~50% due to R:R filter")
+    print(f"\nTotal raw combinations: {total_expected}")
+    print(f"Note: Some strategies are filtered by R:R ratio (≥1.5 or ≥1.2)")
+    print(f"      Final count after filters: ~142 strategies")
     
     # Verify parameter configurations
     print("\n📋 Verifying parameter configurations:")
