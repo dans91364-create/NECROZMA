@@ -111,6 +111,14 @@ Examples:
   # Strategy discovery without Telegram
   python main.py --strategy-discovery --skip-telegram
   
+  # NEW: Split workflow for efficient strategy testing
+  # Step 1: Generate base files (run once per pair)
+  python main.py --parquet GBPUSD_2025.parquet --generate-base
+  
+  # Step 2: Test strategies (run multiple times with different configs)
+  python main.py --parquet GBPUSD_2025.parquet --search-light
+  python main.py --parquet GBPUSD_2025.parquet --search-light --force-rerun
+  
   # Generate interactive dashboard
   python main.py --generate-dashboard
   
@@ -236,6 +244,18 @@ Examples:
         "--strategy-discovery",
         action="store_true",
         help="Run complete strategy discovery pipeline (labeling, regime detection, backtesting, ranking)"
+    )
+    
+    parser.add_argument(
+        "--generate-base",
+        action="store_true",
+        help="Generate base files (universes + patterns + regimes), then stop. Run once per pair."
+    )
+    
+    parser.add_argument(
+        "--search-light",
+        action="store_true",
+        help="Run strategy generation + backtesting using existing base. Can run multiple times."
     )
     
     parser.add_argument(
@@ -1125,6 +1145,495 @@ def run_strategy_discovery(df, args):
         raise
 
 
+def run_generate_base(df, args):
+    """
+    Generate base files (universes + patterns + regimes) for strategy testing
+    
+    Steps executed:
+    1. Load parquet (tick data)
+    2. analyzer.run_analysis() → Generate UNIVERSES
+    3. analyzer.save_results() → Save universes/*.parquet
+    4. Labeling (if not cached)
+    5. Pattern Mining (if not cached) → Save patterns.json
+    6. Regime Detection → Save regimes.parquet
+    7. DELETE labels/ directory (~56GB freed!)
+    8. STOP
+    
+    Args:
+        df: Input DataFrame with tick data
+        args: Command-line arguments
+    """
+    print("\n" + "═" * 80)
+    print("🏗️  GENERATE BASE - Building Foundation For Strategy Testing")
+    print("═" * 80)
+    
+    from lore import LoreSystem, EventType
+    from config import OUTPUT_DIR, FILE_PREFIX
+    import pandas as pd
+    
+    # Initialize Lore System
+    lore = LoreSystem(enable_telegram=not args.skip_telegram)
+    
+    # Awakening event
+    lore.broadcast(EventType.AWAKENING, 
+                  message="Base Generation Pipeline Initiated")
+    
+    try:
+        # Ensure output directory exists
+        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        
+        # ─────────────────────────────────────────────────────────
+        # STEP 1: CHECK FOR CACHED PATTERNS
+        # ─────────────────────────────────────────────────────────
+        patterns_path = OUTPUT_DIR / f"{FILE_PREFIX}patterns.json"
+        
+        if patterns_path.exists():
+            print("\n" + "─" * 80)
+            print("✅ PATTERNS FOUND IN CACHE - SKIPPING LABELING!")
+            print("─" * 80)
+            print(f"   Loading from: {patterns_path}")
+            
+            with open(patterns_path, 'r') as f:
+                patterns = json.load(f)
+            
+            n_patterns = len(patterns.get('important_features', []))
+            print(f"   Important features loaded: {n_patterns}")
+            
+            lore.broadcast(EventType.MILESTONE, 
+                          message="Patterns loaded from cache - Labeling skipped!")
+        else:
+            # ─────────────────────────────────────────────────────────
+            # STEP 1: LABELING
+            # ─────────────────────────────────────────────────────────
+            print("\n" + "─" * 80)
+            print("📊 STEP 1: Multi-Dimensional Outcome Labeling")
+            print("─" * 80)
+            
+            lore.broadcast(EventType.PROGRESS, 
+                          message="Step 1: Labeling outcomes across dimensions...")
+            
+            from labeler import label_dataframe
+            
+            start_time = time.time()
+            labels_dict = label_dataframe(df)
+            elapsed = time.time() - start_time
+            
+            print(f"\n✅ Labeling complete in {elapsed:.1f}s")
+            print(f"   Labeled scenarios: {len(labels_dict)}")
+            
+            lore.broadcast(EventType.MILESTONE, 
+                          message=f"Labeling complete: {len(labels_dict)} scenarios labeled")
+            
+            # ─────────────────────────────────────────────────────────
+            # STEP 2: PATTERN MINING
+            # ─────────────────────────────────────────────────────────
+            print("\n" + "─" * 80)
+            print("⛏️  STEP 2: ML-Based Pattern Mining")
+            print("─" * 80)
+            
+            lore.broadcast(EventType.PROGRESS, 
+                          message="Step 2: Mining patterns with ML...")
+            
+            from pattern_miner import PatternMiner
+            
+            start_time = time.time()
+            miner = PatternMiner()
+            patterns = miner.discover_patterns(df, labels_dict)
+            elapsed = time.time() - start_time
+            
+            n_patterns = len(patterns.get('important_features', []))
+            print(f"\n✅ Pattern mining complete in {elapsed:.1f}s")
+            print(f"   Important features found: {n_patterns}")
+            
+            # SAVE PATTERNS for future use
+            with open(patterns_path, 'w') as f:
+                json.dump(patterns, f, indent=2, default=str)
+            print(f"   💾 Patterns saved to: {patterns_path}")
+            
+            lore.broadcast(EventType.DISCOVERY, 
+                          message=f"Discovered {n_patterns} important patterns")
+            
+            # ─────────────────────────────────────────────────────────
+            # CLEANUP: Remove labels directory to free space (~56GB)
+            # ─────────────────────────────────────────────────────────
+            labels_dir = Path("labels")
+            if labels_dir.exists():
+                try:
+                    # Calculate size before deletion
+                    size_before = sum(f.stat().st_size for f in labels_dir.rglob('*') if f.is_file())
+                    shutil.rmtree(labels_dir, ignore_errors=True)
+                    size_gb = size_before / 1e9
+                    print(f"   🗑️  Labels removed: {size_gb:.1f}GB freed!")
+                except Exception as e:
+                    print(f"   ⚠️  Could not remove labels directory: {e}")
+        
+        # ─────────────────────────────────────────────────────────
+        # STEP 3: REGIME DETECTION
+        # ─────────────────────────────────────────────────────────
+        print("\n" + "─" * 80)
+        print("🔮 STEP 3: Market Regime Detection")
+        print("─" * 80)
+        
+        lore.broadcast(EventType.PROGRESS, 
+                      message="Step 3: Detecting market regimes...")
+        
+        from regime_detector import RegimeDetector
+        
+        regimes_path = OUTPUT_DIR / f"{FILE_PREFIX}regimes.parquet"
+        
+        # Check if regimes already exist (cache)
+        if regimes_path.exists():
+            print("✅ Regimes found in cache, loading...")
+            print(f"   Loading from: {regimes_path}")
+            start_time = time.time()
+            regimes_df = pd.read_parquet(regimes_path)
+            elapsed = time.time() - start_time
+            
+            # Analyze cached regimes
+            detector = RegimeDetector()
+            regime_analysis = detector.analyze_regimes(regimes_df)
+            n_regimes = regime_analysis.get('n_regimes', 0)
+            
+            print(f"   Loaded in {elapsed:.1f}s")
+            print(f"   Regimes loaded: {n_regimes}")
+            
+            lore.broadcast(EventType.MILESTONE, 
+                          message="Regimes loaded from cache")
+        else:
+            print("🔄 Running HDBSCAN clustering (this may take ~97 minutes)...")
+            start_time = time.time()
+            detector = RegimeDetector()
+            regimes_df = detector.detect_regimes(df)
+            regime_analysis = detector.analyze_regimes(regimes_df)
+            elapsed = time.time() - start_time
+            
+            n_regimes = regime_analysis.get('n_regimes', 0)
+            print(f"\n✅ Regime detection complete in {elapsed:.1f}s")
+            print(f"   Regimes detected: {n_regimes}")
+            
+            # Save regimes to file
+            regimes_df.to_parquet(regimes_path, compression='snappy')
+            print(f"   💾 Regimes saved to: {regimes_path}")
+        
+        lore.broadcast(EventType.REGIME_CHANGE, 
+                      message=f"Detected {n_regimes} distinct market regimes")
+        
+        # Final summary
+        print("\n" + "═" * 80)
+        print("🏗️  BASE GENERATION COMPLETE - Ready For Strategy Testing!")
+        print("═" * 80)
+        print(f"\n📊 Base Files Generated:")
+        print(f"   • Patterns: {patterns_path}")
+        print(f"   • Regimes: {regimes_path}")
+        print(f"   • Universes: universes/*.parquet (from analyzer)")
+        print(f"\n💡 Next Step: Run --search-light to test strategies")
+        print("\n" + "═" * 80 + "\n")
+        
+        lore.broadcast(EventType.COMPLETION, 
+                      message="Base Generation Complete! Ready for strategy testing.")
+        
+        return {
+            'patterns': patterns,
+            'regimes': regimes_df,
+            'regime_analysis': regime_analysis
+        }
+        
+    except Exception as e:
+        lore.broadcast(EventType.ERROR, 
+                      message=f"Base generation error: {str(e)}")
+        raise
+
+
+def run_search_light(df, args):
+    """
+    Run strategy generation + backtesting using existing base files
+    
+    **Note**: This function modifies the input DataFrame `df` by adding columns
+    (momentum, volatility, trend_strength, close) if they don't exist. These
+    are required for strategy backtesting.
+    
+    Requires (from base):
+    - parquet (tick data)
+    - universes/*.parquet
+    - patterns.json
+    - regimes.parquet
+    
+    Steps executed:
+    1. Load parquet (tick data)
+    2. SKIP universes (already exist)
+    3. LOAD patterns.json (from cache)
+    4. LOAD regimes.parquet (from cache)
+    5. Step 4: Strategy Generation
+    6. Step 5: Backtesting (tick-level precision)
+    7. SKIP Step 6: Ranking (not needed now)
+    8. SKIP Step 7: Report (not needed now)
+    
+    Output:
+    - backtest_results.parquet (raw results for analysis)
+    
+    Args:
+        df: Input DataFrame with tick data
+        args: Command-line arguments
+    """
+    print("\n" + "═" * 80)
+    print("🔍 SEARCH LIGHT - Fast Strategy Testing")
+    print("═" * 80)
+    
+    from lore import LoreSystem, EventType
+    from config import OUTPUT_DIR, FILE_PREFIX
+    import pandas as pd
+    
+    # Initialize Lore System
+    lore = LoreSystem(enable_telegram=not args.skip_telegram)
+    
+    # Awakening event
+    lore.broadcast(EventType.AWAKENING, 
+                  message="Light Search Pipeline Initiated")
+    
+    try:
+        # Ensure output directory exists
+        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        
+        # ─────────────────────────────────────────────────────────
+        # LOAD BASE FILES
+        # ─────────────────────────────────────────────────────────
+        print("\n" + "─" * 80)
+        print("📂 Loading Base Files")
+        print("─" * 80)
+        
+        patterns_path = OUTPUT_DIR / f"{FILE_PREFIX}patterns.json"
+        regimes_path = OUTPUT_DIR / f"{FILE_PREFIX}regimes.parquet"
+        
+        # Check if base files exist
+        if not patterns_path.exists():
+            raise FileNotFoundError(
+                f"❌ Patterns file not found: {patterns_path}\n"
+                f"   Run --generate-base first to create base files!"
+            )
+        
+        if not regimes_path.exists():
+            raise FileNotFoundError(
+                f"❌ Regimes file not found: {regimes_path}\n"
+                f"   Run --generate-base first to create base files!"
+            )
+        
+        # Load patterns
+        print(f"   Loading patterns from: {patterns_path}")
+        with open(patterns_path, 'r') as f:
+            patterns = json.load(f)
+        n_patterns = len(patterns.get('important_features', []))
+        print(f"   ✅ Patterns loaded: {n_patterns} features")
+        
+        # Load regimes
+        print(f"   Loading regimes from: {regimes_path}")
+        regimes_df = pd.read_parquet(regimes_path)
+        
+        from regime_detector import RegimeDetector
+        detector = RegimeDetector()
+        regime_analysis = detector.analyze_regimes(regimes_df)
+        n_regimes = regime_analysis.get('n_regimes', 0)
+        print(f"   ✅ Regimes loaded: {n_regimes} regimes")
+        
+        lore.broadcast(EventType.MILESTONE, 
+                      message="Base files loaded successfully")
+        
+        # ─────────────────────────────────────────────────────────
+        # STEP 4: STRATEGY GENERATION
+        # ─────────────────────────────────────────────────────────
+        print("\n" + "─" * 80)
+        print("🏭 STEP 4: Strategy Generation")
+        print("─" * 80)
+        
+        lore.broadcast(EventType.PROGRESS, 
+                      message="Step 4: Generating strategy candidates...")
+        
+        from strategy_factory import StrategyFactory
+        
+        start_time = time.time()
+        factory = StrategyFactory()
+        strategies = factory.generate_strategies()
+        elapsed = time.time() - start_time
+        
+        n_strategies = len(strategies)
+        print(f"\n✅ Strategy generation complete in {elapsed:.1f}s")
+        print(f"   Strategies generated: {n_strategies}")
+        
+        lore.broadcast(EventType.MILESTONE, 
+                      message=f"Generated {n_strategies} strategy candidates")
+        
+        # ─────────────────────────────────────────────────────────
+        # STEP 4.5: Add Tick-Level Features (if missing)
+        # ─────────────────────────────────────────────────────────
+        if 'momentum' not in df.columns:
+            print("\n📊 Adding tick-level features...")
+            
+            # Momentum: sum of pips_change over last N ticks
+            df['momentum'] = df['pips_change'].rolling(window=100, min_periods=1).sum()
+            
+            # Volatility: standard deviation of pips_change over last N ticks
+            df['volatility'] = df['pips_change'].rolling(window=100, min_periods=1).std().fillna(0)
+            
+            # Trend strength: absolute normalized momentum
+            df['trend_strength'] = df['momentum'].abs() / (df['volatility'] + EPSILON)
+            
+            # Close (alias for mid_price, needed by some strategies)
+            df['close'] = df['mid_price']
+            
+            print(f"   ✅ Features added: momentum, volatility, trend_strength, close")
+        
+        # ─────────────────────────────────────────────────────────
+        # STEP 5: BACKTESTING
+        # ─────────────────────────────────────────────────────────
+        print("\n" + "─" * 80)
+        print("📈 STEP 5: Walk-Forward Backtesting")
+        print("─" * 80)
+        
+        # Check for cached results
+        merged_results_path = OUTPUT_DIR / f"{FILE_PREFIX}backtest_results.parquet"
+        force_rerun = getattr(args, 'force_rerun', False)
+        
+        if merged_results_path.exists() and not force_rerun:
+            print(f"\n✅ Found cached backtest results!")
+            print(f"   Loading from: {merged_results_path}")
+            
+            # Load cached results
+            results_df = pd.read_parquet(merged_results_path)
+            
+            n_strategies_tested = results_df['strategy_name'].nunique()
+            n_rows = len(results_df)
+            
+            # Count viable strategies
+            viable_df = results_df[results_df['sharpe_ratio'] > 1.0]
+            n_viable = viable_df['strategy_name'].nunique()
+            
+            print(f"   Loaded {n_rows:,} results for {n_strategies_tested:,} strategies")
+            print(f"   Viable strategies (Sharpe > 1.0): {n_viable}/{n_strategies_tested}")
+            print(f"\n   💡 Use --force-rerun to reprocess")
+            
+            lore.broadcast(EventType.INSIGHT, 
+                          message=f"Loaded cached results: {n_viable} viable strategies")
+            
+            backtest_results = results_df
+        else:
+            # Run backtesting (cache doesn't exist or force rerun requested)
+            if force_rerun and merged_results_path.exists():
+                print(f"\n🔄 Force rerun requested, reprocessing all batches...")
+            
+            lore.broadcast(EventType.PROGRESS, 
+                          message="Step 5: Backtesting strategies...")
+            
+            # Check if batch mode is enabled
+            use_batch_mode = getattr(args, 'batch_mode', False)
+            
+            start_time = time.time()
+            
+            if use_batch_mode:
+                # Use batch processing with subprocess isolation
+                print(f"\n🔄 Using batch mode (batch size: {args.batch_size})")
+                
+                from batch_runner import run_batch_processing
+                from config import PARQUET_FILE
+                import os
+                
+                # Save current dataframe to ensure batch workers use same data
+                # Use process-specific filename to avoid conflicts
+                temp_parquet = OUTPUT_DIR / f"temp_batch_data_{os.getpid()}_{int(time.time())}.parquet"
+                print(f"   💾 Saving data for batch processing: {temp_parquet}")
+                df.to_parquet(temp_parquet, compression='snappy')
+                
+                # Run batch processing
+                merged_results_file = run_batch_processing(
+                    batch_size=args.batch_size,
+                    parquet_file=temp_parquet,
+                    force_rerun=force_rerun
+                )
+                
+                # Load merged results
+                if merged_results_file and merged_results_file.exists():
+                    print(f"\n   📊 Loading merged results from: {merged_results_file}")
+                    results_df = pd.read_parquet(merged_results_file)
+                    
+                    backtest_results = results_df
+                    
+                    # Clean up temp file
+                    if temp_parquet.exists():
+                        temp_parquet.unlink()
+                        print(f"   🗑️  Cleaned up temp data file")
+                else:
+                    print(f"\n   ❌ Batch processing failed or no results!")
+                    backtest_results = pd.DataFrame()
+            else:
+                # Original in-process backtesting
+                from backtester import Backtester
+                
+                backtester = Backtester()
+                backtest_results = backtester.test_strategies(strategies, df)
+                
+                # Convert to DataFrame if needed and save
+                if isinstance(backtest_results, dict):
+                    # Convert dict format to DataFrame
+                    rows = []
+                    for strategy_name, lot_results in backtest_results.items():
+                        for lot_size, result in lot_results.items():
+                            if isinstance(result, dict):
+                                row = result.copy()
+                                row['strategy_name'] = strategy_name
+                                row['lot_size'] = lot_size
+                                rows.append(row)
+                    backtest_results = pd.DataFrame(rows)
+                
+                # Save results
+                if not backtest_results.empty:
+                    backtest_results.to_parquet(merged_results_path, compression='snappy')
+                    print(f"   💾 Results saved to: {merged_results_path}")
+            
+            elapsed = time.time() - start_time
+            
+            # Count viable strategies
+            if isinstance(backtest_results, pd.DataFrame) and not backtest_results.empty:
+                viable_df = backtest_results[backtest_results['sharpe_ratio'] > 1.0]
+                n_viable = viable_df['strategy_name'].nunique()
+                n_strategies_tested = backtest_results['strategy_name'].nunique()
+            else:
+                n_viable = 0
+                n_strategies_tested = 0
+            
+            print(f"\n✅ Backtesting complete in {elapsed:.1f}s")
+            print(f"   Viable strategies (Sharpe > 1.0): {n_viable}/{n_strategies_tested}")
+            
+            lore.broadcast(EventType.INSIGHT, 
+                          message=f"Backtesting found {n_viable} viable strategies")
+        
+        # Final summary
+        print("\n" + "═" * 80)
+        print("🔍 SEARCH LIGHT COMPLETE - Strategy Testing Done!")
+        print("═" * 80)
+        print(f"\n📊 Results Summary:")
+        print(f"   • Strategies tested: {n_strategies}")
+        print(f"   • Viable strategies: {n_viable}")
+        print(f"   • Results saved to: {merged_results_path}")
+        print(f"\n💡 Next Step: Run again with different config or analyze results")
+        print("\n" + "═" * 80 + "\n")
+        
+        lore.broadcast(EventType.COMPLETION, 
+                      message=f"Strategy Testing Complete! Found {n_viable} viable strategies.")
+        
+        return {
+            'backtest_results': backtest_results,
+            'summary': {
+                'patterns': n_patterns,
+                'regimes': n_regimes,
+                'strategies': n_strategies,
+                'viable': n_viable
+            }
+        }
+        
+    except Exception as e:
+        lore.broadcast(EventType.ERROR, 
+                      message=f"Light search error: {str(e)}")
+        raise
+
+
 # ═══════════════════════════════════════════════════════════════
 # 🚀 MAIN EXECUTION
 # ═══════════════════════════════════════════════════════════════
@@ -1368,8 +1877,45 @@ def main():
     analyzer = UltraNecrozmaAnalyzer(df, lore_system=lore)
     # Use parallel only if num_workers > 1 and not in sequential mode
     use_parallel = (num_workers > 1) and not args.sequential
-    analyzer.run_analysis(parallel=use_parallel)
-    analyzer.save_results()  # Save universe files
+    
+    # Check for conflicting flags
+    if args.generate_base and args.search_light:
+        print("\n⚠️  WARNING: Both --generate-base and --search-light flags provided")
+        print("   Only --generate-base will be executed (--search-light will be ignored)")
+        print("   Run these commands separately for the intended workflow\n")
+    
+    # Check which workflow mode to use
+    if args.generate_base:
+        # Generate base mode - run analysis then generate base files
+        analyzer.run_analysis(parallel=use_parallel)
+        analyzer.save_results()  # Save universe files
+        
+        # Generate base files
+        base_results = run_generate_base(df, args)
+        
+        # Exit early - no need for further processing
+        print("\n✅ Base generation complete - exiting")
+        print("   Next step: Run with --search-light to test strategies")
+        sys.exit(0)
+    elif args.search_light:
+        # Search light mode - skip analysis, load base files
+        print("\n🔍 Search Light mode - skipping universe analysis")
+        print("   Loading existing base files...")
+        
+        # Don't run analyzer in search light mode
+        # The base files already exist from --generate-base
+        
+        # Run search light
+        search_results = run_search_light(df, args)
+        
+        # Exit early - no need for further processing
+        print("\n✅ Strategy testing complete - exiting")
+        print("   Results saved to backtest_results.parquet")
+        sys.exit(0)
+    else:
+        # Normal mode - run full analysis
+        analyzer.run_analysis(parallel=use_parallel)
+        analyzer.save_results()  # Save universe files
     
     # Strategy discovery (if enabled)
     discovery_results = None
