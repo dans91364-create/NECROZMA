@@ -442,15 +442,57 @@ METRIC_THRESHOLDS = {
 # 🏆 NECROZMA TOP 30 - ESTRATÉGIAS COMPROVADAS EM 8 ROUNDS DE BACKTESTING
 # ═══════════════════════════════════════════════════════════════════════════
 
-# Strategy templates to generate
-# ❌ REMOVIDO: TrendFollower - Sharpe negativo, 114k trades inúteis
-# ❌ REMOVIDO: MomentumBurst - Bug de overtrading não resolvido (742,908 trades/ano)
-# ❌ REMOVIDO: MeanReverter - Duplicado de MeanReverterLegacy (mesmos parâmetros)
-STRATEGY_TEMPLATES = [
-    'MeanReverterLegacy',  # 🏆 Campeão - Sharpe 6.29
-    'MeanReverterV3',      # Adaptive - Sharpe até 4.80
-    'MeanReverterV2',      # Volume - Sharpe até 0.93
-]
+# Strategy templates to generate (288 total: 3 legacy + 285 new templates)
+# Complete strategy library across 14 categories:
+# - Trend (25): Moving averages, MACD, ADX, Ichimoku, Parabolic SAR, etc.
+# - Mean Reversion (30): RSI, Bollinger, Stochastic, CCI, Williams %R, etc.
+# - Momentum (15): ROC, Elder, Momentum oscillators, etc.
+# - Volatility (20): ATR, range strategies, volatility estimators, etc.
+# - Volume (20): OBV, VWAP, accumulation/distribution, CMF, etc.
+# - Candlestick (40): Single, double, triple patterns, complex formations
+# - Chart Patterns (25): Head & shoulders, triangles, flags, wedges, etc.
+# - Fibonacci (15): Retracements, extensions, harmonic patterns (Gartley, Bat, Butterfly, etc.)
+# - Time-based (15): Session breakouts, day-of-week effects, news trading, etc.
+# - Multi-pair (20): Correlation, pairs trading, currency strength, carry trade, etc.
+# - SMC (15): Order blocks, FVG, liquidity, market structure, Wyckoff, etc.
+# - Statistical (20): Kalman, Hurst, HMM, GARCH, PCA, Kelly, etc.
+# - Exotic (15): Renko, Heikin Ashi, Market Profile, order flow, etc.
+# - Risk Management (10): Position sizing, stop strategies, exit rules, drawdown control
+
+# Full list generated programmatically - see strategy_templates/ module
+# Import from strategy_templates to get all available templates dynamically
+try:
+    import strategy_templates.trend as trend_mod
+    import strategy_templates.mean_reversion as mr_mod
+    import strategy_templates.momentum as mom_mod
+    import strategy_templates.volatility as vol_mod
+    import strategy_templates.volume as volume_mod
+    import strategy_templates.candlestick as candle_mod
+    import strategy_templates.chart_patterns as chart_mod
+    import strategy_templates.fibonacci as fib_mod
+    import strategy_templates.time_based as time_mod
+    import strategy_templates.multi_pair as multi_mod
+    import strategy_templates.smc as smc_mod
+    import strategy_templates.statistical as stat_mod
+    import strategy_templates.exotic as exotic_mod
+    import strategy_templates.risk_management as risk_mod
+    
+    # Build complete list from all modules
+    _all_new_templates = []
+    for mod in [trend_mod, mr_mod, mom_mod, vol_mod, volume_mod, candle_mod, chart_mod,
+                fib_mod, time_mod, multi_mod, smc_mod, stat_mod, exotic_mod, risk_mod]:
+        _all_new_templates.extend(mod.__all__)
+    
+    STRATEGY_TEMPLATES = ['MeanReverterLegacy', 'MeanReverterV3', 'MeanReverterV2'] + sorted(set(_all_new_templates))
+except ImportError:
+    # Fallback if modules not yet importable - use static list
+    STRATEGY_TEMPLATES = [
+        # Legacy (3)
+        'MeanReverterLegacy', 'MeanReverterV3', 'MeanReverterV2',
+        # New templates (285) - abbreviated list
+        'SMAStrategy', 'EMAStrategy', 'MACDClassic', 'RSIClassic', 'BollingerBounce',
+        # ... (full list in strategy_templates/__init__.py)
+    ]
 
 # Parameter ranges for strategy generation
 STRATEGY_PARAMS = {
@@ -459,11 +501,10 @@ STRATEGY_PARAMS = {
     # ═══════════════════════════════════════════════════════════════
     'MeanReverterLegacy': {
         'lookback_periods': [5],
-        'threshold': [1.8, 2.0],           # USA 'threshold' NÃO 'threshold_std'
+        'threshold': [1.8, 2.0],
         'stop_loss_pips': [20, 30],
         'take_profit_pips': [40, 50],
     },
-    # Total: 1 × 2 × 2 × 2 = 8 combinações
     
     # ═══════════════════════════════════════════════════════════════
     # 🥈 MEAN REVERTER V3 - Adaptive (Sharpe até 4.80)
@@ -477,7 +518,6 @@ STRATEGY_PARAMS = {
         'require_confirmation': [False],
         'use_session_filter': [False],
     },
-    # Total: 1 × 2 × 3 × 2 × 1 × 1 × 1 = 12 combinações
     
     # ═══════════════════════════════════════════════════════════════
     # 🥉 MEAN REVERTER V2 - Volume (Sharpe até 0.93)
@@ -488,21 +528,33 @@ STRATEGY_PARAMS = {
         'stop_loss_pips': [15, 20],
         'take_profit_pips': [40, 50],
         'rsi_oversold': [35],
-        'rsi_overbought': [80],  # APENAS 80, removido 70 (performance inferior)
+        'rsi_overbought': [80],
         'volume_filter': [1.2],
     },
-    # Total: 1 × 3 × 2 × 2 × 1 × 1 × 1 = 12 combinações
     
     # ═══════════════════════════════════════════════════════════════
-    # REMOVIDOS:
-    # - MomentumBurst: Bug de overtrading não resolvido (742,908 trades/ano)
-    # - MeanReverter: Duplicado de MeanReverterLegacy
-    # - MeanReverterV2 RSI 35-70: Performance inferior (Sharpe < 0.5)
+    # DEFAULT PARAMETERS for all new strategy templates (285 templates)
+    # Single parameter combination per strategy for initial testing
+    # Can be expanded with more combinations based on performance
     # ═══════════════════════════════════════════════════════════════
+    # Default: Apply to all strategies not explicitly defined
+    '_default_': {
+        'period': [14],
+        'threshold': [2.0],
+        'lookback': [20],
+        'fast_period': [12],
+        'slow_period': [26],
+        'signal_period': [9],
+        'oversold': [30],
+        'overbought': [70],
+        'multiplier': [2.0],
+    },
     
     # ═══════════════════════════════════════════════════════════════
-    # TOTAL: 32 unique strategies (8 + 12 + 12 = 32)
-    # MeanReverterLegacy: 8 + MeanReverterV3: 12 + MeanReverterV2: 12
+    # TOTAL: 288 strategy templates available
+    # Legacy: 3 templates (32 parameter combinations)
+    # New: 285 templates (285+ parameter combinations with defaults)
+    # Can generate 300+ unique strategy instances
     # ═══════════════════════════════════════════════════════════════
 }
 

@@ -7,10 +7,15 @@ Automatic Strategy Generation System
 "From patterns to profit - the strategy forge"
 
 Features:
-- Multiple strategy templates (Trend, Mean Reversion, Breakout, Regime)
+- 285+ strategy templates across 14 categories
 - Parameter variation and combination
 - Rule generation from patterns
 - Strategy pool creation
+
+Categories:
+- Trend, Mean Reversion, Momentum, Volatility, Volume
+- Candlestick, Chart Patterns, Fibonacci, Time-based
+- Multi-pair, SMC, Statistical, Exotic, Risk Management
 """
 
 import numpy as np
@@ -20,6 +25,17 @@ from itertools import product
 import json
 
 from config import STRATEGY_TEMPLATES, STRATEGY_PARAMS
+
+# Import all strategy templates from the new modular structure
+try:
+    from strategy_templates.base import Strategy, EPSILON
+    from strategy_templates import trend, mean_reversion, momentum, volatility, volume
+    from strategy_templates import candlestick, chart_patterns, fibonacci, time_based, multi_pair
+    from strategy_templates import smc, statistical, exotic, risk_management
+except ImportError:
+    # Fallback to legacy implementation if new modules not available
+    print("⚠️  Warning: Using legacy strategy implementations")
+    pass
 
 # Constants
 EPSILON = 1e-8  # Small value to prevent division by zero
@@ -891,22 +907,40 @@ class StrategyFactory:
         self.templates = templates or STRATEGY_TEMPLATES
         self.params = params or STRATEGY_PARAMS
         
-        # Map template names to classes
-        self.template_classes = {
-            "TrendFollower": TrendFollower,
-            "MeanReverterLegacy": MeanReverterLegacy,  # 🏆 Round 7 version (Sharpe 6.29)
-            "MeanReverter": MeanReverter,
-            "RegimeAdapter": RegimeAdapter,
-            "MeanReverterV2": MeanReverterV2,
-            "MeanReverterV3": MeanReverterV3,
-            "MomentumBurst": MomentumBurst,
-            # Correlation Templates (not used in Round 3)
-            "CorrelationTrader": CorrelationTrader,
-            "PairDivergence": PairDivergence,
-            "LeadLagStrategy": LeadLagStrategy,
-            "RiskSentiment": RiskSentiment,
-            "USDStrength": USDStrength,
-        }
+        # Map template names to classes - dynamically build from all modules
+        self.template_classes = {}
+        
+        # Legacy strategies (kept for backward compatibility)
+        self.template_classes["TrendFollower"] = TrendFollower
+        self.template_classes["MeanReverterLegacy"] = MeanReverterLegacy
+        self.template_classes["MeanReverter"] = MeanReverter
+        self.template_classes["RegimeAdapter"] = RegimeAdapter
+        self.template_classes["MeanReverterV2"] = MeanReverterV2
+        self.template_classes["MeanReverterV3"] = MeanReverterV3
+        self.template_classes["MomentumBurst"] = MomentumBurst
+        self.template_classes["CorrelationTrader"] = CorrelationTrader
+        self.template_classes["PairDivergence"] = PairDivergence
+        self.template_classes["LeadLagStrategy"] = LeadLagStrategy
+        self.template_classes["RiskSentiment"] = RiskSentiment
+        self.template_classes["USDStrength"] = USDStrength
+        
+        # Dynamically import all new strategy templates from modular structure
+        try:
+            # Import all modules
+            for module in [trend, mean_reversion, momentum, volatility, volume,
+                          candlestick, chart_patterns, fibonacci, time_based, multi_pair,
+                          smc, statistical, exotic, risk_management]:
+                # Get all exported strategy classes from each module
+                for strategy_name in module.__all__:
+                    strategy_class = getattr(module, strategy_name, None)
+                    if strategy_class is not None:
+                        self.template_classes[strategy_name] = strategy_class
+            
+            print(f"✓ Loaded {len(self.template_classes)} strategy templates")
+        except NameError:
+            # Modules not imported - using legacy mode
+            print("⚠️  Using legacy strategy templates only")
+            pass
     
     def generate_parameter_combinations(self, template_name: str) -> List[Dict]:
         """
@@ -918,52 +952,57 @@ class StrategyFactory:
         Returns:
             List of parameter dictionaries
         """
-        # Get template-specific params or use global params as fallback
+        # Get template-specific params or use defaults
         if isinstance(self.params, dict) and template_name in self.params:
-            # New format: per-strategy parameters
+            # Template has specific parameters defined
             template_params = self.params[template_name]
+        elif isinstance(self.params, dict) and '_default_' in self.params:
+            # Use default parameters for new templates
+            template_params = self.params['_default_']
         else:
-            # Old format: global parameters (fallback for compatibility)
-            template_params = self.params
+            # Fallback to global params or empty dict
+            template_params = self.params if isinstance(self.params, dict) else {}
         
         combinations = []
         
-        # Extract parameter lists
-        # V3 always uses OPTIMAL_LOOKBACK=5, others use config or default
-        if template_name == "MeanReverterV3":
-            lookbacks = [V3_OPTIMAL_LOOKBACK]  # V3 ALWAYS uses fixed lookback=5 (proven optimal)
-        else:
-            lookbacks = template_params.get("lookback_periods", [20])
-        
-        # MeanReverterLegacy uses 'threshold', others use 'threshold_std'
-        if template_name == "MeanReverterLegacy":
-            thresholds = template_params.get("threshold", template_params.get("threshold_std", [1.0]))
-        else:
-            thresholds = template_params.get("threshold_std", template_params.get("thresholds", [1.0]))
-        
-        stop_losses = template_params.get("stop_loss_pips", [20])
-        take_profits = template_params.get("take_profit_pips", [40])
-        
-        # Generate all combinations of core parameters
-        for lookback, threshold, stop, profit in product(
-            lookbacks, thresholds, stop_losses, take_profits
-        ):
-            # Risk/reward filter - less strict for V3 and MeanReverter (tested combinations)
+        # For legacy strategies (MeanReverterLegacy, V2, V3), use original parameter generation
+        if template_name in ["MeanReverterLegacy", "MeanReverterV2", "MeanReverterV3"]:
+            # Extract parameter lists
+            # V3 always uses OPTIMAL_LOOKBACK=5, others use config or default
             if template_name == "MeanReverterV3":
-                min_rr_ratio = 1.2
-            elif template_name in ["MeanReverter", "MeanReverterLegacy"]:
-                min_rr_ratio = 1.3  # Allow SL30/TP40 (1.33 ratio)
+                lookbacks = [V3_OPTIMAL_LOOKBACK]  # V3 ALWAYS uses fixed lookback=5 (proven optimal)
             else:
-                min_rr_ratio = 1.5
-            if profit >= stop * min_rr_ratio:
-                base_params = {
-                    "lookback_periods": lookback,
-                    "threshold": threshold,
-                    "stop_loss_pips": stop,
-                    "take_profit_pips": profit,
-                }
-                
-                # Add strategy-specific parameters
+                lookbacks = template_params.get("lookback_periods", [20])
+            
+            # MeanReverterLegacy uses 'threshold', others use 'threshold_std'
+            if template_name == "MeanReverterLegacy":
+                thresholds = template_params.get("threshold", template_params.get("threshold_std", [1.0]))
+            else:
+                thresholds = template_params.get("threshold_std", template_params.get("thresholds", [1.0]))
+            
+            stop_losses = template_params.get("stop_loss_pips", [20])
+            take_profits = template_params.get("take_profit_pips", [40])
+            
+            # Generate all combinations of core parameters
+            for lookback, threshold, stop, profit in product(
+                lookbacks, thresholds, stop_losses, take_profits
+            ):
+                # Risk/reward filter - less strict for V3 and MeanReverter (tested combinations)
+                if template_name == "MeanReverterV3":
+                    min_rr_ratio = 1.2
+                elif template_name in ["MeanReverter", "MeanReverterLegacy"]:
+                    min_rr_ratio = 1.3  # Allow SL30/TP40 (1.33 ratio)
+                else:
+                    min_rr_ratio = 1.5
+                if profit >= stop * min_rr_ratio:
+                    base_params = {
+                        "lookback_periods": lookback,
+                        "threshold": threshold,
+                        "stop_loss_pips": stop,
+                        "take_profit_pips": profit,
+                    }
+                    
+                    # Add strategy-specific parameters (rest of legacy logic continues below...)
                 if template_name == "MomentumBurst":
                     # Add cooldown variations
                     cooldowns = template_params.get("cooldown_minutes", template_params.get("cooldown", [60]))
@@ -1002,13 +1041,21 @@ class StrategyFactory:
                         params["use_session_filter"] = session
                         combinations.append(params)
                 
-                else:
-                    # For other strategies (TrendFollower, MeanReverter), just use base params
-                    params = base_params.copy()
-                    # For MeanReverter, also include threshold_std for naming consistency
-                    if template_name == "MeanReverter":
-                        params["threshold_std"] = params["threshold"]
-                    combinations.append(params)
+                    else:
+                        # For other strategies (TrendFollower, MeanReverter), just use base params
+                        params = base_params.copy()
+                        # For MeanReverter, also include threshold_std for naming consistency
+                        if template_name == "MeanReverter":
+                            params["threshold_std"] = params["threshold"]
+                        combinations.append(params)
+        else:
+            # For new strategy templates, use simplified parameter generation
+            # Just create a single combination from the template params
+            param_dict = {}
+            for key, value_list in template_params.items():
+                # Take first value from each parameter list
+                param_dict[key] = value_list[0] if isinstance(value_list, list) and value_list else value_list
+            combinations.append(param_dict)
         
         return combinations
     
@@ -1040,23 +1087,30 @@ class StrategyFactory:
             
             for params in param_combinations:
                 # Create unique name including all key parameters
-                # Handle both 'threshold' and 'threshold_std' (V3 uses threshold_std)
-                threshold_value = params.get('threshold_std', params.get('threshold', 1.0))
-                strategy_name = f"{template_name}_L{params['lookback_periods']}_T{threshold_value}_SL{params['stop_loss_pips']}_TP{params['take_profit_pips']}"
-                
-                # Add strategy-specific parameters to name
-                if template_name == "MomentumBurst" and "cooldown" in params:
-                    strategy_name += f"_CD{params['cooldown']}"
-                elif template_name == "MeanReverterV2":
-                    if "rsi_oversold" in params and "rsi_overbought" in params:
-                        strategy_name += f"_RSI{params['rsi_oversold']}-{params['rsi_overbought']}"
-                    if "volume_filter" in params:
-                        strategy_name += f"_VF{params['volume_filter']}"
-                elif template_name == "MeanReverterV3":
-                    # Include V3-specific parameters in the name
-                    strategy_name += f"_AT{int(params.get('adaptive_threshold', True))}"
-                    strategy_name += f"_RC{int(params.get('require_confirmation', True))}"
-                    strategy_name += f"_SF{int(params.get('use_session_filter', False))}"
+                # For legacy strategies with full parameters
+                if template_name in ["MeanReverterLegacy", "MeanReverterV2", "MeanReverterV3"]:
+                    # Handle both 'threshold' and 'threshold_std' (V3 uses threshold_std)
+                    threshold_value = params.get('threshold_std', params.get('threshold', 1.0))
+                    strategy_name = f"{template_name}_L{params['lookback_periods']}_T{threshold_value}_SL{params['stop_loss_pips']}_TP{params['take_profit_pips']}"
+                    
+                    # Add strategy-specific parameters to name
+                    if template_name == "MomentumBurst" and "cooldown" in params:
+                        strategy_name += f"_CD{params['cooldown']}"
+                    elif template_name == "MeanReverterV2":
+                        if "rsi_oversold" in params and "rsi_overbought" in params:
+                            strategy_name += f"_RSI{params['rsi_oversold']}-{params['rsi_overbought']}"
+                        if "volume_filter" in params:
+                            strategy_name += f"_VF{params['volume_filter']}"
+                    elif template_name == "MeanReverterV3":
+                        # Include V3-specific parameters in the name
+                        strategy_name += f"_AT{int(params.get('adaptive_threshold', True))}"
+                        strategy_name += f"_RC{int(params.get('require_confirmation', True))}"
+                        strategy_name += f"_SF{int(params.get('use_session_filter', False))}"
+                else:
+                    # For new templates, use simpler naming with key parameters
+                    period = params.get('period', params.get('lookback', 14))
+                    threshold = params.get('threshold', 2.0)
+                    strategy_name = f"{template_name}_P{period}_T{threshold}"
                 
                 # Check for duplicates
                 if strategy_name in strategy_names:
