@@ -19,8 +19,27 @@ import pandas as pd
 
 # Configuration
 BASE_URL = "https://ticks.ex2archive.com/ticks/{pair}_Zero_Spread/{year}/Exness_{pair}_Zero_Spread_{year}.zip"
-ALL_PAIRS = ['EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'AUDUSD', 'USDCAD', 'EURGBP', 'GBPJPY', 'EURJPY', 'AUDJPY']
-ALL_YEARS = [2023, 2024, 2025]
+ALL_PAIRS = [
+    # Majors (7)
+    'EURUSD', 'GBPUSD', 'USDJPY', 'USDCHF', 'USDCAD', 'AUDUSD', 'NZDUSD',
+    
+    # Crosses (10)
+    'EURJPY', 'EURGBP', 'GBPJPY', 'AUDJPY', 'NZDJPY', 'CADJPY', 'CHFJPY',
+    'EURAUD', 'GBPAUD', 'EURCHF',
+    
+    # Precious Metals (4)
+    'XAUUSD', 'XAGUSD', 'XPTUSD', 'XPDUSD',
+    
+    # Industrial Metals (3)
+    'XCUUSD', 'XALUSD', 'XNIUSD',
+    
+    # Exotics (5)
+    'USDMXN', 'USDZAR', 'USDTRY', 'EURNOK', 'USDSEK',
+    
+    # Index (1)
+    'DXY',
+]
+ALL_YEARS = [2025]
 OUTPUT_DIR = Path("data/parquet")
 TEMP_DIR = Path("data/temp")
 
