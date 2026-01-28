@@ -146,6 +146,16 @@ Examples:
   
   # Process specific universes or chunks
   python main.py --universes "1,5,10-15" --chunks "1-6"
+  
+  # VAST MODE: High-performance parallel processing for cloud machines
+  # Auto-detect and use all resources
+  python main.py --vast-mode --input-dir data/parquet/ --generate-base
+  
+  # Specify parallelism manually
+  python main.py --vast-mode --input-dir data/parquet/ --generate-base --parallel-pairs 30 --max-workers 4
+  
+  # Just search-light on existing bases
+  python main.py --vast-mode --input-dir data/parquet/ --search-light
         """
     )
     
@@ -392,7 +402,96 @@ Examples:
         help='Process specific chunks (e.g., "1-6,12")'
     )
     
+    # VAST Mode arguments (high-performance parallel processing)
+    parser.add_argument(
+        "--vast-mode",
+        action="store_true",
+        help="Optimize for high-performance machines (auto-detects cores/RAM and maximizes utilization)"
+    )
+    
+    parser.add_argument(
+        "--input-dir",
+        type=str,
+        default=None,
+        help="Directory containing multiple parquet files to process in parallel"
+    )
+    
+    parser.add_argument(
+        "--parallel-pairs",
+        type=int,
+        default=1,
+        help="Number of currency pairs to process simultaneously (default: 1, auto in vast-mode)"
+    )
+    
+    parser.add_argument(
+        "--max-workers",
+        type=int,
+        default=None,
+        help="Maximum workers per pair for parallel processing (default: auto-detect)"
+    )
+    
     return parser.parse_args()
+
+
+# ═══════════════════════════════════════════════════════════════
+# ⚡ VAST MODE FUNCTIONS
+# ═══════════════════════════════════════════════════════════════
+
+def detect_resources():
+    """
+    Detect available system resources
+    
+    Returns:
+        dict: Dictionary containing:
+            - cpu_cores: Number of CPU cores
+            - ram_gb: Total RAM in GB
+            - recommended_parallel_pairs: Recommended number of pairs to process in parallel
+            - recommended_workers_per_pair: Recommended workers per pair
+            - recommended_chunk_size: Recommended chunk size for memory operations (reserved for future use)
+    """
+    import psutil
+    
+    cpu_count = os.cpu_count() or 8
+    ram_gb = psutil.virtual_memory().total / (1024**3)
+    
+    return {
+        'cpu_cores': cpu_count,
+        'ram_gb': ram_gb,
+        'recommended_parallel_pairs': min(30, max(1, cpu_count // 4)),  # 4 cores per pair, minimum 1
+        'recommended_workers_per_pair': 4,
+        'recommended_chunk_size': int(ram_gb * 10_000_000)  # Reserved for future memory optimization
+    }
+
+
+def print_resources_banner(resources, num_parquet_files, parallel_pairs, workers_per_pair):
+    """
+    Print VAST mode banner with detected resources
+    
+    Args:
+        resources: Dictionary from detect_resources()
+        num_parquet_files: Number of parquet files to process
+        parallel_pairs: Number of pairs to process in parallel
+        workers_per_pair: Number of workers per pair
+    """
+    # Estimate time based on typical runtime (3-4 hours for 128 cores)
+    # Scale based on actual resources
+    base_time_hours = 3.5
+    cpu_cores = max(1, resources['cpu_cores'])  # Prevent division by zero
+    scaling_factor = 128 / cpu_cores
+    estimated_hours = base_time_hours * scaling_factor
+    
+    print("\n")
+    print("╔═══════════════════════════════════════════════════════════════════════════════╗")
+    print("║                    ⚡ VAST MODE ACTIVATED ⚡                                   ║")
+    print("╠═══════════════════════════════════════════════════════════════════════════════╣")
+    print(f"║   🖥️  CPU Cores:     {resources['cpu_cores']:<55} ║")
+    print(f"║   🧠 RAM:           {resources['ram_gb']:.0f} GB{' ' * (55 - len(f'{resources['ram_gb']:.0f} GB'))} ║")
+    print(f"║   📁 Parquet Files: {num_parquet_files:<55} ║")
+    print(f"║   ⚡ Parallel Pairs: {parallel_pairs:<55} ║")
+    print(f"║   👷 Workers/Pair:  {workers_per_pair:<55} ║")
+    print(f"║   📊 Est. Time:     ~{estimated_hours:.1f} hours{' ' * (55 - len(f'~{estimated_hours:.1f} hours'))} ║")
+    print("╚═══════════════════════════════════════════════════════════════════════════════╝")
+    print()
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -1635,6 +1734,293 @@ def run_search_light(df, args):
 
 
 # ═══════════════════════════════════════════════════════════════
+# ⚡ VAST MODE - HIGH PERFORMANCE PARALLEL PROCESSING
+# ═══════════════════════════════════════════════════════════════
+
+def _setup_worker_environment(parquet_file, workers_per_pair, skip_telegram, mode='generate_base'):
+    """
+    Common setup for worker functions in vast mode
+    
+    **IMPORTANT**: Parquet files must follow the naming convention: PAIRNAME_YEAR.parquet
+    Example: EURUSD_2025.parquet, GBPUSD_2024.parquet
+    
+    Args:
+        parquet_file: Path to parquet file (must follow PAIRNAME_YEAR.parquet naming)
+        workers_per_pair: Number of workers to use for this pair
+        skip_telegram: Whether to skip Telegram notifications
+        mode: 'generate_base' or 'search_light'
+        
+    Returns:
+        tuple: (args, df, pair_name) where:
+            - args: Configured arguments object
+            - df: Loaded DataFrame
+            - pair_name: Extracted pair name
+    
+    Note: This function runs in a separate process, so modifying config is process-safe.
+    """
+    # Create minimal args object
+    class Args:
+        pass
+    
+    args = Args()
+    args.parquet = str(parquet_file)
+    args.workers = workers_per_pair
+    args.sequential = workers_per_pair == 1
+    args.skip_telegram = skip_telegram
+    args.test = False
+    
+    if mode == 'generate_base':
+        args.generate_base = True
+        args.search_light = False
+        args.analyze_only = False
+        args.force_convert = False
+        args.convert_only = False
+    else:  # search_light
+        args.generate_base = False
+        args.search_light = True
+        args.batch_mode = False
+        args.batch_size = 200
+    
+    # Load data
+    from data_loader import load_crystal
+    df = load_crystal(Path(parquet_file))
+    
+    # Set dynamic config for this pair
+    # Note: This is safe in multiprocessing as each process has its own memory space
+    parquet_filename = Path(parquet_file)
+    filename = parquet_filename.stem
+    parts = filename.split("_")
+    
+    if len(parts) >= 2:
+        import config
+        config.PAIR_NAME = parts[0]
+        config.DATA_YEAR = parts[1]
+        config.FILE_PREFIX = f"{parts[0]}_{parts[1]}_"
+        if hasattr(config, 'FILE_PREFIX_STABLE'):
+            config.FILE_PREFIX_STABLE = f"{parts[0]}_{parts[1]}_"
+        pair_name = parts[0]
+    else:
+        pair_name = filename
+    
+    return args, df, pair_name
+
+
+def run_generate_base_single(parquet_file, workers_per_pair, skip_telegram=False):
+    """
+    Run generate-base for a single parquet file (worker function for vast mode)
+    
+    **IMPORTANT**: Parquet files must follow the naming convention: PAIRNAME_YEAR.parquet
+    Example: EURUSD_2025.parquet, GBPUSD_2024.parquet
+    
+    Args:
+        parquet_file: Path to parquet file
+        workers_per_pair: Number of workers to use for this pair
+        skip_telegram: Whether to skip Telegram notifications
+        
+    Returns:
+        dict: Results with file name, status, and pair name
+    """
+    try:
+        # Setup environment
+        args, df, pair_name = _setup_worker_environment(
+            parquet_file, workers_per_pair, skip_telegram, 'generate_base'
+        )
+        
+        # Run analysis first (generates universes)
+        from analyzer import UltraNecrozmaAnalyzer
+        from lore import LoreSystem
+        
+        lore = LoreSystem(enable_telegram=not skip_telegram)
+        analyzer = UltraNecrozmaAnalyzer(df, lore_system=lore)
+        use_parallel = workers_per_pair > 1
+        analyzer.run_analysis(parallel=use_parallel)
+        analyzer.save_results()
+        
+        # Run generate base (result not used, but function generates files)
+        run_generate_base(df, args)
+        
+        return {
+            'file': parquet_file.name,
+            'status': 'success',
+            'pair': pair_name
+        }
+        
+    except Exception as e:
+        return {
+            'file': parquet_file.name,
+            'status': 'failed',
+            'error': str(e)
+        }
+
+
+def run_search_light_single(parquet_file, workers_per_pair, skip_telegram=False, force_rerun=False):
+    """
+    Run search-light for a single parquet file (worker function for vast mode)
+    
+    **IMPORTANT**: Parquet files must follow the naming convention: PAIRNAME_YEAR.parquet
+    Example: EURUSD_2025.parquet, GBPUSD_2024.parquet
+    
+    Args:
+        parquet_file: Path to parquet file
+        workers_per_pair: Number of workers to use for this pair
+        skip_telegram: Whether to skip Telegram notifications
+        force_rerun: Whether to force rerun backtesting
+        
+    Returns:
+        dict: Results with file name, status, pair name, and viable strategies count
+    """
+    try:
+        # Setup environment
+        args, df, pair_name = _setup_worker_environment(
+            parquet_file, workers_per_pair, skip_telegram, 'search_light'
+        )
+        args.force_rerun = force_rerun
+        
+        # Run search light
+        result = run_search_light(df, args)
+        
+        return {
+            'file': parquet_file.name,
+            'status': 'success',
+            'pair': pair_name,
+            'viable_strategies': result['summary']['viable']
+        }
+        
+    except Exception as e:
+        return {
+            'file': parquet_file.name,
+            'status': 'failed',
+            'error': str(e)
+        }
+
+
+def run_vast_mode(args):
+    """
+    Run in VAST mode - process multiple pairs in parallel
+    
+    **IMPORTANT**: Parquet files must follow the naming convention: PAIRNAME_YEAR.parquet
+    Examples: EURUSD_2025.parquet, GBPUSD_2024.parquet
+    
+    This function:
+    1. Auto-detects system resources (CPU cores, RAM)
+    2. Discovers all parquet files in input directory
+    3. Calculates optimal parallelism settings
+    4. Processes files in parallel using ProcessPoolExecutor
+    5. Reports progress and results
+    
+    Args:
+        args: Command-line arguments including:
+            - input_dir: Directory containing parquet files
+            - generate_base: Whether to run generate-base mode
+            - search_light: Whether to run search-light mode
+            - parallel_pairs: Number of pairs to process simultaneously (auto if not specified)
+            - max_workers: Workers per pair (auto if not specified)
+            - skip_telegram: Whether to skip Telegram notifications
+    
+    Exits:
+        Prints summary and exits (does not return)
+    """
+    from concurrent.futures import ProcessPoolExecutor, as_completed
+    
+    # 1. Detect resources
+    resources = detect_resources()
+    
+    # 2. Find all parquet files
+    if not args.input_dir:
+        print("❌ ERROR: --input-dir is required for VAST mode")
+        print("   Example: python main.py --vast-mode --input-dir data/parquet/ --generate-base")
+        sys.exit(1)
+    
+    input_dir = Path(args.input_dir)
+    if not input_dir.exists():
+        print(f"❌ ERROR: Input directory not found: {input_dir}")
+        sys.exit(1)
+    
+    parquet_files = sorted(list(input_dir.glob("*.parquet")))
+    
+    if not parquet_files:
+        print(f"❌ ERROR: No parquet files found in {input_dir}")
+        sys.exit(1)
+    
+    # 3. Calculate optimal parallelism
+    parallel_pairs = args.parallel_pairs if args.parallel_pairs > 1 else resources['recommended_parallel_pairs']
+    workers_per_pair = args.max_workers if args.max_workers else resources['recommended_workers_per_pair']
+    
+    # 4. Print banner
+    print_resources_banner(resources, len(parquet_files), parallel_pairs, workers_per_pair)
+    
+    # 5. Determine which mode to run
+    if not args.generate_base and not args.search_light:
+        print("❌ ERROR: Must specify either --generate-base or --search-light with --vast-mode")
+        print("   Example: python main.py --vast-mode --input-dir data/parquet/ --generate-base")
+        sys.exit(1)
+    
+    # 6. Process in parallel
+    print(f"🐉 Processing {len(parquet_files)} pairs in parallel...")
+    print()
+    
+    start_time = time.time()
+    completed = 0
+    failed = 0
+    
+    with ProcessPoolExecutor(max_workers=parallel_pairs) as executor:
+        if args.generate_base:
+            # Submit all generate-base tasks
+            futures = {
+                executor.submit(
+                    run_generate_base_single, 
+                    pf, 
+                    workers_per_pair,
+                    args.skip_telegram
+                ): pf for pf in parquet_files
+            }
+        else:  # args.search_light
+            # Submit all search-light tasks
+            futures = {
+                executor.submit(
+                    run_search_light_single, 
+                    pf, 
+                    workers_per_pair,
+                    args.skip_telegram,
+                    args.force_rerun if hasattr(args, 'force_rerun') else False
+                ): pf for pf in parquet_files
+            }
+        
+        # Wait for all to complete with progress
+        for future in as_completed(futures):
+            result = future.result()
+            completed += 1
+            
+            if result['status'] == 'success':
+                elapsed = time.time() - start_time
+                elapsed_str = f"{elapsed/3600:.1f}h" if elapsed > 3600 else f"{elapsed/60:.1f}m"
+                
+                if args.generate_base:
+                    print(f"✅ [{completed}/{len(parquet_files)}] {result['pair']} - generate-base complete ({elapsed_str})")
+                else:
+                    viable = result.get('viable_strategies', 'N/A')
+                    print(f"✅ [{completed}/{len(parquet_files)}] {result['pair']} - search-light complete (viable: {viable}, {elapsed_str})")
+            else:
+                failed += 1
+                print(f"❌ [{completed}/{len(parquet_files)}] {result['file']} - FAILED: {result.get('error', 'Unknown error')}")
+    
+    # 7. Final summary
+    total_time = time.time() - start_time
+    total_time_str = f"{total_time/3600:.1f}h" if total_time > 3600 else f"{total_time/60:.1f}m"
+    
+    print()
+    print("═" * 80)
+    print("⚡ VAST MODE COMPLETE ⚡")
+    print("═" * 80)
+    print(f"   Total pairs: {len(parquet_files)}")
+    print(f"   Successful: {completed - failed}")
+    print(f"   Failed: {failed}")
+    print(f"   Total time: {total_time_str}")
+    print("═" * 80)
+    print()
+
+
+# ═══════════════════════════════════════════════════════════════
 # 🚀 MAIN EXECUTION
 # ═══════════════════════════════════════════════════════════════
 
@@ -1706,6 +2092,12 @@ def main():
     else:
         print(f"   ✅ Thermal Protection: Ready")
     print("═" * 80 + "\n")
+    
+    # Check if VAST mode is enabled
+    if args.vast_mode:
+        print("⚡ VAST MODE DETECTED - Switching to high-performance parallel processing\n")
+        run_vast_mode(args)
+        return  # Exit after vast mode completes
     
     # Import config (after system check)
     from config import CSV_FILE, PARQUET_FILE, NUM_WORKERS, CACHE_CONFIG
