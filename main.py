@@ -1153,9 +1153,9 @@ def run_generate_base(df, args):
     1. Load parquet (tick data)
     2. analyzer.run_analysis() → Generate UNIVERSES
     3. analyzer.save_results() → Save universes/*.parquet
-    4. Step 1: Labeling
-    5. Step 2: Regime Detection → Save regimes.parquet
-    6. Step 3: Pattern Mining → Save patterns.json
+    4. Labeling (if not cached)
+    5. Pattern Mining (if not cached) → Save patterns.json
+    6. Regime Detection → Save regimes.parquet
     7. DELETE labels/ directory (~56GB freed!)
     8. STOP
     
@@ -1225,14 +1225,14 @@ def run_generate_base(df, args):
                           message=f"Labeling complete: {len(labels_dict)} scenarios labeled")
             
             # ─────────────────────────────────────────────────────────
-            # STEP 3: PATTERN MINING
+            # STEP 2: PATTERN MINING
             # ─────────────────────────────────────────────────────────
             print("\n" + "─" * 80)
-            print("⛏️  STEP 3: ML-Based Pattern Mining")
+            print("⛏️  STEP 2: ML-Based Pattern Mining")
             print("─" * 80)
             
             lore.broadcast(EventType.PROGRESS, 
-                          message="Step 3: Mining patterns with ML...")
+                          message="Step 2: Mining patterns with ML...")
             
             from pattern_miner import PatternMiner
             
@@ -1268,14 +1268,14 @@ def run_generate_base(df, args):
                     print(f"   ⚠️  Could not remove labels directory: {e}")
         
         # ─────────────────────────────────────────────────────────
-        # STEP 2: REGIME DETECTION
+        # STEP 3: REGIME DETECTION
         # ─────────────────────────────────────────────────────────
         print("\n" + "─" * 80)
-        print("🔮 STEP 2: Market Regime Detection")
+        print("🔮 STEP 3: Market Regime Detection")
         print("─" * 80)
         
         lore.broadcast(EventType.PROGRESS, 
-                      message="Step 2: Detecting market regimes...")
+                      message="Step 3: Detecting market regimes...")
         
         from regime_detector import RegimeDetector
         
@@ -1347,6 +1347,10 @@ def run_generate_base(df, args):
 def run_search_light(df, args):
     """
     Run strategy generation + backtesting using existing base files
+    
+    **Note**: This function modifies the input DataFrame `df` by adding columns
+    (momentum, volatility, trend_strength, close) if they don't exist. These
+    are required for strategy backtesting.
     
     Requires (from base):
     - parquet (tick data)
@@ -1873,6 +1877,12 @@ def main():
     analyzer = UltraNecrozmaAnalyzer(df, lore_system=lore)
     # Use parallel only if num_workers > 1 and not in sequential mode
     use_parallel = (num_workers > 1) and not args.sequential
+    
+    # Check for conflicting flags
+    if args.generate_base and args.search_light:
+        print("\n⚠️  WARNING: Both --generate-base and --search-light flags provided")
+        print("   Only --generate-base will be executed (--search-light will be ignored)")
+        print("   Run these commands separately for the intended workflow\n")
     
     # Check which workflow mode to use
     if args.generate_base:

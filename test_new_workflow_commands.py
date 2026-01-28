@@ -23,29 +23,29 @@ def test_parse_arguments():
     sys.argv = ['main.py', '--generate-base']
     args = parse_arguments()
     assert hasattr(args, 'generate_base'), "Missing generate_base attribute"
-    assert args.generate_base == True, "generate_base should be True"
+    assert args.generate_base, "generate_base should be True"
     print("✅ --generate-base flag parsed correctly")
     
     # Test 2: --search-light flag
     sys.argv = ['main.py', '--search-light']
     args = parse_arguments()
     assert hasattr(args, 'search_light'), "Missing search_light attribute"
-    assert args.search_light == True, "search_light should be True"
+    assert args.search_light, "search_light should be True"
     print("✅ --search-light flag parsed correctly")
     
     # Test 3: Both flags can be parsed with other arguments
     sys.argv = ['main.py', '--parquet', 'test.parquet', '--generate-base', '--sequential']
     args = parse_arguments()
-    assert args.generate_base == True, "generate_base should be True"
-    assert args.sequential == True, "sequential should be True"
+    assert args.generate_base, "generate_base should be True"
+    assert args.sequential, "sequential should be True"
     assert args.parquet == 'test.parquet', "parquet path should be 'test.parquet'"
     print("✅ Flags work correctly with other arguments")
     
     # Test 4: --search-light with --force-rerun
     sys.argv = ['main.py', '--search-light', '--force-rerun']
     args = parse_arguments()
-    assert args.search_light == True, "search_light should be True"
-    assert args.force_rerun == True, "force_rerun should be True"
+    assert args.search_light, "search_light should be True"
+    assert args.force_rerun, "force_rerun should be True"
     print("✅ --search-light works with --force-rerun")
     
     return True
@@ -105,23 +105,30 @@ def test_argument_exclusivity():
     # Test 1: Only --generate-base (no --search-light)
     sys.argv = ['main.py', '--generate-base']
     args = parse_arguments()
-    assert args.generate_base == True, "generate_base should be True"
-    assert args.search_light == False, "search_light should be False when not specified"
+    assert args.generate_base, "generate_base should be True"
+    assert not args.search_light, "search_light should be False when not specified"
     print("✅ --generate-base works independently")
     
     # Test 2: Only --search-light (no --generate-base)
     sys.argv = ['main.py', '--search-light']
     args = parse_arguments()
-    assert args.search_light == True, "search_light should be True"
-    assert args.generate_base == False, "generate_base should be False when not specified"
+    assert args.search_light, "search_light should be True"
+    assert not args.generate_base, "generate_base should be False when not specified"
     print("✅ --search-light works independently")
     
     # Test 3: Neither flag specified
     sys.argv = ['main.py']
     args = parse_arguments()
-    assert args.generate_base == False, "generate_base should be False by default"
-    assert args.search_light == False, "search_light should be False by default"
+    assert not args.generate_base, "generate_base should be False by default"
+    assert not args.search_light, "search_light should be False by default"
     print("✅ Flags default to False when not specified")
+    
+    # Test 4: Both flags provided (should be allowed but --generate-base takes precedence)
+    sys.argv = ['main.py', '--generate-base', '--search-light']
+    args = parse_arguments()
+    assert args.generate_base, "generate_base should be True when both flags provided"
+    assert args.search_light, "search_light should be True when both flags provided"
+    print("✅ Both flags can be parsed (note: --generate-base takes precedence in execution)")
     
     return True
 
